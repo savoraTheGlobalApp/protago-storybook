@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Contact • iCurious AI</title>
+  <link rel="stylesheet" href="styles.css">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+  <link rel="icon" href="images/iCuriousAI_logo_without_text.png?v=1" type="image/png" sizes="32x32">
+  <link rel="apple-touch-icon" href="images/iCuriousAI_logo_without_text.png?v=1">
+</head>
+<body>
+  <!-- Navigation -->
+  <nav class="navbar">
+    <div class="nav-container">
+      <a href="index.html" class="nav-logo">
+        <img src="images/iCuriousAI_logo_without_text.png" alt="iCurious AI Logo" class="logo-image">
+        <span class="logo-text">iCurious AI</span>
+      </a>
+      <ul class="nav-menu">
+        <li><a href="index.html#home">Home</a></li>
+        <li><a href="products.html">Products</a></li>
+        <li><a href="index.html#vision">Vision</a></li>
+        <li><a href="index.html#features">Features</a></li>
+        <li><a href="contact.html">Contact</a></li>
+        <li><a href="join-waitlist.html" class="nav-cta">Join Waitlist</a></li>
+      </ul>
+      <div class="hamburger"><span></span><span></span><span></span></div>
+    </div>
+  </nav>
+
+  <!-- Contact Section -->
+  <section class="contact">
+    <div class="container">
+      <div class="section-header">
+        <h2>Say hello to iCurious AI</h2>
+        <p>For demos, partnerships, and press—let's chat</p>
+      </div>
+      <div class="contact-content">
+        <div class="contact-info">
+          <h3>Talk to the Founders</h3>
+          <p>We're building an AI buddy that makes play smarter and kinder</p>
+          <p class="contact-instruction">Reach out for pilots, retail and school partnerships, or media. We'll get back quickly.</p>
+          <div class="contact-email">
+            <p><strong>Email us directly:</strong> <a href="mailto:hello@icurious.ai">hello@icurious.ai</a></p>
+          </div>
+        </div>
+
+        <div class="contact-form">
+          <form name="contact" id="contactForm" method="POST" action="/.netlify/functions/submit-contact">
+            <div class="form-group">
+              <input type="text" name="name" placeholder="Your Name" required>
+            </div>
+            <div class="form-group">
+              <input type="email" name="email" placeholder="Your Email" required>
+            </div>
+            <div class="form-group">
+              <label for="role" class="visually-hidden">I am a...</label>
+              <select id="role" name="role" aria-label="I am a..." required>
+                <option value="">I am a...</option>
+                <option value="learner">Learner</option>
+                <option value="parent">Parent</option>
+                <option value="educator">Educator</option>
+                <option value="school-partner">School Partner</option>
+                <option value="retail-partner">Retail Partner</option>
+                <option value="investor">Investor</option>
+                <option value="media">Media/Press</option>
+                <option value="other">Other</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <textarea name="message" placeholder="Tell us about your interest..." rows="4"></textarea>
+            </div>
+          
+            <!-- Google reCAPTCHA -->
+            <div class="g-recaptcha" data-sitekey="6LcEV6YrAAAAAEL5ODYA_oSSprvXuKYqutm8fpHZ"></div>
+          
+            <button type="submit" class="btn btn-primary">Send Message</button>
+          </form>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Founders Section -->
+  <section class="founders">
+    <div class="container">
+      <div class="section-header">
+        <h2>Our Founders</h2>
+        <p>Meet the team behind iCurious AI</p>
+      </div>
+
+      <div class="founders-grid">
+        <div class="founder-card">
+          <div class="avatar">
+            <img src="images/Rajan_photograph.jpg" alt="Rajan Kumar" onerror="this.style.display='none'; this.parentElement.classList.add('fallback');">
+            <span class="avatar-fallback">RK</span>
+          </div>
+          <h3>Rajan Kumar</h3>
+          <p class="role">Co‑Founder & CEO</p>
+          <div class="founder-social-links">
+            <a class="social-link social-link-linkedin" href="https://www.linkedin.com/in/rajan3473p/" target="_blank" rel="noopener" aria-label="Rajan Kumar LinkedIn"><i class="fa-brands fa-linkedin"></i></a>
+            <a class="social-link social-link-twitter" href="https://x.com/iCuriousRajan" target="_blank" rel="noopener" aria-label="Rajan Kumar Twitter"><i class="fab fa-twitter"></i></a>
+          </div>
+        </div>
+
+        <div class="founder-card">
+          <div class="avatar">
+            <img src="images/Shorya_photo.jpg" alt="Shorya Kumar" onerror="this.style.display='none'; this.parentElement.classList.add('fallback');">
+            <span class="avatar-fallback">SK</span>
+          </div>
+          <h3>Shorya Kumar</h3>
+          <p class="role">Co‑Founder & CPO</p>
+          <div class="founder-social-links">
+            <a class="social-link social-link-linkedin" href="https://www.linkedin.com/in/shoryak/" target="_blank" rel="noopener" aria-label="Shorya Kumar LinkedIn"><i class="fa-brands fa-linkedin"></i></a>
+            <a class="social-link social-link-twitter" href="https://x.com/meet_shoryak" target="_blank" rel="noopener" aria-label="Shorya Kumar Twitter"><i class="fab fa-twitter"></i></a>
+          </div>
+        </div>
+
+        <div class="founder-card">
+          <div class="avatar">
+            <img src="images/Piyush_photo2.jpeg" alt="Piyush Kumar" onerror="this.style.display='none'; this.parentElement.classList.add('fallback');">
+            <span class="avatar-fallback">PK</span>
+          </div>
+          <h3>Piyush Kumar</h3>
+          <p class="role">Co‑Founder & CTO</p>
+          <div class="founder-social-links">
+            <a class="social-link social-link-linkedin" href="https://linkedin.com/in/kpiyush25" target="_blank" rel="noopener" aria-label="Piyush Kumar LinkedIn"><i class="fa-brands fa-linkedin"></i></a>
+            <a class="social-link social-link-twitter" href="https://x.com/PiyushKThisSide/" target="_blank" rel="noopener" aria-label="Piyush Kumar Twitter"><i class="fab fa-twitter"></i></a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer class="footer">
+    <div class="container">
+      <div class="footer-content">
+        <div class="footer-section">
+          <a href="index.html" class="footer-logo">
+            <span class="logo-text">iCurious AI</span>
+          </a>
+          <p>Playful AI companion that sparks curiosity and creativity while reducing screen time.</p>
+        </div>
+        <div class="footer-section">
+          <h4>Quick Links</h4>
+          <ul>
+            <li><a href="index.html#home">Home</a></li>
+            <li><a href="products.html">Products</a></li>
+            <li><a href="index.html#vision">Vision</a></li>
+            <li><a href="index.html#features">Features</a></li>
+          </ul>
+        </div>
+        <div class="footer-section">
+          <h4>Connect</h4>
+          <div class="contact-details">
+            <p><a href="mailto:hello@icurious.ai">hello@icurious.ai</a></p>
+          </div>
+          <div class="social-links">
+            <a href="https://x.com/iCuriousAI" title="Twitter / X"><i class="fab fa-twitter"></i></a>
+            <a href="https://www.linkedin.com/company/icurious-ai/" title="LinkedIn"><i class="fab fa-linkedin"></i></a>
+            <!-- <a href="#"><i class="fab fa-facebook"></i></a> -->
+            <a href="https://www.instagram.com/iCuriousAI/" title="Instagram"><i class="fab fa-instagram"></i></a>
+            <a href="https://www.youtube.com/@iCuriousAI" title="YouTube"><i class="fab fa-youtube"></i></a>
+          </div>
+        </div>
+      </div>
+      <div class="footer-bottom">
+        <p>&copy; 2025 iCurious AI. All rights reserved.</p>
+      </div>
+    </div>
+  </footer>
+
+  <script src="https://www.google.com/recaptcha/api.js" async defer></script>
+  <script src="script.js?v=6"></script>
+</body>
+</html>

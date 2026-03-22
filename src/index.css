@@ -1,0 +1,44 @@
+@import "tailwindcss";
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Chewy&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+Devanagari:wght@400;500;600;700&display=swap');
+
+@theme {
+  --font-sans: "Outfit", ui-sans-serif, system-ui, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
+  --color-primary: #FFD93D;
+  --color-primary-dark: #FFC93D;
+}
+
+/* Custom styles for Sanskrit/Devanagari text */
+.font-sanskrit {
+  font-family: 'Noto Sans Devanagari', serif;
+  font-weight: 600;
+  letter-spacing: 0.025em;
+}
+
+/* Traditional Indian border patterns */
+.indian-border-top {
+  border-top: 4px solid;
+  border-image: repeating-linear-gradient(
+    90deg,
+    #f59e0b 0px,
+    #f59e0b 10px,
+    #dc2626 10px,
+    #dc2626 20px,
+    #f59e0b 20px,
+    #f59e0b 30px
+  ) 1;
+}
+
+.indian-border-bottom {
+  border-bottom: 4px solid;
+  border-image: repeating-linear-gradient(
+    90deg,
+    #f59e0b 0px,
+    #f59e0b 10px,
+    #dc2626 10px,
+    #dc2626 20px,
+    #f59e0b 20px,
+    #f59e0b 30px
+  ) 1;
+}

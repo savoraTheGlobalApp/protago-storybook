@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Thank You • iCurious AI</title>
+
+  <!-- Site styles + fonts/icons to match theme -->
+  <link rel="stylesheet" href="styles.css" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+
+  <link rel="icon" href="images/iCuriousAI_logo_without_text.png?v=1" type="image/png" sizes="32x32">
+  <link rel="apple-touch-icon" href="images/iCuriousAI_logo_without_text.png?v=1">
+
+  <style>
+    :root{
+      --bg1:#6d5efc; /* violet */
+      --bg2:#a855f7; /* purple */
+      --bg3:#22d3ee; /* cyan */
+      --card-bg: rgba(255,255,255,0.75);
+      --card-border: rgba(255,255,255,0.4);
+      --text:#0f172a; /* slate-900 */
+      --muted:#64748b; /* slate-500 */
+    }
+
+    html, body {
+      height: 100%;
+    }
+    body {
+      margin: 0;
+      font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+      color: var(--text);
+      background: radial-gradient(1200px 800px at 15% 10%, rgba(109,94,252,.35), transparent 60%),
+                  radial-gradient(1200px 800px at 85% 30%, rgba(168,85,247,.35), transparent 60%),
+                  radial-gradient(1200px 800px at 50% 90%, rgba(34,211,238,.25), transparent 60%),
+                  #f8fafc;
+      overflow-x: hidden;
+    }
+
+    .celebrate {
+      position: relative;
+      min-height: 100dvh;
+      display: grid;
+      place-items: center;
+      padding: 48px 20px;
+      isolation: isolate;
+    }
+
+    /* Soft animated orbs */
+    .orb {
+      position: absolute;
+      width: 38vmax;
+      height: 38vmax;
+      filter: blur(60px);
+      border-radius: 50%;
+      opacity: .45;
+      animation: float 12s ease-in-out infinite;
+      z-index: -1;
+    }
+    .orb.one  { background: radial-gradient(circle at 30% 30%, #8b5cf6, #6366f1 60%, transparent 70%); top:-10vmax; left:-10vmax; animation-delay: 0s; }
+    .orb.two  { background: radial-gradient(circle at 70% 50%, #22d3ee, #60a5fa 60%, transparent 70%); bottom:-12vmax; right:-8vmax; animation-delay: 1.5s; }
+    .orb.three{ background: radial-gradient(circle at 50% 50%, #f472b6, #a78bfa 60%, transparent 70%); top:30%; right:10%; animation-delay: .8s; }
+
+    @keyframes float {
+      0%, 100% { transform: translateY(0) translateX(0) scale(1); }
+      50%      { transform: translateY(-20px) translateX(10px) scale(1.05); }
+    }
+
+    .card {
+      width: min(720px, 94vw);
+      padding: clamp(24px, 3vw, 40px);
+      border-radius: 20px;
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      backdrop-filter: blur(12px);
+      box-shadow: 0 20px 60px rgba(15,23,42,.12);
+      text-align: center;
+      transform: translateY(8px);
+      animation: rise .8s ease-out forwards;
+    }
+    @keyframes rise {
+      to { transform: translateY(0); opacity: 1; }
+      from { transform: translateY(12px); opacity: 0; }
+    }
+
+    .icon-wrap {
+      width: 88px; height: 88px;
+      margin: 0 auto 18px;
+      border-radius: 50%;
+      display: grid; place-items: center;
+      background: conic-gradient(from 180deg at 50% 50%, var(--bg1), var(--bg2), var(--bg3), var(--bg1));
+      color: white;
+      box-shadow: 0 10px 30px rgba(99,102,241,.35);
+      animation: pop 700ms cubic-bezier(.2, .9, .2, 1.2) .15s both;
+    }
+    .icon-wrap i { font-size: 36px; }
+    @keyframes pop {
+      0% { transform: scale(.6); filter: saturate(0.7); }
+      70% { transform: scale(1.08); }
+      100% { transform: scale(1); }
+    }
+
+    h1 {
+      font-size: clamp(26px, 4vw, 36px);
+      margin: 10px 0 10px;
+      line-height: 1.15;
+      background: linear-gradient(90deg, var(--bg1), var(--bg2), var(--bg3));
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+      font-weight: 800;
+      letter-spacing: .2px;
+    }
+    p.lead {
+      color: var(--muted);
+      font-size: clamp(15px, 2.6vw, 18px);
+      margin: 0 0 18px;
+    }
+    .actions {
+      display: flex;
+      gap: 12px;
+      justify-content: center;
+      flex-wrap: wrap;
+      margin-top: 10px;
+    }
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 12px 18px;
+      border-radius: 12px;
+      text-decoration: none;
+      font-weight: 600;
+      box-shadow: 0 8px 22px rgba(99,102,241,.22);
+      transition: transform .15s ease, box-shadow .15s ease;
+      border: 0;
+    }
+    .btn-primary {
+      background: linear-gradient(135deg, var(--bg1), var(--bg2));
+      color: #fff;
+    }
+    .btn-secondary {
+      background: #fff;
+      color: var(--text);
+      border: 1px solid rgba(15,23,42,.08);
+    }
+    .btn:hover { transform: translateY(-1px); box-shadow: 0 10px 26px rgba(99,102,241,.28); }
+
+    /* Confetti canvas sits behind content */
+    #confetti-canvas {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    footer {
+      margin-top: 18px;
+      color: var(--muted);
+      font-size: 13px;
+    }
+  </style>
+</head>
+<body>
+  <canvas id="confetti-canvas"></canvas>
+
+  <div class="celebrate">
+    <div class="orb one"></div>
+    <div class="orb two"></div>
+    <div class="orb three"></div>
+
+    <div class="card">
+      <div class="icon-wrap">
+        <i class="fa-solid fa-check"></i>
+      </div>
+      <h1>Thank You!</h1>
+      <p class="lead">We appreciate your interest in iCurious AI. We'll be in touch soon!</p>
+
+      <div class="actions">
+        <a class="btn btn-primary" href="products.html"><i class="fa-solid fa-rocket"></i> Explore Products</a>
+        <a class="btn btn-secondary" href="index.html"><i class="fa-solid fa-house"></i> Back to Home</a>
+      </div>
+
+      <footer>iCurious AI • Building joyful learning with AI</footer>
+    </div>
+  </div>
+
+  <!-- Lightweight confetti effect -->
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.min.js"></script>
+  <script>
+    (function runConfetti() {
+      const duration = 1600;
+      const end = Date.now() + duration;
+      const defaults = { startVelocity: 30, spread: 360, ticks: 70, zIndex: 0, scalar: 0.9 };
+
+      const frame = () => {
+        confetti(Object.assign({}, defaults, { particleCount: 4, origin: { x: Math.random(), y: Math.random() * 0.4 } }));
+        if (Date.now() < end) requestAnimationFrame(frame);
+      };
+      frame();
+
+      // A couple celebratory bursts
+      setTimeout(() => confetti({ particleCount: 120, spread: 70, origin: { y: 0.6 } }), 120);
+      setTimeout(() => confetti({ particleCount: 100, spread: 100, origin: { x: 0.9, y: 0.2 } }), 350);
+    })();
+  </script>
+</body>
+</html>

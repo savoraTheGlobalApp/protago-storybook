@@ -1,0 +1,29 @@
+{
+      "name": "iCurious AI",
+      "version": "0.1.0",
+      "private": true,
+      "dependencies": {
+            "@tailwindcss/postcss": "^4.1.18",
+            "framer-motion": "^12.23.24",
+            "lucide-react": "^0.487.0",
+            "postcss": "^8.5.6",
+            "react": "^18.3.1",
+            "react-dom": "^18.3.1",
+            "react-router-dom": "^7.9.6",
+            "tailwindcss": "^4.1.18"
+      },
+      "devDependencies": {
+            "@types/node": "^20.10.0",
+            "@types/react": "^19.2.7",
+            "@types/react-dom": "^19.2.3",
+            "@vitejs/plugin-react-swc": "^3.10.2",
+            "typescript": "^5.9.3",
+            "vite": "^6.4.1"
+      },
+      "scripts": {
+            "dev": "vite",
+            "build": "vite build",
+            "postinstall": "cd backend && npm install",
+            "start": "node backend/server.js"
+      }
+}
