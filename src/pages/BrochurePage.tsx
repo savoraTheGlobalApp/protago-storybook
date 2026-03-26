@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ArrowRight, ChevronDown, Menu, X, MessageCircle } from 'lucide-react';
 
@@ -94,10 +94,289 @@ const heading = (text: React.ReactNode, onDark = false) => (
   </h2>
 );
 
+const HERO_SLIDES = [
+  { src: '/styles/cover_scene.png',      caption: 'Shreyansh · Courage' },
+  { src: '/styles/scene_03.png',         caption: 'Something catches their ear…' },
+  { src: '/styles/scene_07.png',         caption: 'A moment of triumph!' },
+  { src: '/styles/scene_10.png',         caption: 'Everyone celebrates together.' },
+  { src: '/styles/bhanvi_cover.png',     caption: 'Bhanvi & Likhita · Sky High' },
+  { src: '/styles/bhanvi_scene_05.png',  caption: 'Look! Paris! cried Likhita.' },
+  { src: '/styles/bhanvi_scene_10.png',  caption: 'You can be a pilot one day too!' },
+  { src: '/styles/prisha_cover.png',     caption: 'Prisha · The Magic of Learning' },
+  { src: '/styles/prisha_scene_09.png',  caption: 'She searched all night — and found it.' },
+];
+
+// ── ORDER FORM ─────────────────────────────────────────────────────────────
+
+const THEMES = ['Courage & Bravery', 'Kindness & Friendship', 'Curiosity & Learning', 'Honesty & Trust', 'Teamwork', 'Environmental Care'];
+const STYLES = ['Pixar 3D', 'DreamWorks', 'Comic Book', 'Flat Illustration'];
+const FORMATS = ['Immersive (Cinematic)', 'Comic Book (Panels)'];
+
+function OrderForm({ price }: { price: number; scrollTo: (id: string) => void }) {
+  const [form, setForm] = useState({
+    parentName: '', email: '', phone: '',
+    childName: '', childAge: '', childGender: '',
+    theme: '', artStyle: '', storyFormat: '',
+    deliveryType: 'print', address: '',
+    notes: '',
+  });
+  const [photo, setPhoto] = useState<File | null>(null);
+  const [submitted, setSubmitted] = useState(false);
+
+  const set = (k: string, v: string) => setForm(f => ({ ...f, [k]: v }));
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    // TODO: wire to backend
+    setSubmitted(true);
+  };
+
+  const inputStyle: React.CSSProperties = {
+    width: '100%', padding: '10px 14px', borderRadius: 10, border: `1.5px solid #E5E7EB`,
+    fontSize: 14, color: C.navy, outline: 'none', background: C.white,
+    fontFamily: "'Nunito', sans-serif",
+  };
+  const labelStyle: React.CSSProperties = {
+    display: 'block', fontSize: 12, fontWeight: 700, color: C.gray,
+    marginBottom: 5, textTransform: 'uppercase', letterSpacing: '0.05em',
+  };
+
+  return (
+    <section id="order" style={{ background: C.warmTint }} className="py-16 sm:py-20">
+      <div className="max-w-2xl mx-auto px-5 sm:px-8">
+        <motion.div initial={{ opacity: 0, y: 16 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} className="mb-10">
+          {eyebrow('Place your order')}
+          {heading(<>Create your child's<br />personalised storybook.</>)}
+          <p className="text-sm mt-3 leading-relaxed" style={{ color: C.gray }}>
+            Fill in the details below and we'll bring your child's story to life. Starting at ₹{price}.
+          </p>
+        </motion.div>
+
+        {submitted ? (
+          <motion.div initial={{ opacity: 0, scale: 0.96 }} animate={{ opacity: 1, scale: 1 }}
+            className="rounded-3xl p-10 text-center" style={{ background: C.white, border: `2px solid ${C.gold}` }}>
+            <p className="text-4xl mb-4">🎉</p>
+            <h3 style={{ fontFamily: "'Baloo 2', sans-serif", fontWeight: 800, color: C.navy, fontSize: '1.5rem' }}>
+              Order received!
+            </h3>
+            <p className="text-sm mt-2 leading-relaxed" style={{ color: C.gray }}>
+              Thank you! We'll reach out to <strong>{form.email}</strong> within 24 hours to confirm your order and next steps.
+            </p>
+          </motion.div>
+        ) : (
+          <motion.form initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}
+            onSubmit={handleSubmit}
+            className="rounded-3xl p-6 sm:p-8 flex flex-col gap-6"
+            style={{ background: C.white, boxShadow: '0 4px 24px rgba(0,0,0,0.07)' }}>
+
+            {/* ── Parent details */}
+            <div>
+              <p className="text-sm font-extrabold mb-4" style={{ fontFamily: "'Baloo 2', sans-serif", color: C.navy }}>
+                Your details
+              </p>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label style={labelStyle}>Your name *</label>
+                  <input required style={inputStyle} placeholder="e.g. Priya Sharma"
+                    value={form.parentName} onChange={e => set('parentName', e.target.value)} />
+                </div>
+                <div>
+                  <label style={labelStyle}>Email *</label>
+                  <input required type="email" style={inputStyle} placeholder="you@email.com"
+                    value={form.email} onChange={e => set('email', e.target.value)} />
+                </div>
+                <div className="sm:col-span-2">
+                  <label style={labelStyle}>WhatsApp / Phone *</label>
+                  <input required style={inputStyle} placeholder="+91 98765 43210"
+                    value={form.phone} onChange={e => set('phone', e.target.value)} />
+                </div>
+              </div>
+            </div>
+
+            <div style={{ height: 1, background: '#F0F0F0' }} />
+
+            {/* ── Child details */}
+            <div>
+              <p className="text-sm font-extrabold mb-4" style={{ fontFamily: "'Baloo 2', sans-serif", color: C.navy }}>
+                About your child
+              </p>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label style={labelStyle}>Child's name *</label>
+                  <input required style={inputStyle} placeholder="e.g. Arjun"
+                    value={form.childName} onChange={e => set('childName', e.target.value)} />
+                </div>
+                <div>
+                  <label style={labelStyle}>Age *</label>
+                  <select required style={inputStyle} value={form.childAge} onChange={e => set('childAge', e.target.value)}>
+                    <option value="">Select age</option>
+                    {Array.from({ length: 10 }, (_, i) => i + 3).map(a => (
+                      <option key={a} value={a}>{a} years old</option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label style={labelStyle}>Gender</label>
+                  <div className="flex gap-2">
+                    {['Boy', 'Girl', 'Other'].map(g => (
+                      <button type="button" key={g}
+                        onClick={() => set('childGender', g)}
+                        className="flex-1 py-2.5 rounded-xl text-sm font-bold transition-all"
+                        style={{
+                          background: form.childGender === g ? C.saffron : '#F5F5F5',
+                          color: form.childGender === g ? C.white : C.gray,
+                          border: `1.5px solid ${form.childGender === g ? C.saffron : 'transparent'}`,
+                        }}>
+                        {g}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+                <div>
+                  <label style={labelStyle}>Child's photo *</label>
+                  <label className="flex flex-col items-center justify-center gap-1 rounded-xl cursor-pointer transition-colors"
+                    style={{
+                      border: `1.5px dashed ${photo ? C.saffron : '#D1D5DB'}`,
+                      padding: '12px',
+                      background: photo ? '#FFF8F3' : '#FAFAFA',
+                    }}>
+                    <span className="text-xl">{photo ? '✅' : '📸'}</span>
+                    <span className="text-xs font-semibold" style={{ color: photo ? C.saffron : C.lgray }}>
+                      {photo ? photo.name : 'Upload photo'}
+                    </span>
+                    <input type="file" accept="image/*" className="hidden"
+                      onChange={e => setPhoto(e.target.files?.[0] ?? null)} />
+                  </label>
+                </div>
+              </div>
+            </div>
+
+            <div style={{ height: 1, background: '#F0F0F0' }} />
+
+            {/* ── Story customisation */}
+            <div>
+              <p className="text-sm font-extrabold mb-4" style={{ fontFamily: "'Baloo 2', sans-serif", color: C.navy }}>
+                Customise the story
+              </p>
+              <div className="flex flex-col gap-4">
+                <div>
+                  <label style={labelStyle}>Story theme *</label>
+                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                    {THEMES.map(t => (
+                      <button type="button" key={t} onClick={() => set('theme', t)}
+                        className="py-2 px-3 rounded-xl text-xs font-bold transition-all text-left leading-snug"
+                        style={{
+                          background: form.theme === t ? C.navy : '#F5F5F5',
+                          color: form.theme === t ? C.white : C.gray,
+                          border: `1.5px solid ${form.theme === t ? C.navy : 'transparent'}`,
+                        }}>
+                        {t}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+                <div>
+                  <label style={labelStyle}>Art style *</label>
+                  <div className="grid grid-cols-2 gap-2">
+                    {STYLES.map(s => (
+                      <button type="button" key={s} onClick={() => set('artStyle', s)}
+                        className="py-2.5 px-3 rounded-xl text-xs font-bold transition-all"
+                        style={{
+                          background: form.artStyle === s ? C.saffron : '#F5F5F5',
+                          color: form.artStyle === s ? C.white : C.gray,
+                          border: `1.5px solid ${form.artStyle === s ? C.saffron : 'transparent'}`,
+                        }}>
+                        {s}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+                <div>
+                  <label style={labelStyle}>Story format *</label>
+                  <div className="grid grid-cols-2 gap-2">
+                    {FORMATS.map(f => (
+                      <button type="button" key={f} onClick={() => set('storyFormat', f)}
+                        className="py-2.5 px-3 rounded-xl text-xs font-bold transition-all"
+                        style={{
+                          background: form.storyFormat === f ? C.gold : '#F5F5F5',
+                          color: form.storyFormat === f ? C.navy : C.gray,
+                          border: `1.5px solid ${form.storyFormat === f ? C.gold : 'transparent'}`,
+                        }}>
+                        {f}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div style={{ height: 1, background: '#F0F0F0' }} />
+
+            {/* ── Delivery */}
+            <div>
+              <p className="text-sm font-extrabold mb-4" style={{ fontFamily: "'Baloo 2', sans-serif", color: C.navy }}>
+                Delivery
+              </p>
+              <div className="flex gap-2 mb-4">
+                {[['print', '📦 Hardcover print', `₹${price} · 5–7 days`], ['pdf', '📄 Digital PDF', `₹${Math.round(price * 0.6)} · Instant`]].map(([val, label, sub]) => (
+                  <button type="button" key={val} onClick={() => set('deliveryType', val)}
+                    className="flex-1 py-3 px-3 rounded-xl text-xs font-bold transition-all text-left"
+                    style={{
+                      background: form.deliveryType === val ? '#FFF8F3' : '#F5F5F5',
+                      border: `2px solid ${form.deliveryType === val ? C.saffron : 'transparent'}`,
+                      color: C.navy,
+                    }}>
+                    <span className="block mb-0.5">{label}</span>
+                    <span className="font-semibold" style={{ color: form.deliveryType === val ? C.saffron : C.lgray }}>{sub}</span>
+                  </button>
+                ))}
+              </div>
+              {form.deliveryType === 'print' && (
+                <div>
+                  <label style={labelStyle}>Delivery address *</label>
+                  <textarea rows={3} required={form.deliveryType === 'print'} style={{ ...inputStyle, resize: 'none' }}
+                    placeholder="Flat / House no, Street, City, State, PIN"
+                    value={form.address} onChange={e => set('address', e.target.value)} />
+                </div>
+              )}
+            </div>
+
+            {/* ── Notes */}
+            <div>
+              <label style={labelStyle}>Any special requests? (optional)</label>
+              <textarea rows={2} style={{ ...inputStyle, resize: 'none' }}
+                placeholder="e.g. My child loves dinosaurs, include them in the story!"
+                value={form.notes} onChange={e => set('notes', e.target.value)} />
+            </div>
+
+            {/* ── Submit */}
+            <button type="submit"
+              className="w-full py-4 rounded-2xl text-base font-extrabold text-white transition-opacity hover:opacity-90 flex items-center justify-center gap-2"
+              style={{ background: C.gradient, fontFamily: "'Baloo 2', sans-serif" }}>
+              Place Order <ArrowRight size={16} />
+            </button>
+            <p className="text-center text-xs" style={{ color: C.lgray }}>
+              We'll confirm your order via WhatsApp/email within 24 hours.
+            </p>
+          </motion.form>
+        )}
+      </div>
+    </section>
+  );
+}
+
+// ── Main page ───────────────────────────────────────────────────────────────
+
 export function BrochurePage() {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [openFaq, setOpenFaq]       = useState<number | null>(null);
+  const [heroSlide, setHeroSlide]   = useState(0);
   const price = Number(import.meta.env.VITE_STORYBOOK_PRICE) || 499;
+
+  useEffect(() => {
+    const t = setInterval(() => setHeroSlide(i => (i + 1) % HERO_SLIDES.length), 3000);
+    return () => clearInterval(t);
+  }, []);
 
   const scrollTo = (id: string) => {
     setMobileOpen(false);
@@ -124,10 +403,10 @@ export function BrochurePage() {
                 {label}
               </button>
             ))}
-            <button onClick={() => scrollTo('books')}
+            <button onClick={() => scrollTo('order')}
               className="px-5 py-2 rounded-full text-sm font-bold text-white transition-opacity hover:opacity-90"
               style={{ background: C.gradient }}>
-              Get Started
+              Order Now
             </button>
           </nav>
 
@@ -144,9 +423,9 @@ export function BrochurePage() {
                 {[['Books','books'],['Art Styles','art-styles'],['How It Works','how-it-works'],['FAQ','faq']].map(([label, id]) => (
                   <button key={id} onClick={() => scrollTo(id)} className="text-sm text-left py-1 font-semibold" style={{ color: C.gray }}>{label}</button>
                 ))}
-                <button onClick={() => scrollTo('books')} className="mt-1 px-5 py-2.5 rounded-full text-sm font-bold text-white text-center"
+                <button onClick={() => scrollTo('order')} className="mt-1 px-5 py-2.5 rounded-full text-sm font-bold text-white text-center"
                   style={{ background: C.gradient }}>
-                  Get Started
+                  Order Now
                 </button>
               </div>
             </motion.div>
@@ -157,20 +436,20 @@ export function BrochurePage() {
       {/* ══════════════════════════════════════════
           § 1  HERO  — warm gradient
       ══════════════════════════════════════════ */}
-      <section id="hero" style={{ background: C.gradient }} className="pt-16">
-        <div className="max-w-6xl mx-auto px-5 sm:px-8 flex flex-col sm:flex-row items-end gap-0">
+      <section id="hero" style={{ background: C.gradient }} className="pt-16 overflow-hidden">
+        <div className="max-w-6xl mx-auto px-5 sm:px-8 flex flex-col sm:flex-row items-start gap-0">
 
-          {/* Text */}
+          {/* Text — left column */}
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}
-            className="flex-none w-full sm:w-[46%] pb-10 sm:pb-16 pt-10 sm:pt-20 pr-0 sm:pr-8">
-            <div className="inline-flex items-center gap-2 rounded-full px-3 py-1 mb-5 text-xs font-bold uppercase tracking-widest"
+            className="flex-none w-full sm:w-[44%] pt-10 sm:pt-16 pb-8 sm:pb-16 pr-0 sm:pr-8 flex flex-col justify-center">
+            <div className="inline-flex items-center gap-2 rounded-full px-3 py-1 mb-5 text-xs font-bold uppercase tracking-widest w-fit"
               style={{ background: 'rgba(0,0,0,0.15)', color: 'rgba(255,255,255,0.9)' }}>
-              Ages 3–12 · Indian stories
+              Ages 3–12
             </div>
-            <h1 style={{ fontFamily: "'Baloo 2', sans-serif", fontWeight: 800, color: '#3D1A00', lineHeight: 1.05, fontSize: 'clamp(1.9rem,4vw,3rem)' }}
+            <h1 style={{ fontFamily: "'Baloo 2', sans-serif", fontWeight: 800, color: '#3D1A00', lineHeight: 1.05, fontSize: 'clamp(1.9rem,3.5vw,3rem)' }}
               className="mb-4">
               Every child is the{' '}
-              <span className="px-1 rounded" style={{ color: C.white, background: 'rgba(0,0,0,0.18)' }}>protagonist</span>{' '}
+              <span style={{ color: C.white }}>protagonist</span>{' '}
               of their story.
             </h1>
             <p className="text-base font-semibold mb-2 leading-relaxed" style={{ color: '#5C2E00' }}>
@@ -180,10 +459,10 @@ export function BrochurePage() {
               Because every child deserves to be the protagonist.
             </p>
             <div className="flex flex-wrap gap-3">
-              <button onClick={() => scrollTo('books')}
+              <button onClick={() => scrollTo('order')}
                 className="px-6 py-3 rounded-full font-bold text-sm flex items-center gap-2 transition-opacity hover:opacity-90"
                 style={{ background: C.navy, color: C.white }}>
-                Browse Our Books <ArrowRight size={14} />
+                Order Your Book <ArrowRight size={14} />
               </button>
               <button onClick={() => scrollTo('art-styles')}
                 className="px-6 py-3 rounded-full font-bold text-sm transition-opacity hover:opacity-80"
@@ -199,20 +478,52 @@ export function BrochurePage() {
             </div>
           </motion.div>
 
-          {/* Hero image — shows full, fades at bottom into gradient */}
-          <motion.div initial={{ opacity: 0, scale: 0.97 }} animate={{ opacity: 1, scale: 1 }}
-            transition={{ duration: 0.6, delay: 0.1 }}
-            className="flex-1 relative overflow-hidden rounded-t-3xl sm:rounded-t-2xl">
-            <img src="/styles/cover_scene.png" alt="Story preview" className="w-full h-auto block" />
+          {/* Carousel — right column, fixed square aspect ratio, scenes anchored left */}
+          <motion.div initial={{ opacity: 0, x: 30 }} animate={{ opacity: 1, x: 0 }}
+            transition={{ duration: 0.6, delay: 0.15 }}
+            className="flex-1 relative sm:rounded-tl-3xl overflow-hidden"
+            style={{ aspectRatio: '1 / 1' }}>
+            <AnimatePresence mode="wait">
+              <motion.img
+                key={heroSlide}
+                src={HERO_SLIDES[heroSlide].src}
+                alt={HERO_SLIDES[heroSlide].caption}
+                className="absolute inset-0 w-full h-full object-cover object-left"
+                initial={{ opacity: 0, x: 40 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -40 }}
+                transition={{ duration: 0.45, ease: 'easeInOut' }}
+              />
+            </AnimatePresence>
+
+            {/* Bottom gradient */}
             <div className="absolute bottom-0 left-0 right-0 h-20"
               style={{ background: 'linear-gradient(to top, #F7B731, transparent)' }} />
-          </motion.div>
-        </div>
 
-        {/* Bottom strip */}
-        <div className="flex items-center justify-between px-6 sm:px-12 py-3" style={{ background: 'rgba(0,0,0,0.15)' }}>
-          <span className="text-xs font-semibold" style={{ color: 'rgba(255,255,255,0.85)' }}>Indian children · Indian stories · Indian settings</span>
-          <span className="text-xs font-bold text-white">protago.in</span>
+            {/* Caption */}
+            <div className="absolute bottom-9 left-0 right-0 flex justify-center px-4">
+              <AnimatePresence mode="wait">
+                <motion.span key={heroSlide}
+                  initial={{ opacity: 0, y: 5 }} animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -5 }} transition={{ duration: 0.25 }}
+                  className="text-xs font-semibold px-4 py-1.5 rounded-full"
+                  style={{ background: 'rgba(0,0,0,0.5)', color: 'rgba(255,255,255,0.95)', backdropFilter: 'blur(4px)' }}>
+                  {HERO_SLIDES[heroSlide].caption}
+                </motion.span>
+              </AnimatePresence>
+            </div>
+
+            {/* Dot indicators */}
+            <div className="absolute bottom-2.5 left-0 right-0 flex justify-center gap-1.5">
+              {HERO_SLIDES.map((_, i) => (
+                <button key={i} onClick={() => setHeroSlide(i)}
+                  className="rounded-full transition-all duration-300"
+                  style={{ width: i === heroSlide ? 18 : 6, height: 6, background: i === heroSlide ? C.white : 'rgba(255,255,255,0.4)' }}
+                />
+              ))}
+            </div>
+          </motion.div>
+
         </div>
       </section>
 
@@ -385,22 +696,29 @@ export function BrochurePage() {
             {ageTiers.map((tier, i) => (
               <motion.div key={tier.range} initial={{ opacity: 0, y: 16 }} whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }} transition={{ delay: i * 0.08 }}
-                className="rounded-2xl p-5 sm:p-6 flex items-center gap-5"
+                className="rounded-2xl p-5 sm:p-6"
                 style={{ background: C.white, borderLeft: `5px solid ${tier.borderColor}`, boxShadow: '0 2px 12px rgba(0,0,0,0.06)' }}>
-                <span className="text-3xl flex-none">{tier.emoji}</span>
-                <div className="flex-1 min-w-0">
-                  <p className="font-extrabold mb-0.5" style={{ fontFamily: "'Baloo 2', sans-serif", color: C.navy, fontSize: '1rem' }}>{tier.range}</p>
-                  <p className="text-xs italic mb-1.5" style={{ color: C.lgray }}>{tier.tone}</p>
-                  <p className="text-sm leading-relaxed" style={{ color: C.gray }}>{tier.desc}</p>
+
+                {/* Top row: emoji + range + tone + stat pills */}
+                <div className="flex items-center gap-3 mb-3">
+                  <span className="text-2xl flex-none">{tier.emoji}</span>
+                  <div className="flex-1 min-w-0">
+                    <p className="font-extrabold leading-tight" style={{ fontFamily: "'Baloo 2', sans-serif", color: C.navy, fontSize: '1rem' }}>{tier.range}</p>
+                    <p className="text-xs italic" style={{ color: C.lgray }}>{tier.tone}</p>
+                  </div>
+                  <div className="flex gap-2 flex-none">
+                    {[['words/pg', tier.words], ['scenes', tier.scenes]].map(([lbl, val]) => (
+                      <div key={lbl} className="text-center rounded-xl px-2.5 py-1.5" style={{ background: C.warmTint }}>
+                        <p className="text-lg font-extrabold leading-none" style={{ fontFamily: "'Baloo 2', sans-serif", color: tier.borderColor }}>{val}</p>
+                        <p className="text-[9px] uppercase tracking-wide mt-0.5" style={{ color: C.lgray }}>{lbl}</p>
+                      </div>
+                    ))}
+                  </div>
                 </div>
-                <div className="flex gap-3 flex-none">
-                  {[['words / page', tier.words], ['scenes', tier.scenes]].map(([lbl, val]) => (
-                    <div key={lbl} className="text-center rounded-xl px-3 py-2" style={{ background: C.warmTint }}>
-                      <p className="text-xl font-extrabold" style={{ fontFamily: "'Baloo 2', sans-serif", color: tier.borderColor }}>{val}</p>
-                      <p className="text-[9px] uppercase tracking-wide leading-tight" style={{ color: C.lgray }}>{lbl}</p>
-                    </div>
-                  ))}
-                </div>
+
+                {/* Description below */}
+                <p className="text-sm leading-relaxed" style={{ color: C.gray, paddingLeft: '2.25rem' }}>{tier.desc}</p>
+
               </motion.div>
             ))}
           </div>
@@ -526,7 +844,12 @@ export function BrochurePage() {
       </section>
 
       {/* ══════════════════════════════════════════
-          § 9  FAQ — white
+          § 9  ORDER FORM — warm tint
+      ══════════════════════════════════════════ */}
+      <OrderForm price={price} scrollTo={scrollTo} />
+
+      {/* ══════════════════════════════════════════
+          § 10  FAQ — white
       ══════════════════════════════════════════ */}
       <section id="faq" style={{ background: C.white }} className="py-16 sm:py-20">
         <div className="max-w-2xl mx-auto px-5 sm:px-8">
@@ -616,7 +939,7 @@ export function BrochurePage() {
                     style={{ background: 'rgba(255,255,255,0.08)', color: 'rgba(255,255,255,0.6)' }}>{p}</span>
                 ))}
               </div>
-              <p className="text-xs" style={{ color: 'rgba(255,255,255,0.3)' }}>An initiative by IIT Kanpur &amp; AIIMS Delhi alumni</p>
+              <p className="text-xs" style={{ color: 'rgba(255,255,255,0.3)' }}>An initiative by IIT Kanpur alumni</p>
             </div>
           </div>
 
