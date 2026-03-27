@@ -2,6 +2,10 @@ import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-d
 import { Storybook } from './pages/Storybook';
 import { StorybookCreate } from './pages/StorybookCreate';
 import { BrochurePage } from './pages/BrochurePage';
+import { TermsPage } from './pages/TermsPage';
+import { PrivacyPage } from './pages/PrivacyPage';
+import { RefundPage } from './pages/RefundPage';
+import { ContactPage } from './pages/ContactPage';
 
 export default function App() {
   return (
@@ -10,6 +14,10 @@ export default function App() {
         <Route path="/" element={<Storybook />} />
         <Route path="/home" element={<BrochurePage />} />
         <Route path="/create/:bookSlug" element={<StorybookCreate />} />
+        <Route path="/terms" element={<TermsPage />} />
+        <Route path="/privacy" element={<PrivacyPage />} />
+        <Route path="/refund" element={<RefundPage />} />
+        <Route path="/contact" element={<ContactPage />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </Router>
