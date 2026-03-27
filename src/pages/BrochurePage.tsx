@@ -95,21 +95,26 @@ const heading = (text: React.ReactNode, onDark = false) => (
 );
 
 const HERO_SLIDES = [
-  { src: '/styles/cover_scene.png',      caption: 'Shreyansh · Courage' },
+  { src: '/styles/cover_scene.png',      caption: 'Aarav · Courage' },
   { src: '/styles/scene_03.png',         caption: 'Something catches their ear…' },
   { src: '/styles/scene_07.png',         caption: 'A moment of triumph!' },
   { src: '/styles/scene_10.png',         caption: 'Everyone celebrates together.' },
-  { src: '/styles/bhanvi_cover.png',     caption: 'Bhanvi & Likhita · Sky High' },
-  { src: '/styles/bhanvi_scene_05.png',  caption: 'Look! Paris! cried Likhita.' },
+  { src: '/styles/bhanvi_cover.png',     caption: 'Naina & Meera · Sky High' },
+  { src: '/styles/bhanvi_scene_05.png',  caption: 'Look! Paris! cried Meera.' },
   { src: '/styles/bhanvi_scene_10.png',  caption: 'You can be a pilot one day too!' },
-  { src: '/styles/prisha_cover.png',     caption: 'Prisha · The Magic of Learning' },
+  { src: '/styles/prisha_cover.png',     caption: 'Diya · The Magic of Learning' },
   { src: '/styles/prisha_scene_09.png',  caption: 'She searched all night — and found it.' },
 ];
 
 // ── ORDER FORM ─────────────────────────────────────────────────────────────
 
 const THEMES = ['Courage & Bravery', 'Kindness & Friendship', 'Curiosity & Learning', 'Honesty & Trust', 'Teamwork', 'Environmental Care'];
-const STYLES = ['Pixar 3D', 'DreamWorks', 'Comic Book', 'Flat Illustration'];
+const STYLES = [
+  { label: 'Pixar 3D',          img: '/styles/boy_pixar.png',         available: true  },
+  { label: 'DreamWorks',        img: '/styles/boy_dreamworks.png',    available: false },
+  { label: 'Comic Book',        img: '/styles/boy_comic.png',         available: false },
+  { label: 'Flat Illustration', img: '/styles/boy_illustration.png',  available: false },
+];
 const FORMATS = ['Immersive (Cinematic)', 'Comic Book (Panels)'];
 
 function OrderForm({ price }: { price: number; scrollTo: (id: string) => void }) {
@@ -277,16 +282,44 @@ function OrderForm({ price }: { price: number; scrollTo: (id: string) => void })
                 </div>
                 <div>
                   <label style={labelStyle}>Art style *</label>
-                  <div className="grid grid-cols-2 gap-2">
+                  <div className="grid grid-cols-2 gap-3">
                     {STYLES.map(s => (
-                      <button type="button" key={s} onClick={() => set('artStyle', s)}
-                        className="py-2.5 px-3 rounded-xl text-xs font-bold transition-all"
+                      <button type="button" key={s.label}
+                        onClick={() => s.available && set('artStyle', s.label)}
+                        className="rounded-xl overflow-hidden transition-all text-left relative"
                         style={{
-                          background: form.artStyle === s ? C.saffron : '#F5F5F5',
-                          color: form.artStyle === s ? C.white : C.gray,
-                          border: `1.5px solid ${form.artStyle === s ? C.saffron : 'transparent'}`,
+                          border: `2px solid ${form.artStyle === s.label ? C.saffron : s.available ? '#E5E7EB' : '#F0F0F0'}`,
+                          opacity: s.available ? 1 : 0.6,
+                          cursor: s.available ? 'pointer' : 'default',
                         }}>
-                        {s}
+                        {/* Style preview image */}
+                        <div className="overflow-hidden" style={{ aspectRatio: '1/1', background: '#F5F5F5' }}>
+                          <img src={s.img} alt={s.label} className="w-full h-full object-cover object-top" />
+                        </div>
+                        {/* Label row */}
+                        <div className="flex items-center justify-between px-2.5 py-2"
+                          style={{ background: form.artStyle === s.label ? C.saffron : s.available ? C.navy : '#CCCCCC' }}>
+                          <span className="text-xs font-bold text-white">{s.label}</span>
+                          {!s.available && (
+                            <span className="text-[9px] font-bold uppercase tracking-wide rounded-full px-1.5 py-0.5"
+                              style={{ background: 'rgba(255,255,255,0.2)', color: 'rgba(255,255,255,0.9)' }}>
+                              Soon
+                            </span>
+                          )}
+                          {form.artStyle === s.label && (
+                            <span className="text-xs text-white">✓</span>
+                          )}
+                        </div>
+                        {/* Coming soon overlay */}
+                        {!s.available && (
+                          <div className="absolute inset-0 flex items-center justify-center"
+                            style={{ background: 'rgba(255,255,255,0.45)' }}>
+                            <span className="text-xs font-extrabold px-3 py-1 rounded-full"
+                              style={{ background: C.navy, color: C.white }}>
+                              Coming Soon
+                            </span>
+                          </div>
+                        )}
                       </button>
                     ))}
                   </div>
@@ -586,7 +619,20 @@ export function BrochurePage() {
 
           {/* Boy row */}
           <p className="text-xs font-bold uppercase tracking-widest mb-3" style={{ color: 'rgba(255,255,255,0.35)' }}>Arjun, Age 7</p>
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-8">
+          <div className="grid grid-cols-2 sm:grid-cols-5 gap-4 mb-10">
+
+            {/* Real photo */}
+            <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }} className="rounded-2xl overflow-hidden shadow-lg">
+              <div className="overflow-hidden" style={{ background: C.navyCard }}>
+                <img src="/styles/boy_base.png" alt="Real photo" className="w-full h-auto block object-top" />
+              </div>
+              <div className="py-2 text-center text-xs font-bold flex items-center justify-center gap-1.5"
+                style={{ background: C.saffron, color: C.white }}>
+                <span>📸</span> Real Photo
+              </div>
+            </motion.div>
+
             {boyStyles.map((s, i) => (
               <motion.div key={s.label} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }} transition={{ delay: i * 0.07 }}
@@ -601,7 +647,20 @@ export function BrochurePage() {
 
           {/* Girl row */}
           <p className="text-xs font-bold uppercase tracking-widest mb-3" style={{ color: 'rgba(255,255,255,0.35)' }}>Priya, Age 7</p>
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+          <div className="grid grid-cols-2 sm:grid-cols-5 gap-4">
+
+            {/* Real photo */}
+            <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }} className="rounded-2xl overflow-hidden shadow-lg">
+              <div className="overflow-hidden" style={{ background: C.navyCard }}>
+                <img src="/styles/girl_base.png" alt="Real photo" className="w-full h-auto block object-top" />
+              </div>
+              <div className="py-2 text-center text-xs font-bold flex items-center justify-center gap-1.5"
+                style={{ background: C.saffron, color: C.white }}>
+                <span>📸</span> Real Photo
+              </div>
+            </motion.div>
+
             {girlStyles.map((s, i) => (
               <motion.div key={s.label} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }} transition={{ delay: i * 0.07 }}
@@ -894,9 +953,9 @@ export function BrochurePage() {
 
           <motion.div initial={{ opacity: 0 }} whileInView={{ opacity: 1 }} viewport={{ once: true }} className="mt-8 text-center">
             <p className="text-sm mb-2" style={{ color: C.lgray }}>Still have questions?</p>
-            <a href="mailto:hello@icurious.ai" className="inline-flex items-center gap-2 text-sm font-semibold hover:opacity-70 transition-opacity"
+            <a href="mailto:hello@protago.in" className="inline-flex items-center gap-2 text-sm font-semibold hover:opacity-70 transition-opacity"
               style={{ color: C.saffron }}>
-              <MessageCircle size={14} /> hello@icurious.ai
+              <MessageCircle size={14} /> hello@protago.in
             </a>
           </motion.div>
         </div>
@@ -908,14 +967,19 @@ export function BrochurePage() {
       <footer style={{ background: C.navy }} className="pt-12 pb-8">
         <div className="max-w-6xl mx-auto px-5 sm:px-8">
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-10 mb-10">
-            <div>
+            <div id="footer-contact">
               <span style={{ fontFamily: "'Baloo 2', sans-serif", fontWeight: 800, fontSize: 22, color: C.saffron }}>protago</span>
               <p className="text-sm mt-3 leading-relaxed mb-4" style={{ color: 'rgba(255,255,255,0.45)' }}>
                 Magical, personalised storybooks that make every Indian child the hero of their own adventure.
               </p>
-              <a href="mailto:hello@icurious.ai" className="inline-flex items-center gap-2 text-sm hover:opacity-80 transition-opacity"
+              <a href="mailto:hello@protago.in" className="inline-flex items-center gap-2 text-sm hover:opacity-80 transition-opacity mb-2"
                 style={{ color: C.gold }}>
-                <MessageCircle size={14} /> hello@icurious.ai
+                <MessageCircle size={14} /> hello@protago.in
+              </a>
+              <a href="https://wa.me/919452868857" target="_blank" rel="noopener noreferrer"
+                className="flex items-center gap-2 text-sm mt-2 hover:opacity-80 transition-opacity"
+                style={{ color: C.gold }}>
+                <MessageCircle size={14} /> WhatsApp: +91 94528 68857
               </a>
             </div>
             <div>
@@ -927,8 +991,8 @@ export function BrochurePage() {
                       style={{ color: 'rgba(255,255,255,0.45)' }}>{label}</button>
                   </li>
                 ))}
-                <li><a href="mailto:hello@icurious.ai" className="text-sm hover:text-white transition-colors"
-                  style={{ color: 'rgba(255,255,255,0.45)' }}>Contact Us</a></li>
+                <li><button onClick={() => scrollTo('footer-contact')} className="text-sm hover:text-white transition-colors"
+                  style={{ color: 'rgba(255,255,255,0.45)' }}>Contact Us</button></li>
               </ul>
             </div>
             <div>
@@ -945,10 +1009,10 @@ export function BrochurePage() {
 
           <div className="border-t pt-6 flex flex-col sm:flex-row items-center justify-between gap-2"
             style={{ borderColor: 'rgba(255,255,255,0.08)' }}>
-            <span className="text-xs" style={{ color: 'rgba(255,255,255,0.25)' }}>&copy; {new Date().getFullYear()} iCurious AI. All rights reserved.</span>
+            <span className="text-xs" style={{ color: 'rgba(255,255,255,0.25)' }}>&copy; {new Date().getFullYear()} Protago. All rights reserved.</span>
             <div className="flex items-center gap-4">
-              {['Privacy Policy','Terms of Service'].map(t => (
-                <span key={t} className="text-xs cursor-pointer hover:opacity-60 transition-opacity" style={{ color: 'rgba(255,255,255,0.25)' }}>{t}</span>
+              {[['Privacy Policy','/privacy'],['Terms & Conditions','/terms'],['Refund Policy','/refund']].map(([label, href]) => (
+                <a key={href} href={href} className="text-xs hover:opacity-60 transition-opacity" style={{ color: 'rgba(255,255,255,0.25)' }}>{label}</a>
               ))}
               <span className="text-xs" style={{ color: 'rgba(255,255,255,0.25)' }}>Made with love in India 🇮🇳</span>
             </div>
