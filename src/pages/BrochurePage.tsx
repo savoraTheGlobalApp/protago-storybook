@@ -126,6 +126,8 @@ function OrderForm({ price }: { price: number; scrollTo: (id: string) => void })
     notes: '',
   });
   const [photo, setPhoto] = useState<File | null>(null);
+  const [uploadedPhotoPath, setUploadedPhotoPath] = useState<string | null>(null);
+  const [photoUploading, setPhotoUploading] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState('');
@@ -134,22 +136,30 @@ function OrderForm({ price }: { price: number; scrollTo: (id: string) => void })
   const API_BASE = import.meta.env.VITE_API_BASE_URL || '';
   const set = (k: string, v: string) => setForm(f => ({ ...f, [k]: v }));
 
-  const uploadPhoto = async (): Promise<string | null> => {
-    if (!photo) return null;
-    const base64 = await new Promise<string>((resolve, reject) => {
-      const reader = new FileReader();
-      reader.onload = () => resolve(reader.result as string);
-      reader.onerror = reject;
-      reader.readAsDataURL(photo);
-    });
-    const res = await fetch(`${API_BASE}/api/upload-photo`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ photo: base64 }),
-    });
-    if (!res.ok) return null;
-    const data = await res.json();
-    return data.photoPath || null;
+  // Upload photo immediately on selection so it's ready by the time user submits
+  const handlePhotoSelect = async (file: File) => {
+    setPhoto(file);
+    setUploadedPhotoPath(null);
+    setPhotoUploading(true);
+    try {
+      const base64 = await new Promise<string>((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result as string);
+        reader.onerror = reject;
+        reader.readAsDataURL(file);
+      });
+      const res = await fetch(`${API_BASE}/api/upload-photo`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ photo: base64 }),
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setUploadedPhotoPath(data.photoPath || null);
+      }
+    } catch { /* non-fatal */ } finally {
+      setPhotoUploading(false);
+    }
   };
 
   const proceedWithPayment = async () => {
@@ -157,7 +167,8 @@ function OrderForm({ price }: { price: number; scrollTo: (id: string) => void })
     setSubmitting(true);
     setSubmitError('');
     try {
-      const photoPath = await uploadPhoto();
+      // Use already-uploaded path; if still uploading wait briefly
+      const photoPath = uploadedPhotoPath;
 
       const res = await fetch(`${API_BASE}/api/order-inquiry`, {
         method: 'POST',
@@ -330,12 +341,12 @@ function OrderForm({ price }: { price: number; scrollTo: (id: string) => void })
                       padding: '12px',
                       background: photo ? '#FFF8F3' : '#FAFAFA',
                     }}>
-                    <span className="text-xl">{photo ? '✅' : '📸'}</span>
+                    <span className="text-xl">{photoUploading ? '⏳' : photo ? '✅' : '📸'}</span>
                     <span className="text-xs font-semibold" style={{ color: photo ? C.saffron : C.lgray }}>
-                      {photo ? photo.name : 'Upload photo'}
+                      {photoUploading ? 'Uploading…' : photo ? photo.name : 'Upload photo'}
                     </span>
                     <input type="file" accept="image/*" className="hidden"
-                      onChange={e => setPhoto(e.target.files?.[0] ?? null)} />
+                      onChange={e => { const f = e.target.files?.[0]; if (f) handlePhotoSelect(f); }} />
                   </label>
                 </div>
               </div>
