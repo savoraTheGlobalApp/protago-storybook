@@ -127,13 +127,98 @@ function OrderForm({ price }: { price: number; scrollTo: (id: string) => void })
   });
   const [photo, setPhoto] = useState<File | null>(null);
   const [submitted, setSubmitted] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState('');
+  const [showConfirm, setShowConfirm] = useState(false);
 
+  const API_BASE = import.meta.env.VITE_API_BASE_URL || '';
   const set = (k: string, v: string) => setForm(f => ({ ...f, [k]: v }));
+
+  const uploadPhoto = async (): Promise<string | null> => {
+    if (!photo) return null;
+    const base64 = await new Promise<string>((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(reader.result as string);
+      reader.onerror = reject;
+      reader.readAsDataURL(photo);
+    });
+    const res = await fetch(`${API_BASE}/api/upload-photo`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ photo: base64 }),
+    });
+    if (!res.ok) return null;
+    const data = await res.json();
+    return data.photoPath || null;
+  };
+
+  const proceedWithPayment = async () => {
+    setShowConfirm(false);
+    setSubmitting(true);
+    setSubmitError('');
+    try {
+      const photoPath = await uploadPhoto();
+
+      const res = await fetch(`${API_BASE}/api/order-inquiry`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ...form, photoPath }),
+      });
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        throw new Error(data.error || 'Failed to create order');
+      }
+      const { orderId, razorpayKeyId, amount, currency } = await res.json();
+
+      // Dev/mock mode — no real Razorpay keys
+      if (!razorpayKeyId || razorpayKeyId.includes('your_')) {
+        setSubmitted(true);
+        setSubmitting(false);
+        return;
+      }
+
+      const options: RazorpayOptions = {
+        key: razorpayKeyId,
+        amount,
+        currency,
+        name: 'Protago',
+        description: `Personalised Storybook for ${form.childName}`,
+        order_id: orderId,
+        handler: async (response: RazorpayResponse) => {
+          try {
+            const verifyRes = await fetch(`${API_BASE}/api/verify-payment`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify(response),
+            });
+            if (!verifyRes.ok) throw new Error('Payment verification failed');
+            setSubmitted(true);
+          } catch {
+            setSubmitError('Payment verification failed. Please contact support.');
+          } finally {
+            setSubmitting(false);
+          }
+        },
+        prefill: { name: form.parentName, email: form.email, contact: form.phone },
+        theme: { color: '#FF6B35' },
+        modal: {
+          ondismiss: () => {
+            setSubmitting(false);
+            setSubmitError('Payment was cancelled. Please try again.');
+          },
+        },
+      };
+      new window.Razorpay(options).open();
+    } catch (err: unknown) {
+      setSubmitError(err instanceof Error ? err.message : 'Something went wrong. Please try again.');
+      setSubmitting(false);
+    }
+  };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    // TODO: wire to backend
-    setSubmitted(true);
+    setSubmitError('');
+    setShowConfirm(true);
   };
 
   const inputStyle: React.CSSProperties = {
@@ -383,10 +468,13 @@ function OrderForm({ price }: { price: number; scrollTo: (id: string) => void })
             </div>
 
             {/* ── Submit */}
-            <button type="submit"
-              className="w-full py-4 rounded-2xl text-base font-extrabold text-white transition-opacity hover:opacity-90 flex items-center justify-center gap-2"
+            {submitError && (
+              <p className="text-sm text-red-500 text-center">{submitError}</p>
+            )}
+            <button type="submit" disabled={submitting}
+              className="w-full py-4 rounded-2xl text-base font-extrabold text-white transition-opacity hover:opacity-90 flex items-center justify-center gap-2 disabled:opacity-60"
               style={{ background: C.gradient, fontFamily: "'Baloo 2', sans-serif" }}>
-              Place Order <ArrowRight size={16} />
+              {submitting ? 'Processing…' : <>Pay ₹{price} & Order <ArrowRight size={16} /></>}
             </button>
             <p className="text-center text-xs" style={{ color: C.lgray }}>
               We'll confirm your order via WhatsApp/email within 24 hours.
@@ -394,6 +482,38 @@ function OrderForm({ price }: { price: number; scrollTo: (id: string) => void })
           </motion.form>
         )}
       </div>
+
+      {/* ── Phone confirmation modal */}
+      <AnimatePresence>
+        {showConfirm && (
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 flex items-center justify-center p-5"
+            style={{ background: 'rgba(0,0,0,0.5)' }}>
+            <motion.div initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.95, opacity: 0 }}
+              className="rounded-3xl p-8 w-full max-w-sm text-center"
+              style={{ background: C.white }}>
+              <p className="text-3xl mb-3">📱</p>
+              <h3 style={{ fontFamily: "'Baloo 2', sans-serif", fontWeight: 800, color: C.navy, fontSize: '1.2rem' }}>
+                Confirm your number
+              </h3>
+              <p className="text-sm mt-2 mb-2" style={{ color: C.gray }}>
+                We'll send order updates to:
+              </p>
+              <p className="text-xl font-bold mb-6" style={{ color: C.navy }}>{form.phone}</p>
+              <button onClick={proceedWithPayment}
+                className="w-full py-3 rounded-xl font-extrabold text-white mb-3"
+                style={{ background: C.gradient, fontFamily: "'Baloo 2', sans-serif" }}>
+                Yes, proceed to payment
+              </button>
+              <button onClick={() => setShowConfirm(false)}
+                className="text-sm font-semibold" style={{ color: C.gray }}>
+                Edit number
+              </button>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </section>
   );
 }
