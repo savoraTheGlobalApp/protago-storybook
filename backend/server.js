@@ -877,6 +877,95 @@ app.post('/api/verify-payment', async (req, res) => {
     }
 });
 
+// ── Order inquiry from the /home landing page form ────────────────────────────
+app.post('/api/order-inquiry', async (req, res) => {
+    try {
+        const {
+            parentName, email, phone,
+            childName, childAge, childGender,
+            theme, artStyle, storyFormat,
+            deliveryType, address, notes,
+            photoPath,
+        } = req.body;
+
+        if (!email || !phone || !childName) {
+            return res.status(400).json({ error: 'Name, email and phone are required' });
+        }
+
+        const price = parseInt(process.env.STORYBOOK_PRICE, 10) || 499;
+
+        // Create Razorpay order
+        const hasRazorpayKeys =
+            process.env.RAZORPAY_KEY_ID &&
+            process.env.RAZORPAY_KEY_SECRET &&
+            !process.env.RAZORPAY_KEY_ID.includes('your_') &&
+            !process.env.RAZORPAY_KEY_SECRET.includes('your_');
+
+        let rzpOrder;
+        if (hasRazorpayKeys) {
+            rzpOrder = await razorpay.orders.create({
+                amount: price * 100,
+                currency: 'INR',
+                receipt: `inquiry_${Date.now()}`,
+            });
+        } else {
+            rzpOrder = { id: `test_order_${Date.now()}`, amount: price * 100, currency: 'INR' };
+            console.warn('Razorpay keys missing — using mock order');
+        }
+
+        const hasSupabase =
+            process.env.SUPABASE_URL_STORY &&
+            !process.env.SUPABASE_URL_STORY.includes('your_');
+
+        if (hasSupabase) {
+            const supabaseRes = await fetch(`${process.env.SUPABASE_URL_STORY}/rest/v1/storybook_orders`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'apikey': process.env.SUPABASE_SERVICE_KEY_STORY,
+                    'Authorization': `Bearer ${process.env.SUPABASE_SERVICE_KEY_STORY}`,
+                    'Prefer': 'return=representation',
+                },
+                body: JSON.stringify({
+                    razorpay_order_id: rzpOrder.id,
+                    shipping_name: parentName,
+                    parent_email: email,
+                    parent_phone: phone,
+                    child_name: childName,
+                    child_age: childAge ? parseInt(childAge, 10) : null,
+                    child_gender: childGender,
+                    book_slug: theme || null,
+                    art_style: artStyle || null,
+                    story_format: storyFormat || null,
+                    delivery_type: deliveryType || null,
+                    address_line1: address || null,
+                    notes: notes || null,
+                    photo_url: photoPath || null,
+                    status: 'pending',
+                    amount: price,
+                    currency: 'INR',
+                }),
+            });
+            if (!supabaseRes.ok) {
+                const err = await supabaseRes.text();
+                console.error('Supabase insert failed:', err);
+            }
+        } else {
+            console.warn('Supabase not configured — order logged locally only');
+        }
+
+        return res.status(200).json({
+            orderId: rzpOrder.id,
+            razorpayKeyId: process.env.RAZORPAY_KEY_ID,
+            amount: rzpOrder.amount,
+            currency: rzpOrder.currency,
+        });
+    } catch (error) {
+        console.error('Order inquiry error:', error);
+        return res.status(500).json({ error: 'Internal server error' });
+    }
+});
+
 // Serve static files from the React app
 app.use(express.static(path.join(__dirname, '../build')));
 
