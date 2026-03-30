@@ -967,6 +967,34 @@ app.post('/api/order-inquiry', async (req, res) => {
     }
 });
 
+// ── Discord order alert webhook ─────────────────────────────────────────────
+app.post('/api/order-alert', async (req, res) => {
+    const discordUrl = process.env.DISCORD_WEBHOOK_URL;
+    if (!discordUrl) return res.status(200).json({ ok: true, skipped: true });
+
+    try {
+        const record = req.body?.record || req.body;
+        const msg = [
+            '🛍️ **New Protago Order!**',
+            `👶 Child: ${record.child_name || '—'} (${record.child_age || '—'} yrs, ${record.child_gender || '—'})`,
+            `🎨 Style: ${record.art_style || '—'} · Theme: ${record.story_theme || '—'} · Value: ${record.story_value || '—'}`,
+            `📦 Delivery: ${record.address_line1 || '—'}`,
+            `📞 Phone: ${record.parent_phone || '—'} · ✉️ ${record.parent_email || '—'}`,
+            `💰 Amount: ₹${record.amount || '—'} · Status: ${record.status || '—'}`,
+        ].join('\n');
+
+        await fetch(discordUrl, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ content: msg }),
+        });
+        res.status(200).json({ ok: true });
+    } catch (err) {
+        console.error('Discord alert failed:', err);
+        res.status(200).json({ ok: true }); // don't fail the Supabase webhook
+    }
+});
+
 // Serve static files from the React app
 app.use(express.static(path.join(__dirname, '../build')));
 
