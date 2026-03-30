@@ -883,7 +883,7 @@ app.post('/api/order-inquiry', async (req, res) => {
         const {
             parentName, email, phone,
             childName, childAge, childGender,
-            theme, artStyle, storyFormat,
+            theme, storyTheme, artStyle, storyFormat,
             deliveryType, address, notes,
             photoPath,
         } = req.body;
@@ -934,7 +934,8 @@ app.post('/api/order-inquiry', async (req, res) => {
                     child_name: childName,
                     child_age: childAge ? parseInt(childAge, 10) : null,
                     child_gender: childGender,
-                    book_slug: theme || null,
+                    story_value: theme || null,
+                    story_theme: storyTheme || null,
                     art_style: artStyle || null,
                     story_format: storyFormat || null,
                     delivery_type: deliveryType || null,

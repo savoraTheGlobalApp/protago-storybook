@@ -11,8 +11,9 @@ export default function App() {
   return (
     <Router>
       <Routes>
-        <Route path="/" element={<Storybook />} />
-        <Route path="/home" element={<BrochurePage />} />
+        <Route path="/" element={<BrochurePage />} />
+        <Route path="/home" element={<Navigate to="/" replace />} />
+        <Route path="/explore" element={<Storybook />} />
         <Route path="/create/:bookSlug" element={<StorybookCreate />} />
         <Route path="/terms" element={<TermsPage />} />
         <Route path="/privacy" element={<PrivacyPage />} />

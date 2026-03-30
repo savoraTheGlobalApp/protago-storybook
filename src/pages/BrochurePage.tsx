@@ -108,26 +108,31 @@ const HERO_SLIDES = [
 
 // ── ORDER FORM ─────────────────────────────────────────────────────────────
 
-const THEMES = ['Courage & Bravery', 'Kindness & Friendship', 'Curiosity & Learning', 'Honesty & Trust', 'Teamwork', 'Environmental Care'];
+const VALUES = ['Courage & Bravery', 'Kindness & Friendship', 'Curiosity & Learning', 'Honesty & Trust', 'Teamwork', 'Environmental Care'];
+const STORY_THEMES = ['Holi', 'Diwali', 'Space', 'Cars & Racing', 'Magic & Wizards', 'Jungle Adventure', 'Ocean & Sea', 'Superheroes'];
 const STYLES = [
   { label: 'Pixar 3D',          img: '/styles/boy_pixar.png',         available: true  },
   { label: 'DreamWorks',        img: '/styles/boy_dreamworks.png',    available: false },
   { label: 'Comic Book',        img: '/styles/boy_comic.png',         available: false },
   { label: 'Flat Illustration', img: '/styles/boy_illustration.png',  available: false },
 ];
-const FORMATS = ['Immersive (Cinematic)', 'Comic Book (Panels)'];
+const FORMATS = [
+  { label: 'Immersive (Cinematic)', available: true },
+  { label: 'Comic Book (Panels)',   available: false },
+];
 
 function OrderForm({ price }: { price: number; scrollTo: (id: string) => void }) {
   const [form, setForm] = useState({
     parentName: '', email: '', phone: '',
     childName: '', childAge: '', childGender: '',
-    theme: '', artStyle: '', storyFormat: '',
+    theme: '', storyTheme: '', artStyle: '', storyFormat: '',
     deliveryType: 'print', address: '',
     notes: '',
   });
   const [photo, setPhoto] = useState<File | null>(null);
   const [uploadedPhotoPath, setUploadedPhotoPath] = useState<string | null>(null);
   const [photoUploading, setPhotoUploading] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(0);
   const [submitted, setSubmitted] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState('');
@@ -136,10 +141,11 @@ function OrderForm({ price }: { price: number; scrollTo: (id: string) => void })
   const API_BASE = import.meta.env.VITE_API_BASE_URL || '';
   const set = (k: string, v: string) => setForm(f => ({ ...f, [k]: v }));
 
-  // Upload photo immediately on selection so it's ready by the time user submits
+  // Upload photo immediately on selection with XHR progress tracking
   const handlePhotoSelect = async (file: File) => {
     setPhoto(file);
     setUploadedPhotoPath(null);
+    setUploadProgress(0);
     setPhotoUploading(true);
     try {
       const base64 = await new Promise<string>((resolve, reject) => {
@@ -148,16 +154,31 @@ function OrderForm({ price }: { price: number; scrollTo: (id: string) => void })
         reader.onerror = reject;
         reader.readAsDataURL(file);
       });
-      const res = await fetch(`${API_BASE}/api/upload-photo`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ photo: base64 }),
+      const body = JSON.stringify({ photo: base64 });
+
+      await new Promise<void>((resolve, reject) => {
+        const xhr = new XMLHttpRequest();
+        xhr.open('POST', `${API_BASE}/api/upload-photo`);
+        xhr.setRequestHeader('Content-Type', 'application/json');
+        xhr.upload.onprogress = (e) => {
+          if (e.lengthComputable) setUploadProgress(Math.round((e.loaded / e.total) * 100));
+        };
+        xhr.onload = () => {
+          if (xhr.status >= 200 && xhr.status < 300) {
+            try {
+              const data = JSON.parse(xhr.responseText);
+              setUploadedPhotoPath(data.photoPath || null);
+              setUploadProgress(100);
+            } catch { /* non-fatal */ }
+            resolve();
+          } else {
+            reject(new Error('Upload failed'));
+          }
+        };
+        xhr.onerror = () => reject(new Error('Upload error'));
+        xhr.send(body);
       });
-      if (res.ok) {
-        const data = await res.json();
-        setUploadedPhotoPath(data.photoPath || null);
-      }
-    } catch { /* non-fatal */ } finally {
+    } catch { /* non-fatal — order can still proceed */ } finally {
       setPhotoUploading(false);
     }
   };
@@ -317,7 +338,7 @@ function OrderForm({ price }: { price: number; scrollTo: (id: string) => void })
                   </select>
                 </div>
                 <div>
-                  <label style={labelStyle}>Gender</label>
+                  <label style={labelStyle}>Gender *</label>
                   <div className="flex gap-2">
                     {['Boy', 'Girl', 'Other'].map(g => (
                       <button type="button" key={g}
@@ -343,8 +364,13 @@ function OrderForm({ price }: { price: number; scrollTo: (id: string) => void })
                     }}>
                     <span className="text-xl">{photoUploading ? '⏳' : photo ? '✅' : '📸'}</span>
                     <span className="text-xs font-semibold" style={{ color: photo ? C.saffron : C.lgray }}>
-                      {photoUploading ? 'Uploading…' : photo ? photo.name : 'Upload photo'}
+                      {photoUploading ? `Uploading… ${uploadProgress}%` : photo ? photo.name : 'Upload photo'}
                     </span>
+                    {photoUploading && (
+                      <div style={{ width: '100%', height: '4px', background: '#EEE', borderRadius: '2px', overflow: 'hidden', marginTop: '2px' }}>
+                        <div style={{ height: '100%', width: `${uploadProgress}%`, background: C.saffron, borderRadius: '2px', transition: 'width 0.2s ease' }} />
+                      </div>
+                    )}
                     <input type="file" accept="image/*" className="hidden"
                       onChange={e => { const f = e.target.files?.[0]; if (f) handlePhotoSelect(f); }} />
                   </label>
@@ -361,15 +387,31 @@ function OrderForm({ price }: { price: number; scrollTo: (id: string) => void })
               </p>
               <div className="flex flex-col gap-4">
                 <div>
-                  <label style={labelStyle}>Story theme *</label>
-                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
-                    {THEMES.map(t => (
-                      <button type="button" key={t} onClick={() => set('theme', t)}
-                        className="py-2 px-3 rounded-xl text-xs font-bold transition-all text-left leading-snug"
+                  <label style={labelStyle}>Value (optional)</label>
+                  <div className="flex flex-wrap gap-2">
+                    {VALUES.map(t => (
+                      <button type="button" key={t} onClick={() => set('theme', form.theme === t ? '' : t)}
+                        className="py-2 px-3 rounded-xl text-xs font-bold transition-all leading-snug"
                         style={{
                           background: form.theme === t ? C.navy : '#F5F5F5',
                           color: form.theme === t ? C.white : C.gray,
                           border: `1.5px solid ${form.theme === t ? C.navy : 'transparent'}`,
+                        }}>
+                        {t}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+                <div>
+                  <label style={labelStyle}>Theme *</label>
+                  <div className="flex flex-wrap gap-2">
+                    {STORY_THEMES.map(t => (
+                      <button type="button" key={t} onClick={() => set('storyTheme', t)}
+                        className="py-2 px-3 rounded-xl text-xs font-bold transition-all leading-snug"
+                        style={{
+                          background: form.storyTheme === t ? C.saffron : '#F5F5F5',
+                          color: form.storyTheme === t ? C.white : C.gray,
+                          border: `1.5px solid ${form.storyTheme === t ? C.saffron : 'transparent'}`,
                         }}>
                         {t}
                       </button>
@@ -423,15 +465,22 @@ function OrderForm({ price }: { price: number; scrollTo: (id: string) => void })
                 <div>
                   <label style={labelStyle}>Story format *</label>
                   <div className="grid grid-cols-2 gap-2">
-                    {FORMATS.map(f => (
-                      <button type="button" key={f} onClick={() => set('storyFormat', f)}
-                        className="py-2.5 px-3 rounded-xl text-xs font-bold transition-all"
+                    {FORMATS.map(({ label, available }) => (
+                      <button type="button" key={label}
+                        onClick={() => available && set('storyFormat', label)}
+                        className="py-2.5 px-3 rounded-xl text-xs font-bold transition-all relative"
                         style={{
-                          background: form.storyFormat === f ? C.gold : '#F5F5F5',
-                          color: form.storyFormat === f ? C.navy : C.gray,
-                          border: `1.5px solid ${form.storyFormat === f ? C.gold : 'transparent'}`,
+                          background: form.storyFormat === label ? C.gold : '#F5F5F5',
+                          color: form.storyFormat === label ? C.navy : available ? C.gray : '#BBBBBB',
+                          border: `1.5px solid ${form.storyFormat === label ? C.gold : 'transparent'}`,
+                          cursor: available ? 'pointer' : 'default',
+                          opacity: available ? 1 : 0.7,
                         }}>
-                        {f}
+                        {label}
+                        {!available && (
+                          <span className="absolute top-1 right-1 text-[9px] font-bold px-1.5 py-0.5 rounded-full"
+                            style={{ background: C.saffron, color: '#fff' }}>Soon</span>
+                        )}
                       </button>
                     ))}
                   </div>
@@ -447,18 +496,16 @@ function OrderForm({ price }: { price: number; scrollTo: (id: string) => void })
                 Delivery
               </p>
               <div className="flex gap-2 mb-4">
-                {[['print', '📦 Hardcover print', `₹${price} · 5–7 days`], ['pdf', '📄 Digital PDF', `₹${Math.round(price * 0.6)} · Instant`]].map(([val, label, sub]) => (
-                  <button type="button" key={val} onClick={() => set('deliveryType', val)}
-                    className="flex-1 py-3 px-3 rounded-xl text-xs font-bold transition-all text-left"
-                    style={{
-                      background: form.deliveryType === val ? '#FFF8F3' : '#F5F5F5',
-                      border: `2px solid ${form.deliveryType === val ? C.saffron : 'transparent'}`,
-                      color: C.navy,
-                    }}>
-                    <span className="block mb-0.5">{label}</span>
-                    <span className="font-semibold" style={{ color: form.deliveryType === val ? C.saffron : C.lgray }}>{sub}</span>
-                  </button>
-                ))}
+                <button type="button" onClick={() => set('deliveryType', 'print')}
+                  className="flex-1 py-3 px-3 rounded-xl text-xs font-bold transition-all text-left"
+                  style={{
+                    background: '#FFF8F3',
+                    border: `2px solid ${C.saffron}`,
+                    color: C.navy,
+                  }}>
+                  <span className="block mb-0.5">📦 Hardcover print</span>
+                  <span className="font-semibold" style={{ color: C.saffron }}>₹{price} · 5–7 days</span>
+                </button>
               </div>
               {form.deliveryType === 'print' && (
                 <div>
@@ -473,6 +520,7 @@ function OrderForm({ price }: { price: number; scrollTo: (id: string) => void })
             {/* ── Notes */}
             <div>
               <label style={labelStyle}>Any special requests? (optional)</label>
+              <p className="text-xs mb-1.5" style={{ color: C.saffron, fontWeight: 600 }}>The more information you give, the better the story will be!</p>
               <textarea rows={2} style={{ ...inputStyle, resize: 'none' }}
                 placeholder="e.g. My child loves dinosaurs, include them in the story!"
                 value={form.notes} onChange={e => set('notes', e.target.value)} />
@@ -482,10 +530,10 @@ function OrderForm({ price }: { price: number; scrollTo: (id: string) => void })
             {submitError && (
               <p className="text-sm text-red-500 text-center">{submitError}</p>
             )}
-            <button type="submit" disabled={submitting}
+            <button type="submit" disabled={submitting || photoUploading}
               className="w-full py-4 rounded-2xl text-base font-extrabold text-white transition-opacity hover:opacity-90 flex items-center justify-center gap-2 disabled:opacity-60"
               style={{ background: C.gradient, fontFamily: "'Baloo 2', sans-serif" }}>
-              {submitting ? 'Processing…' : <>Pay ₹{price} & Order <ArrowRight size={16} /></>}
+              {submitting ? 'Processing…' : photoUploading ? `Uploading photo… ${uploadProgress}%` : <>Pay ₹{price} & Order <ArrowRight size={16} /></>}
             </button>
             <p className="text-center text-xs" style={{ color: C.lgray }}>
               We'll confirm your order via WhatsApp/email within 24 hours.
@@ -1028,7 +1076,7 @@ export function BrochurePage() {
             <p className="font-extrabold" style={{ fontFamily: "'Baloo 2', sans-serif", color: C.navy, fontSize: '1.1rem' }}>
               Starting at ₹{price} · protago.in
             </p>
-            <p className="text-xs mt-0.5" style={{ color: C.gray }}>Digital PDF instant · Print delivered in 5–7 days</p>
+            <p className="text-xs mt-0.5" style={{ color: C.gray }}>Hardcover print delivered in 5–7 days</p>
           </motion.div>
         </div>
       </section>
@@ -1088,6 +1136,45 @@ export function BrochurePage() {
               style={{ color: C.saffron }}>
               <MessageCircle size={14} /> hello@protago.in
             </a>
+          </motion.div>
+        </div>
+      </section>
+
+      {/* ══════════════════════════════════════════
+          TEAM
+      ══════════════════════════════════════════ */}
+      <section style={{ background: C.warmTint }} className="py-16 px-5 sm:px-8">
+        <div className="max-w-3xl mx-auto text-center">
+          <motion.div initial={{ opacity: 0, y: 24 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}>
+            <h2 className="text-2xl sm:text-3xl font-extrabold mb-2" style={{ fontFamily: "'Baloo 2', sans-serif", color: C.navy }}>
+              Meet the Team
+            </h2>
+            <p className="text-sm mb-10" style={{ color: C.lgray }}>An initiative by IIT Kanpur alumni</p>
+            <div className="flex flex-col sm:flex-row justify-center gap-8">
+              {[
+                { name: 'Piyush Kumar', role: 'Co-Founder & CEO', edu: 'B.Tech, IIT Kanpur', photo: '/team/piyush.jpg', linkedin: 'https://linkedin.com/in/kpiyush25', twitter: 'https://x.com/PiyushKThisSide/' },
+                { name: 'Shorya Kumar', role: 'Co-Founder & CTO', edu: 'B.Tech, IIT Kanpur', photo: '/team/shorya.jpg', linkedin: 'https://www.linkedin.com/in/shoryak/', twitter: 'https://x.com/meet_shoryak' },
+              ].map(({ name, role, edu, photo, linkedin, twitter }) => (
+                <div key={name} className="flex flex-col items-center gap-3 flex-1 max-w-xs mx-auto">
+                  <img src={photo} alt={name}
+                    className="w-72 h-72 rounded-full object-cover object-top"
+                    style={{ border: `3px solid ${C.saffron}` }} />
+                  <div className="text-center">
+                    <p className="font-extrabold text-lg" style={{ fontFamily: "'Baloo 2', sans-serif", color: C.navy }}>{name}</p>
+                    <p className="text-sm font-semibold" style={{ color: C.saffron }}>{role}</p>
+                    <p className="text-xs mt-0.5" style={{ color: C.lgray }}>{edu}</p>
+                    <div className="flex justify-center gap-3 mt-2">
+                      <a href={linkedin} target="_blank" rel="noopener noreferrer" className="hover:opacity-70 transition-opacity" style={{ color: C.navy }}>
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433a2.062 2.062 0 01-2.063-2.065 2.064 2.064 0 112.063 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/></svg>
+                      </a>
+                      <a href={twitter} target="_blank" rel="noopener noreferrer" className="hover:opacity-70 transition-opacity" style={{ color: C.navy }}>
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.744l7.737-8.835L1.254 2.25H8.08l4.259 5.63 5.905-5.63zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
+                      </a>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
           </motion.div>
         </div>
       </section>
