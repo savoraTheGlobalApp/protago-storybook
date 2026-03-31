@@ -142,10 +142,8 @@ function OrderForm({ price }: { price: number; scrollTo: (id: string) => void })
     address: savedDraft.address || '',
     notes: savedDraft.notes || '',
   });
-  const [photo, setPhoto] = useState<File | null>(null);
-  const [uploadedPhotoPath, setUploadedPhotoPath] = useState<string | null>(null);
-  const [photoUploading, setPhotoUploading] = useState(false);
-  const [uploadProgress, setUploadProgress] = useState(0);
+  type PhotoEntry = { file: File; preview: string; uploading: boolean; progress: number; uploadedPath: string | null };
+  const [photos, setPhotos] = useState<PhotoEntry[]>([]);
   const [submitted, setSubmitted] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState('');
@@ -188,12 +186,14 @@ function OrderForm({ price }: { price: number; scrollTo: (id: string) => void })
     }
   };
 
-  // Upload photo immediately on selection with XHR progress tracking
-  const handlePhotoSelect = async (file: File) => {
-    setPhoto(file);
-    setUploadedPhotoPath(null);
-    setUploadProgress(0);
-    setPhotoUploading(true);
+  const anyUploading = photos.some(p => p.uploading);
+
+  const handlePhotoAdd = async (file: File) => {
+    if (photos.length >= 3) return;
+    const preview = URL.createObjectURL(file);
+    const idx = photos.length;
+    setPhotos(prev => [...prev, { file, preview, uploading: true, progress: 0, uploadedPath: null }]);
+
     try {
       const base64 = await new Promise<string>((resolve, reject) => {
         const reader = new FileReader();
@@ -201,33 +201,34 @@ function OrderForm({ price }: { price: number; scrollTo: (id: string) => void })
         reader.onerror = reject;
         reader.readAsDataURL(file);
       });
-      const body = JSON.stringify({ photo: base64 });
 
       await new Promise<void>((resolve, reject) => {
         const xhr = new XMLHttpRequest();
         xhr.open('POST', `${API_BASE}/api/upload-photo`);
         xhr.setRequestHeader('Content-Type', 'application/json');
         xhr.upload.onprogress = (e) => {
-          if (e.lengthComputable) setUploadProgress(Math.round((e.loaded / e.total) * 100));
+          if (e.lengthComputable)
+            setPhotos(prev => prev.map((p, i) => i === idx ? { ...p, progress: Math.round((e.loaded / e.total) * 100) } : p));
         };
         xhr.onload = () => {
           if (xhr.status >= 200 && xhr.status < 300) {
             try {
               const data = JSON.parse(xhr.responseText);
-              setUploadedPhotoPath(data.photoPath || null);
-              setUploadProgress(100);
+              setPhotos(prev => prev.map((p, i) => i === idx ? { ...p, uploading: false, progress: 100, uploadedPath: data.photoPath || null } : p));
             } catch { /* non-fatal */ }
             resolve();
-          } else {
-            reject(new Error('Upload failed'));
-          }
+          } else reject(new Error('Upload failed'));
         };
         xhr.onerror = () => reject(new Error('Upload error'));
-        xhr.send(body);
+        xhr.send(JSON.stringify({ photo: base64 }));
       });
-    } catch { /* non-fatal — order can still proceed */ } finally {
-      setPhotoUploading(false);
+    } catch {
+      setPhotos(prev => prev.map((p, i) => i === idx ? { ...p, uploading: false } : p));
     }
+  };
+
+  const handlePhotoRemove = (idx: number) => {
+    setPhotos(prev => { URL.revokeObjectURL(prev[idx].preview); return prev.filter((_, i) => i !== idx); });
   };
 
   const proceedWithPayment = async () => {
@@ -235,8 +236,8 @@ function OrderForm({ price }: { price: number; scrollTo: (id: string) => void })
     setSubmitting(true);
     setSubmitError('');
     try {
-      // Use already-uploaded path; if still uploading wait briefly
-      const photoPath = uploadedPhotoPath;
+      const photoPath = photos[0]?.uploadedPath || null;
+      const additionalPhotoPaths = photos.slice(1).map(p => p.uploadedPath).filter(Boolean);
 
       const res = await fetch(`${API_BASE}/api/order-inquiry`, {
         method: 'POST',
@@ -244,6 +245,7 @@ function OrderForm({ price }: { price: number; scrollTo: (id: string) => void })
         body: JSON.stringify({
           ...form,
           photoPath,
+          additionalPhotoPaths,
           couponCode: couponApplied?.code || null,
           referralSource: localStorage.getItem('protago_ref') || null,
         }),
@@ -408,26 +410,59 @@ function OrderForm({ price }: { price: number; scrollTo: (id: string) => void })
                     ))}
                   </div>
                 </div>
-                <div>
-                  <label style={labelStyle}>Child's photo *</label>
-                  <label className="flex flex-col items-center justify-center gap-1 rounded-xl cursor-pointer transition-colors"
-                    style={{
-                      border: `1.5px dashed ${photo ? C.saffron : '#D1D5DB'}`,
-                      padding: '12px',
-                      background: photo ? '#FFF8F3' : '#FAFAFA',
-                    }}>
-                    <span className="text-xl">{photoUploading ? '⏳' : photo ? '✅' : '📸'}</span>
-                    <span className="text-xs font-semibold" style={{ color: photo ? C.saffron : C.lgray }}>
-                      {photoUploading ? `Uploading… ${uploadProgress}%` : photo ? photo.name : 'Upload photo'}
-                    </span>
-                    {photoUploading && (
-                      <div style={{ width: '100%', height: '4px', background: '#EEE', borderRadius: '2px', overflow: 'hidden', marginTop: '2px' }}>
-                        <div style={{ height: '100%', width: `${uploadProgress}%`, background: C.saffron, borderRadius: '2px', transition: 'width 0.2s ease' }} />
+                <div className="sm:col-span-2">
+                  <label style={labelStyle}>Child's photos * <span style={{ color: C.lgray, fontWeight: 400, textTransform: 'none', fontSize: 11 }}>(up to 3)</span></label>
+
+                  {/* Instructions */}
+                  <div className="rounded-xl p-3 mb-3 flex flex-col gap-1.5" style={{ background: '#FFF8F3', border: `1px solid ${C.saffron}30` }}>
+                    <p className="text-xs font-bold" style={{ color: C.saffron }}>📸 Tips for the best result</p>
+                    <div className="grid grid-cols-2 gap-x-4 gap-y-1">
+                      {[
+                        ['✅', 'Clear face, front-facing'],
+                        ['✅', 'Good natural lighting'],
+                        ['✅', 'Recent photo (within 1 year)'],
+                        ['✅', 'Child alone in the photo'],
+                        ['❌', 'No sunglasses or hats'],
+                        ['❌', 'Avoid blurry or dark shots'],
+                      ].map(([emoji, text]) => (
+                        <p key={text} className="text-xs" style={{ color: C.gray }}>{emoji} {text}</p>
+                      ))}
+                    </div>
+                    <p className="text-xs mt-0.5" style={{ color: C.lgray }}>Adding 2–3 photos from different angles gives much better results.</p>
+                  </div>
+
+                  {/* Photo slots */}
+                  <div className="grid grid-cols-3 gap-2">
+                    {photos.map((p, i) => (
+                      <div key={i} className="relative rounded-xl overflow-hidden"
+                        style={{ aspectRatio: '1/1', background: '#F0EEE8', border: `2px solid ${C.saffron}` }}>
+                        <img src={p.preview} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
+                        {p.uploading && (
+                          <div style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.45)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 4 }}>
+                            <p className="text-white text-xs font-bold">{p.progress}%</p>
+                            <div style={{ width: '70%', height: 3, background: 'rgba(255,255,255,0.3)', borderRadius: 2 }}>
+                              <div style={{ height: '100%', width: `${p.progress}%`, background: '#fff', borderRadius: 2, transition: 'width 0.2s' }} />
+                            </div>
+                          </div>
+                        )}
+                        {!p.uploading && (
+                          <button type="button" onClick={() => handlePhotoRemove(i)}
+                            style={{ position: 'absolute', top: 4, right: 4, background: 'rgba(0,0,0,0.55)', border: 'none', borderRadius: '50%', width: 20, height: 20, color: '#fff', fontSize: 12, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                            ×
+                          </button>
+                        )}
                       </div>
+                    ))}
+                    {photos.length < 3 && (
+                      <label className="rounded-xl flex flex-col items-center justify-center gap-1 cursor-pointer transition-all"
+                        style={{ aspectRatio: '1/1', border: `2px dashed #D1D5DB`, background: '#FAFAFA' }}>
+                        <span style={{ fontSize: 22 }}>+</span>
+                        <span className="text-xs font-semibold" style={{ color: C.lgray }}>Add photo</span>
+                        <input type="file" accept="image/*" className="hidden"
+                          onChange={e => { const f = e.target.files?.[0]; if (f) handlePhotoAdd(f); e.target.value = ''; }} />
+                      </label>
                     )}
-                    <input type="file" accept="image/*" className="hidden"
-                      onChange={e => { const f = e.target.files?.[0]; if (f) handlePhotoSelect(f); }} />
-                  </label>
+                  </div>
                 </div>
               </div>
             </div>
@@ -626,10 +661,10 @@ function OrderForm({ price }: { price: number; scrollTo: (id: string) => void })
                 <span style={{ color: C.lgray, textDecoration: 'line-through' }}>₹{price}</span>
               </div>
             )}
-            <button type="submit" disabled={submitting || photoUploading}
+            <button type="submit" disabled={submitting || anyUploading}
               className="w-full py-4 rounded-2xl text-base font-extrabold text-white transition-opacity hover:opacity-90 flex items-center justify-center gap-2 disabled:opacity-60"
               style={{ background: C.gradient, fontFamily: "'Baloo 2', sans-serif" }}>
-              {submitting ? 'Processing…' : photoUploading ? `Uploading photo… ${uploadProgress}%` : <>Pay ₹{couponApplied ? couponApplied.finalPrice : price} & Order <ArrowRight size={16} /></>}
+              {submitting ? 'Processing…' : anyUploading ? `Uploading photos…` : <>Pay ₹{couponApplied ? couponApplied.finalPrice : price} & Order <ArrowRight size={16} /></>}
             </button>
             <p className="text-center text-xs" style={{ color: C.lgray }}>
               We'll confirm your order via WhatsApp/email within 24 hours.
