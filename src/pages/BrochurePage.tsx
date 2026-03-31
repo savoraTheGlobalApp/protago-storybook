@@ -143,8 +143,38 @@ function OrderForm({ price }: { price: number; scrollTo: (id: string) => void })
   const [submitError, setSubmitError] = useState('');
   const [showConfirm, setShowConfirm] = useState(false);
 
+  const [couponInput, setCouponInput] = useState('');
+  const [couponApplied, setCouponApplied] = useState<{ code: string; discountAmount: number; finalPrice: number; discountType: string; discountValue: number } | null>(null);
+  const [couponError, setCouponError] = useState('');
+  const [couponLoading, setCouponLoading] = useState(false);
+
   const API_BASE = import.meta.env.VITE_API_BASE_URL || '';
   const set = (k: string, v: string) => setForm(f => ({ ...f, [k]: v }));
+
+  const handleApplyCoupon = async () => {
+    if (!couponInput.trim()) return;
+    setCouponError('');
+    setCouponLoading(true);
+    try {
+      const res = await fetch(`${API_BASE}/api/validate-coupon`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ code: couponInput.trim() }),
+      });
+      const data = await res.json();
+      if (data.valid) {
+        setCouponApplied({ code: couponInput.trim().toUpperCase(), discountAmount: data.discountAmount, finalPrice: data.finalPrice, discountType: data.discountType, discountValue: data.discountValue });
+        setCouponError('');
+      } else {
+        setCouponApplied(null);
+        setCouponError(data.error || 'Invalid coupon code');
+      }
+    } catch {
+      setCouponError('Could not validate coupon. Try again.');
+    } finally {
+      setCouponLoading(false);
+    }
+  };
 
   // Upload photo immediately on selection with XHR progress tracking
   const handlePhotoSelect = async (file: File) => {
@@ -199,7 +229,12 @@ function OrderForm({ price }: { price: number; scrollTo: (id: string) => void })
       const res = await fetch(`${API_BASE}/api/order-inquiry`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ...form, photoPath }),
+        body: JSON.stringify({
+          ...form,
+          photoPath,
+          couponCode: couponApplied?.code || null,
+          referralSource: localStorage.getItem('protago_ref') || null,
+        }),
       });
       if (!res.ok) {
         const data = await res.json().catch(() => ({}));
@@ -557,14 +592,56 @@ function OrderForm({ price }: { price: number; scrollTo: (id: string) => void })
                 value={form.notes} onChange={e => set('notes', e.target.value)} />
             </div>
 
+            {/* ── Coupon code */}
+            <div style={{ height: 1, background: '#F0F0F0' }} />
+            <div>
+              <label style={labelStyle}>Coupon code (optional)</label>
+              <div className="flex gap-2">
+                <input
+                  style={{ ...inputStyle, flex: 1 }}
+                  placeholder="e.g. SHREYANKA20"
+                  value={couponInput}
+                  onChange={e => { setCouponInput(e.target.value.toUpperCase()); setCouponApplied(null); setCouponError(''); }}
+                  onKeyDown={e => e.key === 'Enter' && (e.preventDefault(), handleApplyCoupon())}
+                />
+                <button type="button" onClick={handleApplyCoupon} disabled={couponLoading || !couponInput.trim()}
+                  className="px-4 rounded-xl text-sm font-bold transition-opacity disabled:opacity-50"
+                  style={{ background: C.navy, color: '#fff', border: 'none', cursor: 'pointer', whiteSpace: 'nowrap' }}>
+                  {couponLoading ? '…' : 'Apply'}
+                </button>
+              </div>
+              {couponApplied && (
+                <div className="mt-2 flex items-center justify-between rounded-xl px-3 py-2"
+                  style={{ background: '#F0FFF4', border: '1.5px solid #22C55E' }}>
+                  <div>
+                    <span className="text-xs font-bold" style={{ color: '#16A34A' }}>✓ {couponApplied.code} applied!</span>
+                    <span className="text-xs ml-2" style={{ color: '#16A34A' }}>
+                      {couponApplied.discountType === 'percent' ? `${couponApplied.discountValue}% off` : `₹${couponApplied.discountAmount} off`}
+                    </span>
+                  </div>
+                  <button type="button" onClick={() => { setCouponApplied(null); setCouponInput(''); }}
+                    className="text-xs font-semibold" style={{ color: '#6B7280', background: 'none', border: 'none', cursor: 'pointer' }}>
+                    Remove
+                  </button>
+                </div>
+              )}
+              {couponError && <p className="text-xs mt-1.5" style={{ color: '#EF4444' }}>{couponError}</p>}
+            </div>
+
             {/* ── Submit */}
             {submitError && (
               <p className="text-sm text-red-500 text-center">{submitError}</p>
             )}
+            {couponApplied && (
+              <div className="flex items-center justify-between text-sm px-1">
+                <span style={{ color: C.lgray }}>Original price</span>
+                <span style={{ color: C.lgray, textDecoration: 'line-through' }}>₹{price}</span>
+              </div>
+            )}
             <button type="submit" disabled={submitting || photoUploading}
               className="w-full py-4 rounded-2xl text-base font-extrabold text-white transition-opacity hover:opacity-90 flex items-center justify-center gap-2 disabled:opacity-60"
               style={{ background: C.gradient, fontFamily: "'Baloo 2', sans-serif" }}>
-              {submitting ? 'Processing…' : photoUploading ? `Uploading photo… ${uploadProgress}%` : <>Pay ₹{price} & Order <ArrowRight size={16} /></>}
+              {submitting ? 'Processing…' : photoUploading ? `Uploading photo… ${uploadProgress}%` : <>Pay ₹{couponApplied ? couponApplied.finalPrice : price} & Order <ArrowRight size={16} /></>}
             </button>
             <p className="text-center text-xs" style={{ color: C.lgray }}>
               We'll confirm your order via WhatsApp/email within 24 hours.
@@ -628,6 +705,12 @@ export function BrochurePage() {
     if (anchor) {
       setTimeout(() => document.getElementById(anchor)?.scrollIntoView({ behavior: 'smooth' }), 300);
     }
+  }, [searchParams]);
+
+  // Capture influencer referral from ?ref= and persist in localStorage
+  useEffect(() => {
+    const ref = searchParams.get('ref');
+    if (ref) localStorage.setItem('protago_ref', ref);
   }, [searchParams]);
 
   const scrollTo = (id: string) => {

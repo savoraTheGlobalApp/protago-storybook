@@ -870,6 +870,40 @@ app.post('/api/verify-payment', async (req, res) => {
             console.error('Supabase update failed:', errorText);
         }
 
+        // Increment coupon uses_count if a coupon was used on this order
+        try {
+            const headers = {
+                'apikey': process.env.SUPABASE_SERVICE_KEY_STORY,
+                'Authorization': `Bearer ${process.env.SUPABASE_SERVICE_KEY_STORY}`,
+            };
+            // Look up the order to get coupon_code
+            const orderRes = await fetch(
+                `${process.env.SUPABASE_URL_STORY}/rest/v1/storybook_orders?razorpay_order_id=eq.${razorpay_order_id}&select=coupon_code`,
+                { headers }
+            );
+            const [order] = await orderRes.json().catch(() => []);
+            if (order?.coupon_code) {
+                // Get current uses_count
+                const couponRes = await fetch(
+                    `${process.env.SUPABASE_URL_STORY}/rest/v1/coupons?code=eq.${encodeURIComponent(order.coupon_code)}&select=uses_count`,
+                    { headers }
+                );
+                const [coupon] = await couponRes.json().catch(() => []);
+                if (coupon != null) {
+                    await fetch(
+                        `${process.env.SUPABASE_URL_STORY}/rest/v1/coupons?code=eq.${encodeURIComponent(order.coupon_code)}`,
+                        {
+                            method: 'PATCH',
+                            headers: { 'Content-Type': 'application/json', ...headers },
+                            body: JSON.stringify({ uses_count: (coupon.uses_count || 0) + 1 }),
+                        }
+                    );
+                }
+            }
+        } catch (e) {
+            console.error('Coupon increment error (non-fatal):', e);
+        }
+
         return res.status(200).json({ success: true });
     } catch (error) {
         console.error('Verify payment error:', error);
@@ -885,14 +919,18 @@ app.post('/api/order-inquiry', async (req, res) => {
             childName, childAge, childGender,
             theme, storyTheme, artStyle, storyFormat,
             deliveryType, address, notes,
-            photoPath,
+            photoPath, couponCode, referralSource,
         } = req.body;
 
         if (!email || !phone || !childName) {
             return res.status(400).json({ error: 'Name, email and phone are required' });
         }
 
-        const price = parseInt(process.env.STORYBOOK_PRICE, 10) || 499;
+        const basePrice = parseInt(process.env.STORYBOOK_PRICE, 10) || 499;
+
+        // Validate coupon server-side
+        const coupon = couponCode ? await validateCouponCode(couponCode) : null;
+        const { discountAmount, finalPrice: price } = applyDiscount(basePrice, coupon);
 
         // Create Razorpay order
         const hasRazorpayKeys =
@@ -942,6 +980,9 @@ app.post('/api/order-inquiry', async (req, res) => {
                     address_line1: address || null,
                     notes: notes || null,
                     photo_url: photoPath || null,
+                    coupon_code: coupon ? couponCode.toUpperCase() : null,
+                    discount_amount: discountAmount,
+                    referral_source: referralSource || null,
                     status: 'pending',
                     amount: price,
                     currency: 'INR',
@@ -964,6 +1005,62 @@ app.post('/api/order-inquiry', async (req, res) => {
     } catch (error) {
         console.error('Order inquiry error:', error);
         return res.status(500).json({ error: 'Internal server error' });
+    }
+});
+
+// ── Coupon validation helper ────────────────────────────────────────────────
+async function validateCouponCode(code) {
+    if (!code) return null;
+    const url = `${process.env.SUPABASE_URL_STORY}/rest/v1/coupons?code=eq.${encodeURIComponent(code.toUpperCase())}&select=*`;
+    const res = await fetch(url, {
+        headers: {
+            'apikey': process.env.SUPABASE_SERVICE_KEY_STORY,
+            'Authorization': `Bearer ${process.env.SUPABASE_SERVICE_KEY_STORY}`,
+        },
+    });
+    if (!res.ok) return null;
+    const [coupon] = await res.json();
+    if (!coupon) return null;
+    if (!coupon.is_active) return null;
+    if (coupon.expires_at && new Date(coupon.expires_at) < new Date()) return null;
+    if (coupon.max_uses !== null && coupon.uses_count >= coupon.max_uses) return null;
+    return coupon;
+}
+
+function applyDiscount(basePrice, coupon) {
+    if (!coupon) return { discountAmount: 0, finalPrice: basePrice };
+    const discountAmount = coupon.discount_type === 'percent'
+        ? Math.round(basePrice * coupon.discount_value / 100)
+        : Math.min(coupon.discount_value, basePrice);
+    return { discountAmount, finalPrice: Math.max(1, basePrice - discountAmount) };
+}
+
+// ── Validate coupon endpoint ────────────────────────────────────────────────
+app.post('/api/validate-coupon', async (req, res) => {
+    try {
+        const { code } = req.body;
+        if (!code) return res.status(400).json({ valid: false, error: 'No code provided' });
+
+        const hasSupabase = process.env.SUPABASE_URL_STORY && !process.env.SUPABASE_URL_STORY.includes('your_');
+        if (!hasSupabase) return res.status(200).json({ valid: false, error: 'Coupons not configured' });
+
+        const coupon = await validateCouponCode(code);
+        if (!coupon) return res.status(200).json({ valid: false, error: 'Invalid or expired coupon code' });
+
+        const basePrice = parseInt(process.env.STORYBOOK_PRICE, 10) || 499;
+        const { discountAmount, finalPrice } = applyDiscount(basePrice, coupon);
+
+        return res.status(200).json({
+            valid: true,
+            discountType: coupon.discount_type,
+            discountValue: coupon.discount_value,
+            discountAmount,
+            finalPrice,
+            influencerName: coupon.influencer_name || null,
+        });
+    } catch (err) {
+        console.error('validate-coupon error:', err);
+        return res.status(500).json({ valid: false, error: 'Server error' });
     }
 });
 
