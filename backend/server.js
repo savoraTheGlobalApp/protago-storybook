@@ -919,7 +919,7 @@ app.post('/api/order-inquiry', async (req, res) => {
             childName, childAge, childGender,
             theme, storyTheme, artStyle, storyFormat,
             deliveryType, address, notes,
-            photoPath, couponCode, referralSource,
+            photoPath, additionalPhotoPaths, couponCode, referralSource,
         } = req.body;
 
         if (!email || !phone || !childName) {
@@ -980,6 +980,7 @@ app.post('/api/order-inquiry', async (req, res) => {
                     address_line1: address || null,
                     notes: notes || null,
                     photo_url: photoPath || null,
+                    additional_photo_urls: (additionalPhotoPaths && additionalPhotoPaths.length) ? additionalPhotoPaths : null,
                     coupon_code: coupon ? couponCode.toUpperCase() : null,
                     discount_amount: discountAmount,
                     referral_source: referralSource || null,

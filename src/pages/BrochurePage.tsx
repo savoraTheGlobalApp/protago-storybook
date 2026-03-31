@@ -214,7 +214,7 @@ function OrderForm({ price }: { price: number; scrollTo: (id: string) => void })
           if (xhr.status >= 200 && xhr.status < 300) {
             try {
               const data = JSON.parse(xhr.responseText);
-              setPhotos(prev => prev.map((p, i) => i === idx ? { ...p, uploading: false, progress: 100, uploadedPath: data.photoPath || null } : p));
+              setPhotos(prev => prev.map((p, i) => i === idx ? { ...p, uploading: false, progress: 100, uploadedPath: data.photo_url || null } : p));
             } catch { /* non-fatal */ }
             resolve();
           } else reject(new Error('Upload failed'));
@@ -1064,11 +1064,14 @@ export function BrochurePage() {
                   Each page is a <strong style={{ color: C.navy }}>full-bleed cinematic illustration</strong> — rich scenery,
                   dramatic lighting, and your child at the centre of a vivid, beautiful world.
                 </p>
-                <div className="flex flex-wrap gap-5">
+                <div className="flex flex-wrap gap-5 mb-3">
                   {['Deep scene detail', 'Immersive atmosphere', 'Perfect for bedtime'].map(f => (
                     <span key={f} className="text-xs font-bold" style={{ color: C.navy }}>✓ {f}</span>
                   ))}
                 </div>
+                <span className="inline-block text-xs font-bold px-3 py-1 rounded-full" style={{ background: C.gold + '28', color: C.navy, border: `1px solid ${C.gold}` }}>
+                  📖 26 pages including cover
+                </span>
               </div>
             </motion.div>
 
