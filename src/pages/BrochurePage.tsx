@@ -139,7 +139,6 @@ function OrderForm({ price }: { price: number; scrollTo: (id: string) => void })
     storyTheme: preselectedTheme || savedDraft.storyTheme || '',
     artStyle: savedDraft.artStyle || '',
     storyFormat: savedDraft.storyFormat || '',
-    deliveryType: savedDraft.deliveryType || 'print',
     address: savedDraft.address || '',
     notes: savedDraft.notes || '',
   });
@@ -563,29 +562,13 @@ function OrderForm({ price }: { price: number; scrollTo: (id: string) => void })
 
             {/* ── Delivery */}
             <div>
-              <p className="text-sm font-extrabold mb-4" style={{ fontFamily: "'Baloo 2', sans-serif", color: C.navy }}>
-                Delivery
+              <p className="text-sm font-extrabold mb-3" style={{ fontFamily: "'Baloo 2', sans-serif", color: C.navy }}>
+                Delivery address *
               </p>
-              <div className="flex gap-2 mb-4">
-                <button type="button" onClick={() => set('deliveryType', 'print')}
-                  className="flex-1 py-3 px-3 rounded-xl text-xs font-bold transition-all text-left"
-                  style={{
-                    background: '#FFF8F3',
-                    border: `2px solid ${C.saffron}`,
-                    color: C.navy,
-                  }}>
-                  <span className="block mb-0.5">📦 Hardcover print</span>
-                  <span className="font-semibold" style={{ color: C.saffron }}>₹{price} · 5–7 days</span>
-                </button>
-              </div>
-              {form.deliveryType === 'print' && (
-                <div>
-                  <label style={labelStyle}>Delivery address *</label>
-                  <textarea rows={3} required={form.deliveryType === 'print'} style={{ ...inputStyle, resize: 'none' }}
-                    placeholder="Flat / House no, Street, City, State, PIN"
-                    value={form.address} onChange={e => set('address', e.target.value)} />
-                </div>
-              )}
+              <textarea rows={3} required style={{ ...inputStyle, resize: 'none' }}
+                placeholder="Flat / House no, Street, City, State, PIN"
+                value={form.address} onChange={e => set('address', e.target.value)} />
+              <p className="text-xs mt-1.5" style={{ color: C.lgray }}>📦 Hardcopy delivered in 5–7 business days</p>
             </div>
 
             {/* ── Notes */}
