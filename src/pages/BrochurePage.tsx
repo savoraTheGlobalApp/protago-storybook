@@ -111,7 +111,6 @@ const HERO_SLIDES = [
 
 // ── ORDER FORM ─────────────────────────────────────────────────────────────
 
-const VALUES = ['Courage & Bravery', 'Kindness & Friendship', 'Curiosity & Learning', 'Honesty & Trust', 'Teamwork', 'Environmental Care'];
 const STYLES = [
   { label: 'Pixar 3D',          img: '/styles/boy_pixar.png',         available: true  },
   { label: 'DreamWorks',        img: '/styles/boy_dreamworks.png',    available: false },
@@ -127,12 +126,22 @@ function OrderForm({ price }: { price: number; scrollTo: (id: string) => void })
   const [searchParams] = useSearchParams();
   const preselectedTheme = searchParams.get('theme') || '';
 
+  const FORM_STORAGE_KEY = 'protago_form_draft';
+  const savedDraft = (() => { try { return JSON.parse(localStorage.getItem(FORM_STORAGE_KEY) || '{}'); } catch { return {}; } })();
+
   const [form, setForm] = useState({
-    parentName: '', email: '', phone: '',
-    childName: '', childAge: '', childGender: '',
-    theme: '', storyTheme: preselectedTheme, artStyle: '', storyFormat: '',
-    deliveryType: 'print', address: '',
-    notes: '',
+    parentName: savedDraft.parentName || '',
+    email: savedDraft.email || '',
+    phone: savedDraft.phone || '',
+    childName: savedDraft.childName || '',
+    childAge: savedDraft.childAge || '',
+    childGender: savedDraft.childGender || '',
+    storyTheme: preselectedTheme || savedDraft.storyTheme || '',
+    artStyle: savedDraft.artStyle || '',
+    storyFormat: savedDraft.storyFormat || '',
+    deliveryType: savedDraft.deliveryType || 'print',
+    address: savedDraft.address || '',
+    notes: savedDraft.notes || '',
   });
   const [photo, setPhoto] = useState<File | null>(null);
   const [uploadedPhotoPath, setUploadedPhotoPath] = useState<string | null>(null);
@@ -149,7 +158,11 @@ function OrderForm({ price }: { price: number; scrollTo: (id: string) => void })
   const [couponLoading, setCouponLoading] = useState(false);
 
   const API_BASE = import.meta.env.VITE_API_BASE_URL || '';
-  const set = (k: string, v: string) => setForm(f => ({ ...f, [k]: v }));
+  const set = (k: string, v: string) => setForm(f => {
+    const next = { ...f, [k]: v };
+    try { localStorage.setItem(FORM_STORAGE_KEY, JSON.stringify(next)); } catch { /* non-fatal */ }
+    return next;
+  });
 
   const handleApplyCoupon = async () => {
     if (!couponInput.trim()) return;
@@ -244,6 +257,7 @@ function OrderForm({ price }: { price: number; scrollTo: (id: string) => void })
 
       // Dev/mock mode — no real Razorpay keys
       if (!razorpayKeyId || razorpayKeyId.includes('your_')) {
+        localStorage.removeItem(FORM_STORAGE_KEY);
         setSubmitted(true);
         setSubmitting(false);
         return;
@@ -264,6 +278,7 @@ function OrderForm({ price }: { price: number; scrollTo: (id: string) => void })
               body: JSON.stringify(response),
             });
             if (!verifyRes.ok) throw new Error('Payment verification failed');
+            localStorage.removeItem(FORM_STORAGE_KEY);
             setSubmitted(true);
           } catch {
             setSubmitError('Payment verification failed. Please contact support.');
@@ -427,23 +442,13 @@ function OrderForm({ price }: { price: number; scrollTo: (id: string) => void })
               </p>
               <div className="flex flex-col gap-4">
                 <div>
-                  <label style={labelStyle}>Value (optional)</label>
-                  <div className="flex flex-wrap gap-2">
-                    {VALUES.map(t => (
-                      <button type="button" key={t} onClick={() => set('theme', form.theme === t ? '' : t)}
-                        className="py-2 px-3 rounded-xl text-xs font-bold transition-all leading-snug"
-                        style={{
-                          background: form.theme === t ? C.navy : '#F5F5F5',
-                          color: form.theme === t ? C.white : C.gray,
-                          border: `1.5px solid ${form.theme === t ? C.navy : 'transparent'}`,
-                        }}>
-                        {t}
-                      </button>
-                    ))}
+                  <div className="flex items-center justify-between mb-1">
+                    <label style={labelStyle}>Theme *</label>
+                    <a href="/themes" className="text-xs font-bold"
+                      style={{ color: C.saffron, textDecoration: 'none' }}>
+                      Browse themes library →
+                    </a>
                   </div>
-                </div>
-                <div>
-                  <label style={labelStyle}>Theme *</label>
                   {(['3–5', '5–8', '8–12'] as const).map(range => {
                     const rangeThemes = THEMES.filter(t => t.ageRange === range);
                     const isRelevant = form.childAge ? ageToRange(Number(form.childAge)) === range : true;
