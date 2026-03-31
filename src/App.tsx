@@ -6,6 +6,7 @@ import { TermsPage } from './pages/TermsPage';
 import { PrivacyPage } from './pages/PrivacyPage';
 import { RefundPage } from './pages/RefundPage';
 import { ContactPage } from './pages/ContactPage';
+import { ThemesExplorer } from './pages/ThemesExplorer';
 
 export default function App() {
   return (
@@ -19,6 +20,7 @@ export default function App() {
         <Route path="/privacy" element={<PrivacyPage />} />
         <Route path="/refund" element={<RefundPage />} />
         <Route path="/contact" element={<ContactPage />} />
+        <Route path="/themes" element={<ThemesExplorer />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </Router>
