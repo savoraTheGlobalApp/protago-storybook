@@ -1,6 +1,9 @@
 import { useState, useEffect } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ArrowRight, ChevronDown, Menu, X, MessageCircle } from 'lucide-react';
+import { ArrowRight, ChevronDown, MessageCircle } from 'lucide-react';
+import { NavBar } from '../components/NavBar';
+import { THEMES, ageToRange } from '../data/themes';
 
 // ── Palette — two backgrounds (white / navy), one warm gradient, saffron + gold accents
 const C = {
@@ -109,7 +112,6 @@ const HERO_SLIDES = [
 // ── ORDER FORM ─────────────────────────────────────────────────────────────
 
 const VALUES = ['Courage & Bravery', 'Kindness & Friendship', 'Curiosity & Learning', 'Honesty & Trust', 'Teamwork', 'Environmental Care'];
-const STORY_THEMES = ['Holi', 'Diwali', 'Space', 'Cars & Racing', 'Magic & Wizards', 'Jungle Adventure', 'Ocean & Sea', 'Superheroes'];
 const STYLES = [
   { label: 'Pixar 3D',          img: '/styles/boy_pixar.png',         available: true  },
   { label: 'DreamWorks',        img: '/styles/boy_dreamworks.png',    available: false },
@@ -122,10 +124,13 @@ const FORMATS = [
 ];
 
 function OrderForm({ price }: { price: number; scrollTo: (id: string) => void }) {
+  const [searchParams] = useSearchParams();
+  const preselectedTheme = searchParams.get('theme') || '';
+
   const [form, setForm] = useState({
     parentName: '', email: '', phone: '',
     childName: '', childAge: '', childGender: '',
-    theme: '', storyTheme: '', artStyle: '', storyFormat: '',
+    theme: '', storyTheme: preselectedTheme, artStyle: '', storyFormat: '',
     deliveryType: 'print', address: '',
     notes: '',
   });
@@ -404,19 +409,45 @@ function OrderForm({ price }: { price: number; scrollTo: (id: string) => void })
                 </div>
                 <div>
                   <label style={labelStyle}>Theme *</label>
-                  <div className="flex flex-wrap gap-2">
-                    {STORY_THEMES.map(t => (
-                      <button type="button" key={t} onClick={() => set('storyTheme', t)}
-                        className="py-2 px-3 rounded-xl text-xs font-bold transition-all leading-snug"
-                        style={{
-                          background: form.storyTheme === t ? C.saffron : '#F5F5F5',
-                          color: form.storyTheme === t ? C.white : C.gray,
-                          border: `1.5px solid ${form.storyTheme === t ? C.saffron : 'transparent'}`,
-                        }}>
-                        {t}
-                      </button>
-                    ))}
-                  </div>
+                  {(['3–5', '5–8', '8–12'] as const).map(range => {
+                    const rangeThemes = THEMES.filter(t => t.ageRange === range);
+                    const isRelevant = form.childAge ? ageToRange(Number(form.childAge)) === range : true;
+                    return (
+                      <div key={range} className="mb-3">
+                        <p className="text-xs font-bold mb-2" style={{ color: isRelevant ? C.saffron : C.lgray }}>
+                          Ages {range} {isRelevant && form.childAge ? '✓ recommended' : ''}
+                        </p>
+                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 8 }}>
+                          {rangeThemes.map(t => {
+                            const selected = form.storyTheme === t.slug;
+                            return (
+                              <button type="button" key={t.slug}
+                                onClick={() => set('storyTheme', t.slug)}
+                                className="rounded-xl overflow-hidden text-left transition-all"
+                                style={{
+                                  border: `2.5px solid ${selected ? C.saffron : '#E5E7EB'}`,
+                                  opacity: isRelevant ? 1 : 0.5,
+                                  outline: 'none',
+                                }}>
+                                <div style={{ aspectRatio: '16/9', background: '#F0EEE8', position: 'relative' }}>
+                                  <img src={`/themes/${t.slug}.png`} alt={t.name}
+                                    style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
+                                  {selected && (
+                                    <div style={{ position: 'absolute', top: 4, right: 4, background: C.saffron, borderRadius: '50%', width: 18, height: 18, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                      <span style={{ color: '#fff', fontSize: 10, fontWeight: 800 }}>✓</span>
+                                    </div>
+                                  )}
+                                </div>
+                                <div style={{ padding: '4px 6px 5px', background: selected ? C.saffron : C.navy }}>
+                                  <p style={{ fontSize: 10, fontWeight: 700, color: '#fff', lineHeight: 1.3 }}>{t.icon} {t.name}</p>
+                                </div>
+                              </button>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    );
+                  })}
                 </div>
                 <div>
                   <label style={labelStyle}>Art style *</label>
@@ -580,18 +611,26 @@ function OrderForm({ price }: { price: number; scrollTo: (id: string) => void })
 // ── Main page ───────────────────────────────────────────────────────────────
 
 export function BrochurePage() {
-  const [mobileOpen, setMobileOpen] = useState(false);
   const [openFaq, setOpenFaq]       = useState<number | null>(null);
+  const [themesTab, setThemesTab]   = useState<'3–5' | '5–8' | '8–12'>('3–5');
   const [heroSlide, setHeroSlide]   = useState(0);
   const price = Number(import.meta.env.VITE_STORYBOOK_PRICE) || 499;
+  const [searchParams] = useSearchParams();
 
   useEffect(() => {
     const t = setInterval(() => setHeroSlide(i => (i + 1) % HERO_SLIDES.length), 3000);
     return () => clearInterval(t);
   }, []);
 
+  // Auto-scroll when arriving from another page via ?scroll= or ?theme=
+  useEffect(() => {
+    const anchor = searchParams.get('scroll') || (searchParams.get('theme') ? 'order' : null);
+    if (anchor) {
+      setTimeout(() => document.getElementById(anchor)?.scrollIntoView({ behavior: 'smooth' }), 300);
+    }
+  }, [searchParams]);
+
   const scrollTo = (id: string) => {
-    setMobileOpen(false);
     document.getElementById(id)?.scrollIntoView({ behavior: 'smooth' });
   };
 
@@ -600,50 +639,7 @@ export function BrochurePage() {
       <link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@700;800&family=Nunito:wght@400;600;700&display=swap" rel="stylesheet" />
 
       {/* ── HEADER ─────────────────────────────── */}
-      <header className="fixed top-0 left-0 right-0 z-50 border-b"
-        style={{ background: 'rgba(255,255,255,0.96)', backdropFilter: 'blur(12px)', borderColor: '#F0F0F0' }}>
-        <div className="max-w-6xl mx-auto px-5 sm:px-8 py-3 flex items-center justify-between">
-          <button onClick={() => scrollTo('hero')} style={{ fontFamily: "'Baloo 2', sans-serif", fontWeight: 800, fontSize: 22, color: C.saffron }}>
-            protago
-          </button>
-
-          <nav className="hidden md:flex items-center gap-7">
-            {[['Books','books'],['Art Styles','art-styles'],['How It Works','how-it-works'],['FAQ','faq']].map(([label, id]) => (
-              <button key={id} onClick={() => scrollTo(id)}
-                className="text-sm font-semibold transition-colors hover:opacity-70"
-                style={{ color: C.gray }}>
-                {label}
-              </button>
-            ))}
-            <button onClick={() => scrollTo('order')}
-              className="px-5 py-2 rounded-full text-sm font-bold text-white transition-opacity hover:opacity-90"
-              style={{ background: C.gradient }}>
-              Order Now
-            </button>
-          </nav>
-
-          <button onClick={() => setMobileOpen(!mobileOpen)} className="md:hidden p-2" style={{ color: C.gray }}>
-            {mobileOpen ? <X size={20} /> : <Menu size={20} />}
-          </button>
-        </div>
-
-        <AnimatePresence>
-          {mobileOpen && (
-            <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }}
-              exit={{ height: 0, opacity: 0 }} className="md:hidden overflow-hidden border-t" style={{ borderColor: '#F0F0F0' }}>
-              <div className="px-5 py-4 flex flex-col gap-3 bg-white">
-                {[['Books','books'],['Art Styles','art-styles'],['How It Works','how-it-works'],['FAQ','faq']].map(([label, id]) => (
-                  <button key={id} onClick={() => scrollTo(id)} className="text-sm text-left py-1 font-semibold" style={{ color: C.gray }}>{label}</button>
-                ))}
-                <button onClick={() => scrollTo('order')} className="mt-1 px-5 py-2.5 rounded-full text-sm font-bold text-white text-center"
-                  style={{ background: C.gradient }}>
-                  Order Now
-                </button>
-              </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
-      </header>
+      <NavBar />
 
       {/* ══════════════════════════════════════════
           § 1  HERO  — warm gradient
@@ -783,6 +779,85 @@ export function BrochurePage() {
           <p className="text-center text-xs mt-4" style={{ color: C.lgray }}>
             Your photo is never stored or shared. Used only to generate your book.
           </p>
+        </div>
+      </section>
+
+      {/* ══════════════════════════════════════════
+          § THEMES — white
+      ══════════════════════════════════════════ */}
+      <section id="themes" style={{ background: C.white }} className="py-16 sm:py-20">
+        <div className="max-w-6xl mx-auto px-5 sm:px-8">
+          <motion.div initial={{ opacity: 0, y: 16 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} className="mb-8">
+            {eyebrow('What will their story be about?')}
+            {heading(<>15 themes across<br />every age group</>)}
+            <p className="text-sm mt-3 leading-relaxed" style={{ color: C.gray }}>
+              From bedtime routines for toddlers to financial literacy for tweens — every theme is built around real learning moments. Click any to explore.
+            </p>
+          </motion.div>
+
+          {/* Age tabs */}
+          {(() => {
+            const AGE_TABS = [
+              { range: '3–5'  as const, label: 'Pre-school',    color: '#FF6B35' },
+              { range: '5–8'  as const, label: 'Early School',  color: '#F7B731' },
+              { range: '8–12' as const, label: 'Upper Primary', color: '#1A1A2E' },
+            ];
+            const tabThemes = THEMES.filter(t => t.ageRange === themesTab);
+            const activeColor = AGE_TABS.find(t => t.range === themesTab)!.color;
+            return (
+              <>
+                <div className="flex gap-2 mb-6">
+                  {AGE_TABS.map(g => (
+                    <button key={g.range} onClick={() => setThemesTab(g.range)}
+                      className="flex-1 py-2.5 rounded-2xl font-extrabold transition-all text-center"
+                      style={{
+                        background: themesTab === g.range ? g.color : C.white,
+                        color: themesTab === g.range ? '#fff' : C.lgray,
+                        border: `2px solid ${themesTab === g.range ? g.color : '#E5E7EB'}`,
+                        fontFamily: "'Baloo 2', sans-serif",
+                        fontSize: 13,
+                        whiteSpace: 'nowrap',
+                        cursor: 'pointer',
+                      }}>
+                      {g.range}
+                      <span className="block opacity-80" style={{ fontSize: 10, fontWeight: 600 }}>{g.label}</span>
+                    </button>
+                  ))}
+                </div>
+
+                <AnimatePresence mode="wait">
+                  <motion.div key={themesTab} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -10 }} transition={{ duration: 0.2 }}
+                    style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(240px, 1fr))', gap: 16 }}>
+                    {tabThemes.map(t => (
+                      <motion.a key={t.slug} href="/themes"
+                        onClick={e => { e.preventDefault(); window.location.href = '/themes'; }}
+                        className="rounded-2xl overflow-hidden cursor-pointer block"
+                        style={{ border: '1.5px solid #E5E7EB', background: C.white, textDecoration: 'none' }}
+                        whileHover={{ scale: 1.02, boxShadow: '0 8px 24px rgba(0,0,0,0.10)' }}
+                        transition={{ type: 'spring', stiffness: 300, damping: 24 }}>
+                        <div style={{ aspectRatio: '16/9', background: '#F0EEE8', position: 'relative' }}>
+                          <img src={`/themes/${t.slug}.png`} alt={t.name}
+                            style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
+                          <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, padding: '20px 14px 10px', background: 'linear-gradient(transparent, rgba(0,0,0,0.55))' }}>
+                            <p className="font-extrabold text-sm" style={{ fontFamily: "'Baloo 2', sans-serif", color: '#fff' }}>{t.icon} {t.name}</p>
+                          </div>
+                        </div>
+                      </motion.a>
+                    ))}
+                  </motion.div>
+                </AnimatePresence>
+
+                <div className="mt-8 text-center">
+                  <a href="/themes"
+                    className="inline-flex items-center gap-2 px-6 py-3 rounded-full text-sm font-bold transition-opacity hover:opacity-90"
+                    style={{ background: activeColor, color: '#fff', textDecoration: 'none' }}>
+                    Explore all themes & personalisation →
+                  </a>
+                </div>
+              </>
+            );
+          })()}
         </div>
       </section>
 

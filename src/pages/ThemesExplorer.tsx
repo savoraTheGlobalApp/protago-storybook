@@ -1,5 +1,7 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
+import { NavBar } from '../components/NavBar';
 
 const C = {
   navy: '#1A1A2E', saffron: '#FF6B35', gold: '#F7B731',
@@ -185,15 +187,22 @@ const AGE_GROUPS: AgeGroup[] = [
 
 
 function ThemeModal({ theme, groupColor, onClose }: { theme: Theme; groupColor: string; onClose: () => void }) {
+  const navigate = useNavigate();
+
+  const handleCreate = () => {
+    onClose();
+    navigate(`/?theme=${theme.slug}#order`);
+  };
+
   return (
     <motion.div
       initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-      style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.65)', zIndex: 50, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '24px' }}
+      style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.65)', zIndex: 50, display: 'flex', alignItems: 'flex-end', justifyContent: 'center', padding: '0' }}
       onClick={onClose}>
       <motion.div
-        initial={{ scale: 0.92, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.92, opacity: 0 }}
-        transition={{ type: 'spring', stiffness: 300, damping: 28 }}
-        style={{ background: C.white, borderRadius: 20, overflow: 'hidden', width: '100%', maxWidth: 720, maxHeight: '90vh', overflowY: 'auto' }}
+        initial={{ y: '100%', opacity: 0 }} animate={{ y: 0, opacity: 1 }} exit={{ y: '100%', opacity: 0 }}
+        transition={{ type: 'spring', stiffness: 300, damping: 32 }}
+        style={{ background: C.white, borderRadius: '20px 20px 0 0', overflow: 'hidden', width: '100%', maxWidth: 720, maxHeight: '92vh', overflowY: 'auto' }}
         onClick={e => e.stopPropagation()}>
 
         {/* Image */}
@@ -235,13 +244,19 @@ function ThemeModal({ theme, groupColor, onClose }: { theme: Theme; groupColor: 
               "{theme.samplePrompt}"
             </p>
           </div>
+
+          <button onClick={handleCreate}
+            className="w-full py-4 rounded-2xl font-extrabold text-base transition-all"
+            style={{ background: C.saffron, color: C.white, fontFamily: "'Baloo 2', sans-serif", border: 'none', cursor: 'pointer' }}>
+            Create this story for my child →
+          </button>
         </div>
       </motion.div>
     </motion.div>
   );
 }
 
-function ThemeCard({ theme, groupColor, onClick }: { theme: Theme; groupColor: string; onClick: () => void }) {
+function ThemeCard({ theme, onClick }: { theme: Theme; groupColor: string; onClick: () => void }) {
   return (
     <motion.div layout className="rounded-2xl overflow-hidden cursor-pointer"
       style={{ border: '1.5px solid #E5E7EB', background: C.white }}
@@ -275,40 +290,44 @@ export function ThemesExplorer() {
 
   return (
     <div style={{ minHeight: '100vh', background: '#F9FAFB', fontFamily: "'Nunito', sans-serif" }}>
-      {/* Header */}
-      <div style={{ background: C.navy }} className="px-5 py-8 text-center">
-        <span style={{ fontFamily: "'Baloo 2', sans-serif", fontWeight: 800, fontSize: 28, color: C.saffron }}>protago</span>
-        <h1 className="text-2xl font-extrabold mt-2 text-white" style={{ fontFamily: "'Baloo 2', sans-serif" }}>
-          Educational Themes Explorer
+      <NavBar />
+
+      {/* Page title */}
+      <div style={{ background: C.navy }} className="px-5 pt-20 pb-8 text-center">
+        <h1 className="text-2xl font-extrabold text-white" style={{ fontFamily: "'Baloo 2', sans-serif" }}>
+          Themes Explorer
         </h1>
         <p className="text-sm mt-1" style={{ color: 'rgba(255,255,255,0.5)' }}>
-          Browse themes by age group — click any to see personalisation scope
+          Browse themes by age group — click any to create a story
         </p>
       </div>
 
       {/* Age group tabs */}
-      <div className="flex justify-center gap-3 px-5 py-6">
+      <div className="flex justify-center gap-2 px-4 py-5">
         {AGE_GROUPS.map(g => (
           <button key={g.range} onClick={() => setActiveGroup(g.range)}
-            className="px-5 py-2.5 rounded-full text-sm font-extrabold transition-all"
+            className="flex-1 py-2.5 rounded-2xl font-extrabold transition-all text-center"
             style={{
               background: activeGroup === g.range ? g.color : C.white,
               color: activeGroup === g.range ? C.white : C.lgray,
               border: `2px solid ${activeGroup === g.range ? g.color : '#E5E7EB'}`,
               fontFamily: "'Baloo 2', sans-serif",
+              fontSize: 13,
+              whiteSpace: 'nowrap',
             }}>
-            Ages {g.range}
-            <span className="block text-xs font-semibold opacity-80">{g.label}</span>
+            {g.range}
+            <span className="block opacity-80" style={{ fontSize: 10, fontWeight: 600 }}>{g.label}</span>
           </button>
         ))}
       </div>
 
       {/* Theme cards */}
-      <div className="max-w-6xl mx-auto px-5 pb-16">
+      <div className="max-w-6xl mx-auto px-4 pb-16">
         <AnimatePresence mode="wait">
           <motion.div key={activeGroup} initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -12 }} transition={{ duration: 0.2 }}
-            style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '16px' }}>
+            className="grid gap-4"
+            style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))' }}>
             {group.themes.map(theme => (
               <ThemeCard key={theme.name} theme={theme} groupColor={group.color} onClick={() => setSelectedTheme(theme)} />
             ))}
