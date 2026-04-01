@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { ArrowRight, ChevronDown, MessageCircle } from 'lucide-react';
 import { NavBar } from '../components/NavBar';
 import { THEMES, ageToRange } from '../data/themes';
+import { trackEvent } from '../utils/analytics';
 
 // ── Palette — two backgrounds (white / navy), one warm gradient, saffron + gold accents
 const C = {
@@ -284,6 +285,7 @@ function OrderForm({ price }: { price: number; scrollTo: (id: string) => void })
       if (data.valid) {
         setCouponApplied({ code: couponInput.trim().toUpperCase(), discountAmount: data.discountAmount, finalPrice: data.finalPrice, discountType: data.discountType, discountValue: data.discountValue });
         setCouponError('');
+        trackEvent('coupon_applied', { coupon_code: couponInput.trim().toUpperCase(), discount_amount: data.discountAmount });
       } else {
         setCouponApplied(null);
         setCouponError(data.error || 'Invalid coupon code');
@@ -299,6 +301,7 @@ function OrderForm({ price }: { price: number; scrollTo: (id: string) => void })
 
   const handlePhotoAdd = async (file: File) => {
     if (photos.length >= 3) return;
+    trackEvent('photo_added', { photo_count: photos.length + 1 });
     const preview = URL.createObjectURL(file);
     const idx = photos.length;
     setPhotos(prev => [...prev, { file, preview, uploading: true, progress: 0, uploadedPath: null, signedUrl: null }]);
@@ -349,6 +352,14 @@ function OrderForm({ price }: { price: number; scrollTo: (id: string) => void })
     setShowConfirm(false);
     setSubmitting(true);
     setSubmitError('');
+    trackEvent('order_initiated', {
+      theme: form.storyTheme,
+      art_style: form.artStyle,
+      story_format: form.storyFormat,
+      has_coupon: !!couponApplied,
+      coupon_code: couponApplied?.code || '',
+      photo_count: photos.length,
+    });
     try {
       const photoPath = photos[0]?.uploadedPath || null;
       const photoSignedUrl = photos[0]?.signedUrl || null;
@@ -398,6 +409,13 @@ function OrderForm({ price }: { price: number; scrollTo: (id: string) => void })
             });
             if (!verifyRes.ok) throw new Error('Payment verification failed');
             localStorage.removeItem(FORM_STORAGE_KEY);
+            trackEvent('purchase', {
+              theme: form.storyTheme,
+              art_style: form.artStyle,
+              coupon_code: couponApplied?.code || '',
+              value: couponApplied ? couponApplied.finalPrice : price,
+              currency: 'INR',
+            });
             setSubmitted(true);
           } catch {
             setSubmitError('Payment verification failed. Please contact support.');
