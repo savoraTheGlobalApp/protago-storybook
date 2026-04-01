@@ -470,7 +470,7 @@ app.post('/api/create-order', async (req, res) => {
                             'Authorization': `Bearer ${process.env.SUPABASE_SERVICE_KEY_STORY}`,
                             'Content-Type': 'application/json',
                         },
-                        body: JSON.stringify({ expiresIn: 3600 }),
+                        body: JSON.stringify({ expiresIn: 604800 }), // 7 days
                     }
                 );
                 if (signRes.ok) {
@@ -556,7 +556,7 @@ app.post('/api/create-order', async (req, res) => {
                                                 'Authorization': `Bearer ${process.env.SUPABASE_SERVICE_KEY_STORY}`,
                                                 'Content-Type': 'application/json',
                                             },
-                                            body: JSON.stringify({ expiresIn: 3600 }),
+                                            body: JSON.stringify({ expiresIn: 604800 }), // 7 days
                                         }
                                     );
                                     if (signRes.ok) {
@@ -729,7 +729,7 @@ app.post('/api/upload-photo', async (req, res) => {
                     'Authorization': `Bearer ${process.env.SUPABASE_SERVICE_KEY_STORY}`,
                     'Content-Type': 'application/json',
                 },
-                body: JSON.stringify({ expiresIn: 3600 }),
+                body: JSON.stringify({ expiresIn: 604800 }), // 7 days
             }
         );
 
@@ -808,7 +808,7 @@ app.get('/api/orders/:orderId/photo', async (req, res) => {
                     'Authorization': `Bearer ${process.env.SUPABASE_SERVICE_KEY_STORY}`,
                     'Content-Type': 'application/json',
                 },
-                body: JSON.stringify({ expiresIn: 3600 }),
+                body: JSON.stringify({ expiresIn: 604800 }), // 7 days
             }
         );
 
@@ -919,7 +919,7 @@ app.post('/api/order-inquiry', async (req, res) => {
             childName, childAge, childGender,
             theme, storyTheme, artStyle, storyFormat,
             deliveryType, address, notes,
-            photoPath, additionalPhotoPaths, couponCode, referralSource,
+            photoPath, photoSignedUrl, additionalPhotoPaths, additionalPhotoSignedUrls, couponCode, referralSource,
         } = req.body;
 
         if (!email || !phone || !childName) {
@@ -980,7 +980,9 @@ app.post('/api/order-inquiry', async (req, res) => {
                     address_line1: address || null,
                     notes: notes || null,
                     photo_url: photoPath || null,
+                    photo_signed_url: photoSignedUrl || null,
                     additional_photo_urls: (additionalPhotoPaths && additionalPhotoPaths.length) ? additionalPhotoPaths : null,
+                    additional_photo_signed_urls: (additionalPhotoSignedUrls && additionalPhotoSignedUrls.length) ? additionalPhotoSignedUrls : null,
                     coupon_code: coupon ? couponCode.toUpperCase() : null,
                     discount_amount: discountAmount,
                     referral_source: referralSource || null,

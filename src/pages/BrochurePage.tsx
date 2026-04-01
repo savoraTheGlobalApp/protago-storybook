@@ -251,7 +251,7 @@ function OrderForm({ price }: { price: number; scrollTo: (id: string) => void })
     address: savedDraft.address || '',
     notes: savedDraft.notes || '',
   });
-  type PhotoEntry = { file: File; preview: string; uploading: boolean; progress: number; uploadedPath: string | null };
+  type PhotoEntry = { file: File; preview: string; uploading: boolean; progress: number; uploadedPath: string | null; signedUrl: string | null };
   const [photos, setPhotos] = useState<PhotoEntry[]>([]);
   const [submitted, setSubmitted] = useState(false);
   const [submitting, setSubmitting] = useState(false);
@@ -301,7 +301,7 @@ function OrderForm({ price }: { price: number; scrollTo: (id: string) => void })
     if (photos.length >= 3) return;
     const preview = URL.createObjectURL(file);
     const idx = photos.length;
-    setPhotos(prev => [...prev, { file, preview, uploading: true, progress: 0, uploadedPath: null }]);
+    setPhotos(prev => [...prev, { file, preview, uploading: true, progress: 0, uploadedPath: null, signedUrl: null }]);
 
     try {
       const base64 = await new Promise<string>((resolve, reject) => {
@@ -323,10 +323,15 @@ function OrderForm({ price }: { price: number; scrollTo: (id: string) => void })
           if (xhr.status >= 200 && xhr.status < 300) {
             try {
               const data = JSON.parse(xhr.responseText);
-              setPhotos(prev => prev.map((p, i) => i === idx ? { ...p, uploading: false, progress: 100, uploadedPath: data.photo_url || null } : p));
-            } catch { /* non-fatal */ }
+              setPhotos(prev => prev.map((p, i) => i === idx ? { ...p, uploading: false, progress: 100, uploadedPath: data.photo_url || null, signedUrl: data.photo_signed_url || null } : p));
+            } catch (err) {
+              console.error('[upload] parse error:', err, xhr.responseText);
+            }
             resolve();
-          } else reject(new Error('Upload failed'));
+          } else {
+            console.error('[upload] failed:', xhr.status, xhr.responseText);
+            reject(new Error('Upload failed'));
+          }
         };
         xhr.onerror = () => reject(new Error('Upload error'));
         xhr.send(JSON.stringify({ photo: base64 }));
@@ -346,7 +351,9 @@ function OrderForm({ price }: { price: number; scrollTo: (id: string) => void })
     setSubmitError('');
     try {
       const photoPath = photos[0]?.uploadedPath || null;
+      const photoSignedUrl = photos[0]?.signedUrl || null;
       const additionalPhotoPaths = photos.slice(1).map(p => p.uploadedPath).filter(Boolean);
+      const additionalPhotoSignedUrls = photos.slice(1).map(p => p.signedUrl).filter(Boolean);
 
       const res = await fetch(`${API_BASE}/api/order-inquiry`, {
         method: 'POST',
@@ -354,7 +361,9 @@ function OrderForm({ price }: { price: number; scrollTo: (id: string) => void })
         body: JSON.stringify({
           ...form,
           photoPath,
+          photoSignedUrl,
           additionalPhotoPaths,
+          additionalPhotoSignedUrls,
           couponCode: couponApplied?.code || null,
           referralSource: localStorage.getItem('protago_ref') || null,
         }),
@@ -1302,9 +1311,9 @@ export function BrochurePage() {
       </section>
 
       {/* ══════════════════════════════════════════
-          § 6.5  GOOGLE REVIEWS — warm tint
+          § 6.5  GOOGLE REVIEWS — hidden until live
       ══════════════════════════════════════════ */}
-      <ReviewsSection />
+      {/* <ReviewsSection /> */}
 
       {/* ══════════════════════════════════════════
           § 7  WHY IT MATTERS — navy
