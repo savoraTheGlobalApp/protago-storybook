@@ -22,10 +22,17 @@ export function NavBar() {
   const location = useLocation();
   const onHome = location.pathname === '/';
 
+  const scrollTo = (anchor: string) => {
+    const el = document.getElementById(anchor);
+    if (!el) return;
+    const top = el.getBoundingClientRect().top + window.scrollY - 64;
+    window.scrollTo({ top, behavior: 'smooth' });
+  };
+
   const goTo = (anchor: string) => {
     setMobileOpen(false);
     if (onHome) {
-      document.getElementById(anchor)?.scrollIntoView({ behavior: 'smooth' });
+      setTimeout(() => scrollTo(anchor), 300);
     } else {
       navigate(`/?scroll=${anchor}`);
     }
@@ -34,7 +41,7 @@ export function NavBar() {
   const goOrder = () => {
     setMobileOpen(false);
     if (onHome) {
-      document.getElementById('order')?.scrollIntoView({ behavior: 'smooth' });
+      setTimeout(() => scrollTo('order'), 300);
     } else {
       navigate('/?scroll=order');
     }
