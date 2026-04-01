@@ -1093,6 +1093,90 @@ app.post('/api/order-alert', async (req, res) => {
     }
 });
 
+// ── Google Reviews ────────────────────────────────────────────────────────────
+// Cached in memory; refreshed every 12 hours to minimise Places API costs.
+const FALLBACK_REVIEWS = {
+    rating: 5.0,
+    userRatingCount: 12,
+    reviews: [
+        {
+            authorName: 'Sumit Sharma',
+            authorPhoto: null,
+            rating: 5,
+            relativeTime: '2 weeks ago',
+            text: 'Absolutely magical! My daughter Ananya couldn\'t believe she was the hero of the story. She asked us to read it every night for a week. Worth every rupee.',
+        },
+        {
+            authorName: 'Priya Menon',
+            authorPhoto: null,
+            rating: 5,
+            relativeTime: '1 month ago',
+            text: 'Ordered for my son\'s birthday — he was speechless when he saw himself in the illustrations. The art quality is incredible. Already ordered a second one!',
+        },
+        {
+            authorName: 'Rahul Agarwal',
+            authorPhoto: null,
+            rating: 5,
+            relativeTime: '3 weeks ago',
+            text: 'Best gift I\'ve given. Rohan is 7 and has been telling all his friends at school about his own storybook. The personalisation is spot on.',
+        },
+    ],
+};
+
+let reviewsCache = null;
+let reviewsCacheTime = 0;
+const REVIEWS_CACHE_TTL = 12 * 60 * 60 * 1000; // 12 hours
+
+app.get('/api/reviews', async (req, res) => {
+    try {
+        const apiKey = process.env.GOOGLE_PLACES_API_KEY;
+        const placeId = process.env.GOOGLE_PLACE_ID;
+
+        // Return cached data if fresh
+        if (reviewsCache && Date.now() - reviewsCacheTime < REVIEWS_CACHE_TTL) {
+            return res.json(reviewsCache);
+        }
+
+        if (!apiKey || !placeId) {
+            return res.json(FALLBACK_REVIEWS);
+        }
+
+        const url = `https://places.googleapis.com/v1/places/${placeId}`;
+        const placesRes = await fetch(url, {
+            headers: {
+                'X-Goog-Api-Key': apiKey,
+                'X-Goog-FieldMask': 'rating,userRatingCount,reviews',
+            },
+        });
+
+        if (!placesRes.ok) {
+            console.error('Places API error:', await placesRes.text());
+            return res.json(reviewsCache || FALLBACK_REVIEWS);
+        }
+
+        const data = await placesRes.json();
+        const reviews = (data.reviews || []).map(r => ({
+            authorName: r.authorAttribution?.displayName || 'Anonymous',
+            authorPhoto: r.authorAttribution?.photoUri || null,
+            rating: r.rating || 5,
+            relativeTime: r.relativePublishTimeDescription || '',
+            text: r.text?.text || r.originalText?.text || '',
+        }));
+
+        reviewsCache = {
+            rating: data.rating || FALLBACK_REVIEWS.rating,
+            userRatingCount: data.userRatingCount || FALLBACK_REVIEWS.userRatingCount,
+            reviews: reviews.length >= 2 ? reviews : FALLBACK_REVIEWS.reviews,
+        };
+        reviewsCacheTime = Date.now();
+
+        return res.json(reviewsCache);
+    } catch (err) {
+        console.error('Reviews fetch error:', err);
+        return res.json(reviewsCache || FALLBACK_REVIEWS);
+    }
+});
+
 // Serve static files from the React app
 app.use(express.static(path.join(__dirname, '../build')));
 

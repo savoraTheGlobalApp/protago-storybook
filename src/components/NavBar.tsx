@@ -12,6 +12,7 @@ const NAV_LINKS = [
   { label: 'Books',        anchor: 'books' },
   { label: 'Art Styles',   anchor: 'art-styles' },
   { label: 'How It Works', anchor: 'how-it-works' },
+  { label: 'Team',         anchor: 'team' },
   { label: 'FAQ',          anchor: 'faq' },
 ];
 

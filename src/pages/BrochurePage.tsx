@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ArrowRight, ChevronDown, MessageCircle } from 'lucide-react';
@@ -121,6 +121,115 @@ const FORMATS = [
   { label: 'Immersive (Cinematic)', available: true },
   { label: 'Comic Book (Panels)',   available: false },
 ];
+
+// ── Google "G" logo SVG ──────────────────────────────────────────────────────
+function GoogleG() {
+  return (
+    <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
+      <path d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844a4.14 4.14 0 0 1-1.796 2.716v2.259h2.908c1.702-1.567 2.684-3.875 2.684-6.615Z" fill="#4285F4"/>
+      <path d="M9 18c2.43 0 4.467-.806 5.956-2.18l-2.908-2.259c-.806.54-1.837.86-3.048.86-2.344 0-4.328-1.584-5.036-3.711H.957v2.332A8.997 8.997 0 0 0 9 18Z" fill="#34A853"/>
+      <path d="M3.964 10.71A5.41 5.41 0 0 1 3.682 9c0-.593.102-1.17.282-1.71V4.958H.957A8.996 8.996 0 0 0 0 9c0 1.452.348 2.827.957 4.042l3.007-2.332Z" fill="#FBBC05"/>
+      <path d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0A8.997 8.997 0 0 0 .957 4.958L3.964 7.29C4.672 5.163 6.656 3.58 9 3.58Z" fill="#EA4335"/>
+    </svg>
+  );
+}
+
+type ReviewData = {
+  rating: number;
+  userRatingCount: number;
+  reviews: { authorName: string; authorPhoto: string | null; rating: number; relativeTime: string; text: string }[];
+};
+
+const API_BASE_URL = import.meta.env.VITE_API_URL || '';
+
+function ReviewsSection() {
+  const [data, setData] = useState<ReviewData | null>(null);
+  const scrollRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    fetch(`${API_BASE_URL}/api/reviews`)
+      .then(r => r.json())
+      .then(setData)
+      .catch(() => {});
+  }, []);
+
+  if (!data) return null;
+
+  const stars = (n: number) => '★'.repeat(n) + '☆'.repeat(5 - n);
+
+  const initials = (name: string) =>
+    name.split(' ').map(w => w[0]).slice(0, 2).join('').toUpperCase();
+
+  const avatarColors = ['#FF6B35', '#1A1A2E', '#F7B731', '#2E7D32', '#6A1B9A'];
+  const avatarColor = (name: string) =>
+    avatarColors[name.charCodeAt(0) % avatarColors.length];
+
+  return (
+    <section style={{ background: '#FAFAFA' }} className="py-16 sm:py-20">
+      <div className="max-w-6xl mx-auto px-5 sm:px-8">
+        {/* Header */}
+        <motion.div initial={{ opacity: 0, y: 16 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}
+          className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8">
+          <div>
+            <div className="flex items-center gap-2 mb-1">
+              <GoogleG />
+              <span className="text-xs font-bold uppercase tracking-widest" style={{ color: '#5F6368' }}>Google Reviews</span>
+            </div>
+            <div className="flex items-baseline gap-2">
+              <span className="text-4xl font-extrabold" style={{ fontFamily: "'Baloo 2', sans-serif", color: '#1A1A2E' }}>
+                {data.rating.toFixed(1)}
+              </span>
+              <span style={{ color: '#F7B731', fontSize: 22, letterSpacing: -1 }}>{'★'.repeat(Math.round(data.rating))}</span>
+              <span className="text-sm" style={{ color: '#888' }}>· {data.userRatingCount} reviews</span>
+            </div>
+          </div>
+          <a
+            href={`https://search.google.com/local/reviews?placeid=${import.meta.env.VITE_GOOGLE_PLACE_ID || ''}`}
+            target="_blank" rel="noopener noreferrer"
+            className="text-sm font-bold flex items-center gap-1.5 self-start sm:self-auto px-4 py-2 rounded-full border transition-colors hover:bg-gray-50"
+            style={{ color: '#4285F4', borderColor: '#DADCE0' }}>
+            <GoogleG /> See all on Google
+          </a>
+        </motion.div>
+
+        {/* Scrollable cards */}
+        <div ref={scrollRef} className="flex gap-4 overflow-x-auto pb-3"
+          style={{ scrollSnapType: 'x mandatory', WebkitOverflowScrolling: 'touch', scrollbarWidth: 'none' }}>
+          {data.reviews.map((r, i) => (
+            <motion.div key={i} initial={{ opacity: 0, y: 16 }} whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }} transition={{ delay: i * 0.07 }}
+              className="flex-shrink-0 rounded-2xl p-5 flex flex-col gap-3"
+              style={{ width: 300, scrollSnapAlign: 'start', background: '#FFFFFF', boxShadow: '0 2px 16px rgba(0,0,0,0.07)', border: '1px solid #F0F0F0' }}>
+              {/* Top row */}
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  {r.authorPhoto ? (
+                    <img src={r.authorPhoto} alt={r.authorName}
+                      className="rounded-full object-cover" style={{ width: 38, height: 38 }} />
+                  ) : (
+                    <div className="rounded-full flex items-center justify-center text-white text-sm font-bold"
+                      style={{ width: 38, height: 38, background: avatarColor(r.authorName), flexShrink: 0 }}>
+                      {initials(r.authorName)}
+                    </div>
+                  )}
+                  <div>
+                    <p className="text-sm font-bold leading-tight" style={{ color: '#1A1A2E' }}>{r.authorName}</p>
+                    <p className="text-xs" style={{ color: '#AAA' }}>{r.relativeTime}</p>
+                  </div>
+                </div>
+                <GoogleG />
+              </div>
+              {/* Stars */}
+              <p style={{ color: '#F7B731', fontSize: 16, letterSpacing: 1 }}>{stars(r.rating)}</p>
+              {/* Text */}
+              <p className="text-sm leading-relaxed" style={{ color: '#444' }}>{r.text}</p>
+            </motion.div>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}
 
 function OrderForm({ price }: { price: number; scrollTo: (id: string) => void }) {
   const [searchParams] = useSearchParams();
@@ -1193,6 +1302,11 @@ export function BrochurePage() {
       </section>
 
       {/* ══════════════════════════════════════════
+          § 6.5  GOOGLE REVIEWS — warm tint
+      ══════════════════════════════════════════ */}
+      <ReviewsSection />
+
+      {/* ══════════════════════════════════════════
           § 7  WHY IT MATTERS — navy
       ══════════════════════════════════════════ */}
       <section style={{ background: C.navy }} className="py-16 sm:py-20">
@@ -1327,7 +1441,7 @@ export function BrochurePage() {
       {/* ══════════════════════════════════════════
           TEAM
       ══════════════════════════════════════════ */}
-      <section style={{ background: C.warmTint }} className="py-16 px-5 sm:px-8">
+      <section id="team" style={{ background: C.warmTint }} className="py-16 px-5 sm:px-8">
         <div className="max-w-3xl mx-auto text-center">
           <motion.div initial={{ opacity: 0, y: 24 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}>
             <h2 className="text-2xl sm:text-3xl font-extrabold mb-2" style={{ fontFamily: "'Baloo 2', sans-serif", color: C.navy }}>
