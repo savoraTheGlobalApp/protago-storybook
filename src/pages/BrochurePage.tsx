@@ -549,22 +549,36 @@ function OrderForm({ price }: { price: number; scrollTo: (id: string) => void })
                 <div className="sm:col-span-2">
                   <label style={labelStyle}>Child's photos * <span style={{ color: C.lgray, fontWeight: 400, textTransform: 'none', fontSize: 11 }}>(up to 3)</span></label>
 
-                  {/* Instructions */}
-                  <div className="rounded-xl p-3 mb-3 flex flex-col gap-1.5" style={{ background: '#FFF8F3', border: `1px solid ${C.saffron}30` }}>
-                    <p className="text-xs font-bold" style={{ color: C.saffron }}>📸 Tips for the best result</p>
-                    <div className="grid grid-cols-2 gap-x-4 gap-y-1">
+                  {/* Visual tips */}
+                  <div className="rounded-xl p-3 mb-3" style={{ background: '#F9FAFB', border: '1px solid #E5E7EB' }}>
+                    <p className="text-xs font-bold uppercase tracking-widest text-center mb-3" style={{ color: C.lgray }}>Tips</p>
+                    <div className="grid grid-cols-4 gap-2">
                       {[
-                        ['✅', 'Clear face, front-facing'],
-                        ['✅', 'Good natural lighting'],
-                        ['✅', 'Recent photo (within 1 year)'],
-                        ['✅', 'Child alone in the photo'],
-                        ['❌', 'No sunglasses or hats'],
-                        ['❌', 'Avoid blurry or dark shots'],
-                      ].map(([emoji, text]) => (
-                        <p key={text} className="text-xs" style={{ color: C.gray }}>{emoji} {text}</p>
+                        { img: '/photo-tips/good.avif',        label: 'Clear front-facing photo',  good: true  },
+                        { img: '/photo-tips/group.jpg',        label: 'Only one person',            good: false },
+                        { img: '/photo-tips/sunglasses.avif',  label: 'No accessories',             good: false },
+                        { img: '/photo-tips/sideangle.jpg',    label: 'No side angle',              good: false },
+                      ].map(({ img, label, good }) => (
+                        <div key={label} className="flex flex-col items-center gap-1.5">
+                          <div className="relative" style={{ width: 80, height: 80 }}>
+                            <img src={img} alt={label}
+                              style={{ width: 80, height: 80, borderRadius: '50%', objectFit: 'cover', objectPosition: 'top',
+                                border: `3px solid ${good ? '#22C55E' : '#EF4444'}` }} />
+                            <div style={{
+                              position: 'absolute', bottom: 0, right: 0,
+                              width: 22, height: 22, borderRadius: '50%',
+                              background: good ? '#22C55E' : '#EF4444',
+                              display: 'flex', alignItems: 'center', justifyContent: 'center',
+                              fontSize: 13, color: '#fff', fontWeight: 800,
+                              border: '2px solid #fff',
+                            }}>
+                              {good ? '✓' : '✕'}
+                            </div>
+                          </div>
+                          <p className="text-center leading-tight" style={{ fontSize: 9, color: C.gray }}>{label}</p>
+                        </div>
                       ))}
                     </div>
-                    <p className="text-xs mt-0.5" style={{ color: C.lgray }}>Adding 2–3 photos from different angles gives much better results.</p>
                   </div>
 
                   {/* Photo slots */}

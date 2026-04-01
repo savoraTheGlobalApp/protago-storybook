@@ -4,7 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Menu, X } from 'lucide-react';
 
 const C = {
-  saffron: '#FF6B35', gray: '#555555', lgray: '#999999',
+  saffron: '#FF6B35', gray: '#555555', lgray: '#999999', navy: '#1A1A2E',
   gradient: 'linear-gradient(135deg, #FF6B35 0%, #F7B731 100%)',
 };
 
@@ -77,35 +77,57 @@ export function NavBar() {
           </button>
         </nav>
 
-        <button onClick={() => setMobileOpen(o => !o)} className="md:hidden p-2"
-          style={{ color: C.gray, background: 'none', border: 'none', cursor: 'pointer' }}>
-          {mobileOpen ? <X size={20} /> : <Menu size={20} />}
-        </button>
+        {/* Hamburger button */}
+        <motion.button
+          onClick={() => setMobileOpen(o => !o)}
+          className="md:hidden flex items-center justify-center rounded-xl"
+          style={{ width: 38, height: 38, background: mobileOpen ? '#F3F4F6' : 'none', border: 'none', cursor: 'pointer', color: C.navy }}
+          whileTap={{ scale: 0.92 }}>
+          <AnimatePresence mode="wait" initial={false}>
+            <motion.span key={mobileOpen ? 'x' : 'menu'}
+              initial={{ rotate: -90, opacity: 0 }} animate={{ rotate: 0, opacity: 1 }}
+              exit={{ rotate: 90, opacity: 0 }} transition={{ duration: 0.15 }}>
+              {mobileOpen ? <X size={22} strokeWidth={2.5} /> : <Menu size={22} strokeWidth={2.5} />}
+            </motion.span>
+          </AnimatePresence>
+        </motion.button>
       </div>
 
+      {/* Mobile menu */}
       <AnimatePresence>
         {mobileOpen && (
-          <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }}
-            exit={{ height: 0, opacity: 0 }} className="md:hidden overflow-hidden border-t" style={{ borderColor: '#F0F0F0' }}>
-            <div className="px-5 py-4 flex flex-col gap-3 bg-white">
-              {NAV_LINKS.map(({ label, anchor }) => (
-                <button key={anchor} onClick={() => goTo(anchor)}
-                  className="text-sm text-left py-1 font-semibold"
-                  style={{ color: C.gray, background: 'none', border: 'none', cursor: 'pointer' }}>
+          <motion.div
+            initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -8 }} transition={{ duration: 0.2 }}
+            className="md:hidden border-t" style={{ borderColor: '#F0F0F0', background: '#fff' }}>
+            <div className="px-4 py-4 flex flex-col">
+              {NAV_LINKS.map(({ label, anchor }, i) => (
+                <motion.button key={anchor}
+                  initial={{ opacity: 0, x: -12 }} animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: i * 0.04 }}
+                  onClick={() => goTo(anchor)}
+                  className="py-4 font-semibold text-center w-full"
+                  style={{ color: C.navy, background: 'none', border: 'none', borderBottom: '1px solid #F5F5F5', cursor: 'pointer', fontSize: 18 }}>
                   {label}
-                </button>
+                </motion.button>
               ))}
-              <button onClick={() => { setMobileOpen(false); navigate('/themes'); }}
-                className="text-sm text-left py-1 font-semibold"
-                style={{ color: C.saffron, background: 'none', border: 'none', cursor: 'pointer',
+              <motion.button
+                initial={{ opacity: 0, x: -12 }} animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: NAV_LINKS.length * 0.04 }}
+                onClick={() => { setMobileOpen(false); navigate('/themes'); }}
+                className="py-4 font-semibold text-center w-full"
+                style={{ color: C.saffron, background: 'none', border: 'none', borderBottom: '1px solid #F5F5F5', cursor: 'pointer', fontSize: 18,
                   fontWeight: location.pathname === '/themes' ? 800 : 600 }}>
                 Themes
-              </button>
-              <button onClick={goOrder}
-                className="mt-1 px-5 py-2.5 rounded-full text-sm font-bold text-white text-center"
-                style={{ background: C.gradient, border: 'none', cursor: 'pointer' }}>
-                Order Now
-              </button>
+              </motion.button>
+              <motion.button
+                initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: (NAV_LINKS.length + 1) * 0.04 }}
+                onClick={goOrder}
+                className="mt-3 mb-1 py-3 rounded-2xl text-sm font-bold text-white text-center"
+                style={{ background: C.gradient, border: 'none', cursor: 'pointer', fontSize: 18 }}>
+                Order Now →
+              </motion.button>
             </div>
           </motion.div>
         )}
