@@ -10,8 +10,14 @@ const GA4_ID = import.meta.env.VITE_GA4_MEASUREMENT_ID;
 let initialized = false;
 
 export function initGA4() {
-  if (initialized || !GA4_ID || GA4_ID === 'G-XXXXXXXXXX') return;
+  if (initialized) return;
   initialized = true;
+
+  // If gtag is already loaded from index.html, just ensure window.gtag is available
+  if (typeof window.gtag === 'function') return;
+
+  // Fallback: dynamically load if not in index.html (e.g. env-var driven)
+  if (!GA4_ID || GA4_ID === 'G-XXXXXXXXXX') return;
 
   const script = document.createElement('script');
   script.async = true;
