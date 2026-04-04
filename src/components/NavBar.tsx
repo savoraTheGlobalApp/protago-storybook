@@ -25,7 +25,7 @@ export function NavBar() {
   const scrollTo = (anchor: string) => {
     const el = document.getElementById(anchor);
     if (!el) return;
-    const top = el.getBoundingClientRect().top + window.scrollY - 64;
+    const top = el.getBoundingClientRect().top + window.scrollY - 90;
     window.scrollTo({ top, behavior: 'smooth' });
   };
 
@@ -132,6 +132,28 @@ export function NavBar() {
           </motion.div>
         )}
       </AnimatePresence>
+
+      {/* Launch offer banner — scrolling marquee */}
+      <div className="w-full overflow-hidden"
+        style={{ background: C.navy, padding: '8px 0' }}>
+        <motion.div
+          className="flex items-center whitespace-nowrap"
+          animate={{ x: ['0%', '-50%'] }}
+          transition={{ x: { duration: 18, repeat: Infinity, ease: 'linear' } }}>
+          {[0, 1].map(copy => (
+            <span key={copy} className="flex items-center gap-6 px-6" style={{ fontSize: 15, fontWeight: 700, color: '#fff' }}>
+              <span>🎉</span>
+              <span>Launch Offer — <span style={{ color: '#F7B731' }}>15% OFF</span> with code <span className="font-extrabold tracking-wider" style={{ color: '#F7B731' }}>PROTAGO50</span></span>
+              <span>🎊</span>
+              <span style={{ color: 'rgba(255,255,255,0.3)' }}>✦</span>
+              <span>🎉</span>
+              <span>Launch Offer — <span style={{ color: '#F7B731' }}>15% OFF</span> with code <span className="font-extrabold tracking-wider" style={{ color: '#F7B731' }}>PROTAGO50</span></span>
+              <span>🎊</span>
+              <span style={{ color: 'rgba(255,255,255,0.3)' }}>✦</span>
+            </span>
+          ))}
+        </motion.div>
+      </div>
     </header>
   );
 }

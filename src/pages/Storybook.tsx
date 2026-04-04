@@ -209,18 +209,18 @@ export function Storybook() {
                 onMouseEnter={() => setCarouselPaused(true)}
                 onMouseLeave={() => setCarouselPaused(false)}
               >
-                <AnimatePresence mode="wait">
+                {/* All images rendered once — opacity-animated to avoid re-fetches on slide change */}
+                {storybooks.map((book, i) => (
                   <motion.img
-                    key={activeSlide}
-                    src={storybooks[activeSlide].cover}
-                    alt={storybooks[activeSlide].title}
+                    key={book.cover}
+                    src={book.cover}
+                    alt={book.title}
                     className="absolute inset-0 w-full h-full object-cover"
-                    initial={{ x: 60, opacity: 0 }}
-                    animate={{ x: 0, opacity: 1 }}
-                    exit={{ x: -60, opacity: 0 }}
+                    animate={{ opacity: i === activeSlide ? 1 : 0, x: i === activeSlide ? 0 : (i < activeSlide ? -60 : 60) }}
                     transition={{ duration: 0.4, ease: 'easeInOut' }}
+                    style={{ zIndex: i === activeSlide ? 1 : 0 }}
                   />
-                </AnimatePresence>
+                ))}
 
                 {/* Bottom overlay */}
                 <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/65 via-black/20 to-transparent px-6 pb-5 pt-16">

@@ -947,25 +947,25 @@ export function BrochurePage() {
             transition={{ duration: 0.6, delay: 0.15 }}
             className="flex-1 relative sm:rounded-tl-3xl overflow-hidden"
             style={{ aspectRatio: '1 / 1' }}>
-            <AnimatePresence mode="wait">
+            {/* All images rendered once — opacity-animated so no re-fetches on slide change */}
+            {HERO_SLIDES.map((slide, i) => (
               <motion.img
-                key={heroSlide}
-                src={HERO_SLIDES[heroSlide].src}
-                alt={HERO_SLIDES[heroSlide].caption}
+                key={slide.src}
+                src={slide.src}
+                alt={slide.caption}
                 className="absolute inset-0 w-full h-full object-cover object-left"
-                initial={{ opacity: 0, x: 40 }}
-                animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: -40 }}
+                animate={{ opacity: i === heroSlide ? 1 : 0, x: i === heroSlide ? 0 : (i < heroSlide ? -40 : 40) }}
                 transition={{ duration: 0.45, ease: 'easeInOut' }}
+                style={{ zIndex: i === heroSlide ? 1 : 0 }}
               />
-            </AnimatePresence>
+            ))}
 
             {/* Bottom gradient */}
             <div className="absolute bottom-0 left-0 right-0 h-20"
-              style={{ background: 'linear-gradient(to top, #F7B731, transparent)' }} />
+              style={{ background: 'linear-gradient(to top, #F7B731, transparent)', zIndex: 2 }} />
 
             {/* Caption */}
-            <div className="absolute bottom-9 left-0 right-0 flex justify-center px-4">
+            <div className="absolute bottom-9 left-0 right-0 flex justify-center px-4" style={{ zIndex: 3 }}>
               <AnimatePresence mode="wait">
                 <motion.span key={heroSlide}
                   initial={{ opacity: 0, y: 5 }} animate={{ opacity: 1, y: 0 }}
