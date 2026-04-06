@@ -992,6 +992,34 @@ export function BrochurePage() {
       </section>
 
       {/* ══════════════════════════════════════════
+          § 1.5  TESTIMONIAL VIDEO — soft bg
+      ══════════════════════════════════════════ */}
+      <section style={{ background: '#FFFAF5' }} className="py-14 sm:py-16">
+        <div className="max-w-5xl mx-auto px-5 sm:px-8">
+          <motion.div initial={{ opacity: 0, y: 16 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}
+            className="flex flex-col items-center text-center">
+            {eyebrow('Real parents, real reactions')}
+            {heading('See what parents are saying')}
+            <p className="text-sm mt-3 mb-8 leading-relaxed max-w-md" style={{ color: C.gray }}>
+              Nothing we say matters more than what they say.
+            </p>
+            <motion.div initial={{ opacity: 0, scale: 0.95 }} whileInView={{ opacity: 1, scale: 1 }}
+              viewport={{ once: true }} transition={{ delay: 0.1 }}
+              className="rounded-2xl overflow-hidden shadow-lg"
+              style={{ width: '100%', maxWidth: 360, aspectRatio: '9 / 16' }}>
+              <iframe
+                src="https://www.youtube.com/embed/OsUGHz9LILY"
+                title="Parent testimonial"
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                allowFullScreen
+                className="w-full h-full border-0"
+              />
+            </motion.div>
+          </motion.div>
+        </div>
+      </section>
+
+      {/* ══════════════════════════════════════════
           § 2  ONE PHOTO — white
       ══════════════════════════════════════════ */}
       <section style={{ background: C.white }} className="py-16 sm:py-20">
