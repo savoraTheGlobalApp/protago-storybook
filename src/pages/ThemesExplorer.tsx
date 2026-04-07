@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { NavBar } from '../components/NavBar';
@@ -25,6 +25,12 @@ type AgeGroup = {
   color: string;
   themes: Theme[];
 };
+
+const FACE_SAMPLES = [
+  { key: 'boy_young', face: '/faces/face_boy_young.png' },
+  { key: 'boy_older', face: '/faces/face_boy_older.png' },
+  { key: 'girl',      face: '/faces/face_girl_medium.png' },
+];
 
 const AGE_GROUPS: AgeGroup[] = [
   {
@@ -256,7 +262,16 @@ function ThemeModal({ theme, groupColor, onClose }: { theme: Theme; groupColor: 
   );
 }
 
+const FACE_SIZE_CARD = 80;
+
 function ThemeCard({ theme, onClick }: { theme: Theme; groupColor: string; onClick: () => void }) {
+  const [activeIdx, setActiveIdx] = useState(0);
+
+  useEffect(() => {
+    const t = setInterval(() => setActiveIdx(i => (i + 1) % FACE_SAMPLES.length), 2000);
+    return () => clearInterval(t);
+  }, []);
+
   return (
     <motion.div layout className="rounded-2xl overflow-hidden cursor-pointer"
       style={{ border: '1.5px solid #E5E7EB', background: C.white }}
@@ -264,15 +279,64 @@ function ThemeCard({ theme, onClick }: { theme: Theme; groupColor: string; onCli
       transition={{ type: 'spring', stiffness: 300, damping: 24 }}
       onClick={onClick}>
 
-      <div style={{ aspectRatio: '16/9', background: '#F0EEE8', position: 'relative' }}>
-        <img
-          src={`/themes/${theme.slug}.png`}
-          alt={theme.name}
-          style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
-          onError={e => { (e.target as HTMLImageElement).style.display = 'none'; }}
-        />
-        <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, padding: '20px 14px 10px', background: 'linear-gradient(transparent, rgba(0,0,0,0.55))' }}>
-          <p className="font-extrabold text-base" style={{ fontFamily: "'Baloo 2', sans-serif", color: '#fff' }}>{theme.icon} {theme.name}</p>
+      {/* Scene + hovering face */}
+      <div style={{ paddingTop: FACE_SIZE_CARD / 2, position: 'relative' }}>
+        {/* Scene */}
+        <div style={{ aspectRatio: '16/9', background: '#F0EEE8', position: 'relative', overflow: 'hidden' }}>
+          {FACE_SAMPLES.map((sample, i) => (
+            <motion.img
+              key={sample.key}
+              src={`/themes_faceswap/${theme.slug}_${sample.key}.png`}
+              alt=""
+              style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
+              animate={{ opacity: i === activeIdx ? 1 : 0 }}
+              transition={{ duration: 0.5, ease: 'easeInOut' }}
+              onError={e => { (e.target as HTMLImageElement).style.display = 'none'; }}
+            />
+          ))}
+
+          {/* Arrow SVG */}
+          <svg viewBox="0 0 160 90" preserveAspectRatio="none"
+            style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', zIndex: 5, pointerEvents: 'none' }}>
+            <motion.path
+              d="M 148 4 Q 148 45 52 30"
+              fill="none" stroke={C.saffron} strokeWidth="2.2" strokeDasharray="5 3" strokeLinecap="round"
+              initial={{ pathLength: 0, opacity: 0 }}
+              animate={{ pathLength: 1, opacity: 1 }}
+              transition={{ pathLength: { duration: 1.0, ease: 'easeInOut', delay: 0.2 }, opacity: { duration: 0.2 } }}
+              key={activeIdx}
+            />
+            <motion.path
+              d="M 60 25 L 52 30 L 58 36"
+              fill="none" stroke={C.saffron} strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"
+              initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 1.0 }}
+              key={`arrowhead-${activeIdx}`}
+            />
+          </svg>
+
+          {/* Title overlay */}
+          <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, padding: '20px 14px 10px', background: 'linear-gradient(transparent, rgba(0,0,0,0.55))', zIndex: 4 }}>
+            <p className="font-extrabold text-base" style={{ fontFamily: "'Baloo 2', sans-serif", color: '#fff' }}>{theme.icon} {theme.name}</p>
+          </div>
+        </div>
+
+        {/* Face circle — hovering top-right */}
+        <div style={{ position: 'absolute', top: 0, right: 12, width: FACE_SIZE_CARD, height: FACE_SIZE_CARD, zIndex: 10 }}>
+          {FACE_SAMPLES.map((sample, i) => (
+            <motion.img
+              key={sample.face}
+              src={sample.face}
+              alt=""
+              className="rounded-full"
+              style={{
+                position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover',
+                border: `3px solid ${C.saffron}`,
+                boxShadow: '0 4px 16px rgba(255,107,53,0.35), 0 0 0 2px #fff',
+              }}
+              animate={{ opacity: i === activeIdx ? 1 : 0, scale: i === activeIdx ? 1 : 0.9 }}
+              transition={{ duration: 0.4, ease: 'easeInOut' }}
+            />
+          ))}
         </div>
       </div>
 

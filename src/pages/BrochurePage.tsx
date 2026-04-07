@@ -110,6 +110,209 @@ const HERO_SLIDES = [
   { src: '/styles/prisha_scene_09.png',  caption: 'She searched all night — and found it.' },
 ];
 
+// ── FACE → SCENE ANIMATION ────────────────────────────────────────────────
+const FACE_SAMPLES = [
+  { key: 'boy_young', face: '/faces/face_boy_young.png' },
+  { key: 'boy_older', face: '/faces/face_boy_older.png' },
+  { key: 'girl',      face: '/faces/face_girl_medium.png' },
+];
+
+const FACE_SCENE_SAMPLES = [
+  { name: 'Boy',  face: '/faces/face_boy_young.png',  scene: '/themes_faceswap/bedtime-routines_boy_young.png' },
+  { name: 'Boy',  face: '/faces/face_boy_older.png',  scene: '/themes_faceswap/bedtime-routines_boy_older.png' },
+  { name: 'Girl', face: '/faces/face_girl_medium.png', scene: '/themes_faceswap/bedtime-routines_girl.png' },
+];
+
+function FaceToSceneAnimation() {
+  const [activeIdx, setActiveIdx] = useState(0);
+  const FACE_SIZE = 220;
+
+  useEffect(() => {
+    const t = setInterval(() => setActiveIdx(i => (i + 1) % FACE_SCENE_SAMPLES.length), 3500);
+    return () => clearInterval(t);
+  }, []);
+
+  return (
+    <div className="mb-12">
+      {/* Outer wrapper — extra top padding so face circle can overflow upward */}
+      <div className="relative" style={{ paddingTop: FACE_SIZE / 2 }}>
+
+        {/* Scene spread */}
+        <div className="relative rounded-2xl overflow-hidden shadow-2xl w-full"
+          style={{ aspectRatio: '16 / 9', background: '#fff' }}>
+
+          {/* Slide images */}
+          {FACE_SCENE_SAMPLES.map((sample, i) => (
+            <motion.img
+              key={sample.scene}
+              src={sample.scene}
+              alt=""
+              className="absolute inset-0 w-full h-full object-cover block"
+              animate={{ opacity: i === activeIdx ? 1 : 0 }}
+              transition={{ duration: 0.6, ease: 'easeInOut' }}
+              style={{ zIndex: i === activeIdx ? 1 : 0 }}
+            />
+          ))}
+
+          {/* Arrow SVG — over scene, below face circle. viewBox 160×90 mirrors 16:9. */}
+          {/* Arrow goes from top-right (where face circle meets scene) to ~character face area */}
+          <svg
+            viewBox="0 0 160 90"
+            preserveAspectRatio="none"
+            className="absolute inset-0 w-full h-full hidden sm:block"
+            style={{ zIndex: 5, pointerEvents: 'none' }}>
+            <motion.path
+              d="M 148 4 Q 148 45 52 30"
+              fill="none"
+              stroke={C.saffron}
+              strokeWidth="1.8"
+              strokeDasharray="4 3"
+              strokeLinecap="round"
+              initial={{ pathLength: 0, opacity: 0 }}
+              animate={{ pathLength: 1, opacity: 1 }}
+              transition={{ pathLength: { duration: 1.2, ease: 'easeInOut', delay: 0.3 }, opacity: { duration: 0.3 } }}
+              key={activeIdx}
+            />
+            {/* Arrowhead */}
+            <motion.path
+              d="M 60 25 L 52 30 L 58 36"
+              fill="none"
+              stroke={C.saffron}
+              strokeWidth="1.8"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 1.2 }}
+              key={`arrow-${activeIdx}`}
+            />
+          </svg>
+        </div>
+
+        {/* Face circle — hovering top-right corner, half above the scene */}
+        <div className="absolute"
+          style={{ top: 0, right: 20, width: FACE_SIZE, height: FACE_SIZE, zIndex: 10 }}>
+          {FACE_SCENE_SAMPLES.map((sample, i) => (
+            <motion.img
+              key={sample.face}
+              src={sample.face}
+              alt={`${sample.name}'s photo`}
+              className="absolute inset-0 w-full h-full object-cover rounded-full"
+              animate={{ opacity: i === activeIdx ? 1 : 0, scale: i === activeIdx ? 1 : 0.9 }}
+              transition={{ duration: 0.5, ease: 'easeInOut' }}
+              style={{
+                border: `5px solid ${C.saffron}`,
+                boxShadow: '0 8px 32px rgba(255,107,53,0.35), 0 0 0 4px #fff',
+              }}
+            />
+          ))}
+          {/* Name label */}
+          <div className="absolute left-1/2 flex flex-col items-center"
+            style={{ top: FACE_SIZE + 8, transform: 'translateX(-50%)', whiteSpace: 'nowrap' }}>
+            <AnimatePresence mode="wait">
+              <motion.p key={activeIdx} initial={{ opacity: 0, y: 3 }} animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -3 }} transition={{ duration: 0.2 }}
+                className="text-sm font-extrabold" style={{ color: C.navy }}>
+                {FACE_SCENE_SAMPLES[activeIdx].name}
+              </motion.p>
+            </AnimatePresence>
+          </div>
+        </div>
+      </div>
+
+      {/* Indicator dots */}
+      <div className="flex justify-center gap-2 mt-10">
+        {FACE_SCENE_SAMPLES.map((_, i) => (
+          <button key={i} onClick={() => setActiveIdx(i)}
+            className="rounded-full transition-all duration-300"
+            style={{
+              width: i === activeIdx ? 22 : 7, height: 7,
+              background: i === activeIdx ? C.saffron : '#E5D5C0', border: 'none', cursor: 'pointer',
+            }}
+          />
+        ))}
+      </div>
+    </div>
+  );
+}
+
+const FACE_SIZE_BROCHURE = 110;
+
+function BrochureThemeCard({ slug, icon, name }: { slug: string; icon: string; name: string }) {
+  const [activeIdx, setActiveIdx] = useState(0);
+  useEffect(() => {
+    const t = setInterval(() => setActiveIdx(i => (i + 1) % FACE_SAMPLES.length), 2000);
+    return () => clearInterval(t);
+  }, []);
+
+  return (
+    <motion.a
+      href="/themes"
+      onClick={e => { e.preventDefault(); window.location.href = '/themes'; }}
+      className="rounded-2xl overflow-hidden cursor-pointer block"
+      style={{ border: '1.5px solid #E5E7EB', background: C.white, textDecoration: 'none' }}
+      whileHover={{ scale: 1.02, boxShadow: '0 8px 24px rgba(0,0,0,0.10)' }}
+      transition={{ type: 'spring', stiffness: 300, damping: 24 }}>
+      <div style={{ paddingTop: FACE_SIZE_BROCHURE / 2, position: 'relative' }}>
+        {/* Scene */}
+        <div style={{ aspectRatio: '16/9', background: '#F0EEE8', position: 'relative', overflow: 'hidden' }}>
+          {FACE_SAMPLES.map((sample, i) => (
+            <motion.img
+              key={sample.key}
+              src={`/themes_faceswap/${slug}_${sample.key}.png`}
+              alt=""
+              style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
+              animate={{ opacity: i === activeIdx ? 1 : 0 }}
+              transition={{ duration: 0.5, ease: 'easeInOut' }}
+              onError={e => { (e.target as HTMLImageElement).style.display = 'none'; }}
+            />
+          ))}
+          {/* Arrow */}
+          <svg viewBox="0 0 160 90" preserveAspectRatio="none"
+            style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', zIndex: 5, pointerEvents: 'none' }}>
+            <motion.path
+              d="M 148 4 Q 148 45 52 30"
+              fill="none" stroke={C.saffron} strokeWidth="2.2" strokeDasharray="5 3" strokeLinecap="round"
+              initial={{ pathLength: 0, opacity: 0 }}
+              animate={{ pathLength: 1, opacity: 1 }}
+              transition={{ pathLength: { duration: 1.0, ease: 'easeInOut', delay: 0.2 }, opacity: { duration: 0.2 } }}
+              key={activeIdx}
+            />
+            <motion.path
+              d="M 60 25 L 52 30 L 58 36"
+              fill="none" stroke={C.saffron} strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"
+              initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 1.0 }}
+              key={`arrowhead-${activeIdx}`}
+            />
+          </svg>
+          {/* Title overlay */}
+          <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, padding: '20px 14px 10px', background: 'linear-gradient(transparent, rgba(0,0,0,0.55))', zIndex: 4 }}>
+            <p className="font-extrabold text-sm" style={{ fontFamily: "'Baloo 2', sans-serif", color: '#fff' }}>{icon} {name}</p>
+          </div>
+        </div>
+        {/* Face circle */}
+        <div style={{ position: 'absolute', top: 0, right: 12, width: FACE_SIZE_BROCHURE, height: FACE_SIZE_BROCHURE, zIndex: 10 }}>
+          {FACE_SAMPLES.map((sample, i) => (
+            <motion.img
+              key={sample.face}
+              src={sample.face}
+              alt=""
+              className="rounded-full"
+              style={{
+                position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover',
+                border: `3px solid ${C.saffron}`,
+                boxShadow: '0 4px 16px rgba(255,107,53,0.35), 0 0 0 2px #fff',
+              }}
+              animate={{ opacity: i === activeIdx ? 1 : 0, scale: i === activeIdx ? 1 : 0.9 }}
+              transition={{ duration: 0.4, ease: 'easeInOut' }}
+            />
+          ))}
+        </div>
+      </div>
+    </motion.a>
+  );
+}
+
 // ── ORDER FORM ─────────────────────────────────────────────────────────────
 
 const STYLES = [
@@ -992,6 +1195,69 @@ export function BrochurePage() {
       </section>
 
       {/* ══════════════════════════════════════════
+          § THEMES — white
+      ══════════════════════════════════════════ */}
+      <section id="themes" style={{ background: C.white }} className="py-16 sm:py-20">
+        <div className="max-w-6xl mx-auto px-5 sm:px-8">
+          <motion.div initial={{ opacity: 0, y: 16 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} className="mb-8">
+            {eyebrow('What will their story be about?')}
+            {heading(<>15 themes across<br />every age group</>)}
+            <p className="text-sm mt-3 leading-relaxed" style={{ color: C.gray }}>
+              From bedtime routines for toddlers to financial literacy for tweens — every theme is built around real learning moments. Click any to explore.
+            </p>
+          </motion.div>
+
+          {(() => {
+            const AGE_TABS = [
+              { range: '3–5'  as const, label: 'Pre-school',    color: '#FF6B35' },
+              { range: '5–8'  as const, label: 'Early School',  color: '#F7B731' },
+              { range: '8–12' as const, label: 'Upper Primary', color: '#1A1A2E' },
+            ];
+            const tabThemes = THEMES.filter(t => t.ageRange === themesTab);
+            const activeColor = AGE_TABS.find(t => t.range === themesTab)!.color;
+            return (
+              <>
+                <div className="flex gap-2 mb-6">
+                  {AGE_TABS.map(g => (
+                    <button key={g.range} onClick={() => setThemesTab(g.range)}
+                      className="flex-1 py-2.5 rounded-2xl font-extrabold transition-all text-center"
+                      style={{
+                        background: themesTab === g.range ? g.color : C.white,
+                        color: themesTab === g.range ? '#fff' : C.lgray,
+                        border: `2px solid ${themesTab === g.range ? g.color : '#E5E7EB'}`,
+                        fontFamily: "'Baloo 2', sans-serif",
+                        fontSize: 13, whiteSpace: 'nowrap', cursor: 'pointer',
+                      }}>
+                      {g.range}
+                      <span className="block opacity-80" style={{ fontSize: 10, fontWeight: 600 }}>{g.label}</span>
+                    </button>
+                  ))}
+                </div>
+
+                <AnimatePresence mode="wait">
+                  <motion.div key={themesTab} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -10 }} transition={{ duration: 0.2 }}
+                    style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: 20 }}>
+                    {tabThemes.map(t => (
+                      <BrochureThemeCard key={t.slug} slug={t.slug} icon={t.icon} name={t.name} />
+                    ))}
+                  </motion.div>
+                </AnimatePresence>
+
+                <div className="mt-8 text-center">
+                  <a href="/themes"
+                    className="inline-flex items-center gap-2 px-6 py-3 rounded-full text-sm font-bold transition-opacity hover:opacity-90"
+                    style={{ background: activeColor, color: '#fff', textDecoration: 'none' }}>
+                    Explore all themes & personalisation →
+                  </a>
+                </div>
+              </>
+            );
+          })()}
+        </div>
+      </section>
+
+      {/* ══════════════════════════════════════════
           § 1.5  TESTIMONIAL VIDEO — soft bg
       ══════════════════════════════════════════ */}
       <section style={{ background: '#FFFAF5' }} className="py-14 sm:py-16">
@@ -1032,6 +1298,8 @@ export function BrochurePage() {
             </p>
           </motion.div>
 
+          <FaceToSceneAnimation />
+
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-8">
             {artStyles.map((s, i) => (
               <motion.div key={s.label} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }}
@@ -1063,85 +1331,6 @@ export function BrochurePage() {
           <p className="text-center text-xs mt-4" style={{ color: C.lgray }}>
             Your photo is never stored or shared. Used only to generate your book.
           </p>
-        </div>
-      </section>
-
-      {/* ══════════════════════════════════════════
-          § THEMES — white
-      ══════════════════════════════════════════ */}
-      <section id="themes" style={{ background: C.white }} className="py-16 sm:py-20">
-        <div className="max-w-6xl mx-auto px-5 sm:px-8">
-          <motion.div initial={{ opacity: 0, y: 16 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} className="mb-8">
-            {eyebrow('What will their story be about?')}
-            {heading(<>15 themes across<br />every age group</>)}
-            <p className="text-sm mt-3 leading-relaxed" style={{ color: C.gray }}>
-              From bedtime routines for toddlers to financial literacy for tweens — every theme is built around real learning moments. Click any to explore.
-            </p>
-          </motion.div>
-
-          {/* Age tabs */}
-          {(() => {
-            const AGE_TABS = [
-              { range: '3–5'  as const, label: 'Pre-school',    color: '#FF6B35' },
-              { range: '5–8'  as const, label: 'Early School',  color: '#F7B731' },
-              { range: '8–12' as const, label: 'Upper Primary', color: '#1A1A2E' },
-            ];
-            const tabThemes = THEMES.filter(t => t.ageRange === themesTab);
-            const activeColor = AGE_TABS.find(t => t.range === themesTab)!.color;
-            return (
-              <>
-                <div className="flex gap-2 mb-6">
-                  {AGE_TABS.map(g => (
-                    <button key={g.range} onClick={() => setThemesTab(g.range)}
-                      className="flex-1 py-2.5 rounded-2xl font-extrabold transition-all text-center"
-                      style={{
-                        background: themesTab === g.range ? g.color : C.white,
-                        color: themesTab === g.range ? '#fff' : C.lgray,
-                        border: `2px solid ${themesTab === g.range ? g.color : '#E5E7EB'}`,
-                        fontFamily: "'Baloo 2', sans-serif",
-                        fontSize: 13,
-                        whiteSpace: 'nowrap',
-                        cursor: 'pointer',
-                      }}>
-                      {g.range}
-                      <span className="block opacity-80" style={{ fontSize: 10, fontWeight: 600 }}>{g.label}</span>
-                    </button>
-                  ))}
-                </div>
-
-                <AnimatePresence mode="wait">
-                  <motion.div key={themesTab} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: -10 }} transition={{ duration: 0.2 }}
-                    style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(240px, 1fr))', gap: 16 }}>
-                    {tabThemes.map(t => (
-                      <motion.a key={t.slug} href="/themes"
-                        onClick={e => { e.preventDefault(); window.location.href = '/themes'; }}
-                        className="rounded-2xl overflow-hidden cursor-pointer block"
-                        style={{ border: '1.5px solid #E5E7EB', background: C.white, textDecoration: 'none' }}
-                        whileHover={{ scale: 1.02, boxShadow: '0 8px 24px rgba(0,0,0,0.10)' }}
-                        transition={{ type: 'spring', stiffness: 300, damping: 24 }}>
-                        <div style={{ aspectRatio: '16/9', background: '#F0EEE8', position: 'relative' }}>
-                          <img src={`/themes/${t.slug}.png`} alt={t.name}
-                            style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
-                          <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, padding: '20px 14px 10px', background: 'linear-gradient(transparent, rgba(0,0,0,0.55))' }}>
-                            <p className="font-extrabold text-sm" style={{ fontFamily: "'Baloo 2', sans-serif", color: '#fff' }}>{t.icon} {t.name}</p>
-                          </div>
-                        </div>
-                      </motion.a>
-                    ))}
-                  </motion.div>
-                </AnimatePresence>
-
-                <div className="mt-8 text-center">
-                  <a href="/themes"
-                    className="inline-flex items-center gap-2 px-6 py-3 rounded-full text-sm font-bold transition-opacity hover:opacity-90"
-                    style={{ background: activeColor, color: '#fff', textDecoration: 'none' }}>
-                    Explore all themes & personalisation →
-                  </a>
-                </div>
-              </>
-            );
-          })()}
         </div>
       </section>
 
