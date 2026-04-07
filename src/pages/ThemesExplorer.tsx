@@ -280,6 +280,14 @@ function ThemeCard({ theme, onClick }: { theme: Theme; groupColor: string; onCli
       onClick={onClick}>
 
       {/* Scene + hovering face */}
+      {theme.slug === 'growth-mindset' ? (
+        <div style={{ aspectRatio: '16/9', background: '#F0EEE8', position: 'relative', overflow: 'hidden' }}>
+          <img src={`/themes/${theme.slug}.png`} alt={theme.name} style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
+          <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, padding: '20px 14px 10px', background: 'linear-gradient(transparent, rgba(0,0,0,0.55))' }}>
+            <p className="font-extrabold text-base" style={{ fontFamily: "'Baloo 2', sans-serif", color: '#fff' }}>{theme.icon} {theme.name}</p>
+          </div>
+        </div>
+      ) : (
       <div style={{ paddingTop: FACE_SIZE_CARD / 2, position: 'relative' }}>
         {/* Scene */}
         <div style={{ aspectRatio: '16/9', background: '#F0EEE8', position: 'relative', overflow: 'hidden' }}>
@@ -339,6 +347,7 @@ function ThemeCard({ theme, onClick }: { theme: Theme; groupColor: string; onCli
           ))}
         </div>
       </div>
+      )}
 
       <div className="p-4">
         <p className="text-xs leading-relaxed" style={{ color: C.gray }}>{theme.description}</p>

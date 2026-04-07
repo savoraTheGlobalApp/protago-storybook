@@ -253,6 +253,14 @@ function BrochureThemeCard({ slug, icon, name }: { slug: string; icon: string; n
       style={{ border: '1.5px solid #E5E7EB', background: C.white, textDecoration: 'none' }}
       whileHover={{ scale: 1.02, boxShadow: '0 8px 24px rgba(0,0,0,0.10)' }}
       transition={{ type: 'spring', stiffness: 300, damping: 24 }}>
+      {slug === 'growth-mindset' ? (
+        <div style={{ aspectRatio: '16/9', background: '#F0EEE8', position: 'relative', overflow: 'hidden' }}>
+          <img src={`/themes/${slug}.png`} alt={name} style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
+          <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, padding: '20px 14px 10px', background: 'linear-gradient(transparent, rgba(0,0,0,0.55))' }}>
+            <p className="font-extrabold text-sm" style={{ fontFamily: "'Baloo 2', sans-serif", color: '#fff' }}>{icon} {name}</p>
+          </div>
+        </div>
+      ) : (
       <div style={{ paddingTop: FACE_SIZE_BROCHURE / 2, position: 'relative' }}>
         {/* Scene */}
         <div style={{ aspectRatio: '16/9', background: '#F0EEE8', position: 'relative', overflow: 'hidden' }}>
@@ -309,6 +317,7 @@ function BrochureThemeCard({ slug, icon, name }: { slug: string; icon: string; n
           ))}
         </div>
       </div>
+      )}
     </motion.a>
   );
 }
