@@ -17,12 +17,14 @@
             "@types/react": "^19.2.7",
             "@types/react-dom": "^19.2.3",
             "@vitejs/plugin-react-swc": "^3.10.2",
+            "sharp": "^0.33.5",
             "typescript": "^5.9.3",
             "vite": "^6.4.1"
       },
       "scripts": {
             "dev": "vite",
             "build": "vite build",
+            "optimize:images": "node scripts/optimize-images.mjs",
             "postinstall": "cd backend && npm install",
             "start": "node backend/server.js"
       }

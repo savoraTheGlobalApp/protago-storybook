@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion, AnimatePresence, useInView } from 'framer-motion';
 import { ArrowRight, ChevronDown, MessageCircle } from 'lucide-react';
 import { NavBar } from '../components/NavBar';
 import { THEMES, ThemeEntry, ageToRange } from '../data/themes';
@@ -36,13 +36,13 @@ const faqs = [
 
 
 const boyStyles = [
-  { label: 'Pixar 3D',  img: '/styles/boy_pixar.png' },
-  { label: 'Realistic', img: '/styles/boy_base.png' },
+  { label: 'Pixar 3D',  img: '/styles/boy_pixar.webp' },
+  { label: 'Realistic', img: '/styles/boy_base.webp' },
 ];
 
 const girlStyles = [
-  { label: 'Pixar 3D',  img: '/styles/girl_pixar.png' },
-  { label: 'Realistic', img: '/styles/girl_base.png' },
+  { label: 'Pixar 3D',  img: '/styles/girl_pixar.webp' },
+  { label: 'Realistic', img: '/styles/girl_base.webp' },
 ];
 
 const ageTiers = [
@@ -89,41 +89,44 @@ const heading = (text: React.ReactNode, onDark = false) => (
 );
 
 const HERO_SLIDES = [
-  { src: '/styles/cover_scene.png',      caption: 'Aarav · Courage' },
-  { src: '/styles/scene_03.png',         caption: 'Something catches their ear…' },
-  { src: '/styles/scene_07.png',         caption: 'A moment of triumph!' },
-  { src: '/styles/scene_10.png',         caption: 'Everyone celebrates together.' },
-  { src: '/styles/bhanvi_cover.png',     caption: 'Naina & Meera · Sky High' },
-  { src: '/styles/bhanvi_scene_05.png',  caption: 'Look! Paris! cried Meera.' },
-  { src: '/styles/bhanvi_scene_10.png',  caption: 'You can be a pilot one day too!' },
-  { src: '/styles/prisha_cover.png',     caption: 'Diya · The Magic of Learning' },
-  { src: '/styles/prisha_scene_09.png',  caption: 'She searched all night — and found it.' },
+  { src: '/styles/cover_scene.webp',      caption: 'Aarav · Courage' },
+  { src: '/styles/scene_03.webp',         caption: 'Something catches their ear…' },
+  { src: '/styles/scene_07.webp',         caption: 'A moment of triumph!' },
+  { src: '/styles/scene_10.webp',         caption: 'Everyone celebrates together.' },
+  { src: '/styles/bhanvi_cover.webp',     caption: 'Naina & Meera · Sky High' },
+  { src: '/styles/bhanvi_scene_05.webp',  caption: 'Look! Paris! cried Meera.' },
+  { src: '/styles/bhanvi_scene_10.webp',  caption: 'You can be a pilot one day too!' },
+  { src: '/styles/prisha_cover.webp',     caption: 'Diya · The Magic of Learning' },
+  { src: '/styles/prisha_scene_09.webp',  caption: 'She searched all night — and found it.' },
 ];
 
 // ── FACE → SCENE ANIMATION ────────────────────────────────────────────────
 const FACE_SAMPLES = [
-  { key: 'boy_young', face: '/faces/face_boy_young.png' },
-  { key: 'boy_older', face: '/faces/face_boy_older.png' },
-  { key: 'girl',      face: '/faces/face_girl_medium.png' },
+  { key: 'boy_young', face: '/faces/face_boy_young.webp' },
+  { key: 'boy_older', face: '/faces/face_boy_older.webp' },
+  { key: 'girl',      face: '/faces/face_girl_medium.webp' },
 ];
 
 const FACE_SCENE_SAMPLES = [
-  { name: 'Boy',  face: '/faces/face_boy_young.png',  scene: '/themes_faceswap/bedtime-routines_boy_young.png' },
-  { name: 'Boy',  face: '/faces/face_boy_older.png',  scene: '/themes_faceswap/bedtime-routines_boy_older.png' },
-  { name: 'Girl', face: '/faces/face_girl_medium.png', scene: '/themes_faceswap/bedtime-routines_girl.png' },
+  { name: 'Boy',  face: '/faces/face_boy_young.webp',  scene: '/themes_faceswap/bedtime-routines_boy_young.webp' },
+  { name: 'Boy',  face: '/faces/face_boy_older.webp',  scene: '/themes_faceswap/bedtime-routines_boy_older.webp' },
+  { name: 'Girl', face: '/faces/face_girl_medium.webp', scene: '/themes_faceswap/bedtime-routines_girl.webp' },
 ];
 
 function FaceToSceneAnimation() {
   const [activeIdx, setActiveIdx] = useState(0);
   const FACE_SIZE = 220;
+  const wrapperRef = useRef<HTMLDivElement>(null);
+  const inView = useInView(wrapperRef, { margin: '200px 0px' });
 
   useEffect(() => {
+    if (!inView) return;
     const t = setInterval(() => setActiveIdx(i => (i + 1) % FACE_SCENE_SAMPLES.length), 3500);
     return () => clearInterval(t);
-  }, []);
+  }, [inView]);
 
   return (
-    <div className="mb-12">
+    <div className="mb-12" ref={wrapperRef}>
       {/* Outer wrapper — extra top padding so face circle can overflow upward */}
       <div className="relative" style={{ paddingTop: FACE_SIZE / 2 }}>
 
@@ -131,12 +134,14 @@ function FaceToSceneAnimation() {
         <div className="relative rounded-2xl overflow-hidden shadow-2xl w-full"
           style={{ aspectRatio: '16 / 9', background: '#fff' }}>
 
-          {/* Slide images */}
-          {FACE_SCENE_SAMPLES.map((sample, i) => (
+          {/* Slide images — only mount once section enters viewport */}
+          {inView && FACE_SCENE_SAMPLES.map((sample, i) => (
             <motion.img
               key={sample.scene}
               src={sample.scene}
               alt=""
+              loading="lazy"
+              decoding="async"
               className="absolute inset-0 w-full h-full object-cover block"
               animate={{ opacity: i === activeIdx ? 1 : 0 }}
               transition={{ duration: 0.6, ease: 'easeInOut' }}
@@ -182,11 +187,13 @@ function FaceToSceneAnimation() {
         {/* Face circle — hovering top-right corner, half above the scene */}
         <div className="absolute"
           style={{ top: 0, right: 20, width: FACE_SIZE, height: FACE_SIZE, zIndex: 10 }}>
-          {FACE_SCENE_SAMPLES.map((sample, i) => (
+          {inView && FACE_SCENE_SAMPLES.map((sample, i) => (
             <motion.img
               key={sample.face}
               src={sample.face}
               alt={`${sample.name}'s photo`}
+              loading="lazy"
+              decoding="async"
               className="absolute inset-0 w-full h-full object-cover rounded-full"
               animate={{ opacity: i === activeIdx ? 1 : 0, scale: i === activeIdx ? 1 : 0.9 }}
               transition={{ duration: 0.5, ease: 'easeInOut' }}
@@ -230,13 +237,18 @@ const FACE_SIZE_BROCHURE = 110;
 
 function BrochureThemeCard({ slug, icon, name, onClick }: { slug: string; icon: string; name: string; onClick: () => void }) {
   const [activeIdx, setActiveIdx] = useState(0);
+  const cardRef = useRef<HTMLDivElement>(null);
+  const inView = useInView(cardRef, { margin: '300px 0px' });
+
   useEffect(() => {
+    if (!inView) return;
     const t = setInterval(() => setActiveIdx(i => (i + 1) % FACE_SAMPLES.length), 2000);
     return () => clearInterval(t);
-  }, []);
+  }, [inView]);
 
   return (
     <motion.div
+      ref={cardRef}
       className="rounded-2xl overflow-hidden cursor-pointer"
       style={{ border: '1.5px solid #E5E7EB', background: C.white }}
       whileHover={{ scale: 1.02, boxShadow: '0 8px 24px rgba(0,0,0,0.10)' }}
@@ -244,7 +256,7 @@ function BrochureThemeCard({ slug, icon, name, onClick }: { slug: string; icon: 
       onClick={onClick}>
       {slug === 'growth-mindset' ? (
         <div style={{ aspectRatio: '16/9', background: '#F0EEE8', position: 'relative', overflow: 'hidden' }}>
-          <img src={`/themes/${slug}.png`} alt={name} style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
+          <img src={`/themes/${slug}.webp`} alt={name} loading="lazy" decoding="async" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
           <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, padding: '20px 14px 10px', background: 'linear-gradient(transparent, rgba(0,0,0,0.55))' }}>
             <p className="font-extrabold text-sm" style={{ fontFamily: "'Baloo 2', sans-serif", color: '#fff' }}>{icon} {name}</p>
           </div>
@@ -253,11 +265,22 @@ function BrochureThemeCard({ slug, icon, name, onClick }: { slug: string; icon: 
       <div style={{ paddingTop: FACE_SIZE_BROCHURE / 2, position: 'relative' }}>
         {/* Scene */}
         <div style={{ aspectRatio: '16/9', background: '#F0EEE8', position: 'relative', overflow: 'hidden' }}>
-          {FACE_SAMPLES.map((sample, i) => (
+          {!inView ? (
+            <img
+              src={`/themes_faceswap/${slug}_${FACE_SAMPLES[0].key}@thumb.webp`}
+              alt=""
+              loading="lazy"
+              decoding="async"
+              style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
+              onError={e => { (e.target as HTMLImageElement).style.display = 'none'; }}
+            />
+          ) : FACE_SAMPLES.map((sample, i) => (
             <motion.img
               key={sample.key}
-              src={`/themes_faceswap/${slug}_${sample.key}.png`}
+              src={`/themes_faceswap/${slug}_${sample.key}@thumb.webp`}
               alt=""
+              loading="lazy"
+              decoding="async"
               style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
               animate={{ opacity: i === activeIdx ? 1 : 0 }}
               transition={{ duration: 0.5, ease: 'easeInOut' }}
@@ -289,11 +312,26 @@ function BrochureThemeCard({ slug, icon, name, onClick }: { slug: string; icon: 
         </div>
         {/* Face circle */}
         <div style={{ position: 'absolute', top: 0, right: 12, width: FACE_SIZE_BROCHURE, height: FACE_SIZE_BROCHURE, zIndex: 10 }}>
-          {FACE_SAMPLES.map((sample, i) => (
+          {!inView ? (
+            <img
+              src={FACE_SAMPLES[0].face}
+              alt=""
+              loading="lazy"
+              decoding="async"
+              className="rounded-full"
+              style={{
+                position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover',
+                border: `3px solid ${C.saffron}`,
+                boxShadow: '0 4px 16px rgba(255,107,53,0.35), 0 0 0 2px #fff',
+              }}
+            />
+          ) : FACE_SAMPLES.map((sample, i) => (
             <motion.img
               key={sample.face}
               src={sample.face}
               alt=""
+              loading="lazy"
+              decoding="async"
               className="rounded-full"
               style={{
                 position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover',
@@ -345,13 +383,14 @@ function BrochureThemeModal({ theme, onClose }: { theme: ThemeEntry; onClose: ()
         <div style={{ paddingTop: 55, position: 'relative' }}>
           <div style={{ aspectRatio: '16/9', background: '#F0EEE8', position: 'relative', overflow: 'hidden' }}>
             {theme.slug === 'growth-mindset' ? (
-              <img src={`/themes/${theme.slug}.png`} alt={theme.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+              <img src={`/themes/${theme.slug}.webp`} alt={theme.name} decoding="async" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
             ) : (
               FACE_SAMPLES.map((sample, i) => (
                 <motion.img
                   key={sample.key}
-                  src={`/themes_faceswap/${theme.slug}_${sample.key}.png`}
+                  src={`/themes_faceswap/${theme.slug}_${sample.key}.webp`}
                   alt=""
+                  decoding="async"
                   style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }}
                   animate={{ opacity: i === activeIdx ? 1 : 0 }}
                   transition={{ duration: 0.5 }}
@@ -386,7 +425,7 @@ function BrochureThemeModal({ theme, onClose }: { theme: ThemeEntry; onClose: ()
           {theme.slug !== 'growth-mindset' && (
             <div style={{ position: 'absolute', top: 0, right: 20, width: 110, height: 110, zIndex: 10 }}>
               {FACE_SAMPLES.map((sample, i) => (
-                <motion.img key={sample.face} src={sample.face} alt="" className="rounded-full"
+                <motion.img key={sample.face} src={sample.face} alt="" decoding="async" className="rounded-full"
                   style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover',
                     border: `4px solid ${C.saffron}`, boxShadow: '0 4px 16px rgba(255,107,53,0.35), 0 0 0 3px #fff' }}
                   animate={{ opacity: i === activeIdx ? 1 : 0, scale: i === activeIdx ? 1 : 0.9 }}
@@ -433,8 +472,8 @@ function BrochureThemeModal({ theme, onClose }: { theme: ThemeEntry; onClose: ()
 // ── ORDER FORM ─────────────────────────────────────────────────────────────
 
 const STYLES = [
-  { label: 'Pixar 3D',  img: '/styles/boy_pixar.png',     available: true,  price: null,                                                       originalPrice: null },
-  { label: 'Realistic', img: '/styles/boy_base.png',      available: true,  price: Number(import.meta.env.VITE_REALISTIC_PRICE) || 1499,       originalPrice: 1699 },
+  { label: 'Pixar 3D',  img: '/styles/boy_pixar.webp',    available: true,  price: null,                                                       originalPrice: null },
+  { label: 'Realistic', img: '/styles/boy_base.webp',     available: true,  price: Number(import.meta.env.VITE_REALISTIC_PRICE) || 1499,       originalPrice: 1699 },
 ];
 const FORMATS = [
   { label: 'Immersive (Cinematic)', available: true },
@@ -1029,7 +1068,8 @@ function OrderForm({ price, isCustomStory, setIsCustomStory }: { price: number; 
                                   outline: 'none',
                                 }}>
                                 <div style={{ aspectRatio: '16/9', background: '#F0EEE8', position: 'relative' }}>
-                                  <img src={`/themes/${t.slug}.png`} alt={t.name}
+                                  <img src={`/themes/${t.slug}@thumb.webp`} alt={t.name}
+                                    loading="lazy" decoding="async"
                                     style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
                                   {selected && (
                                     <div style={{ position: 'absolute', top: 4, right: 4, background: C.saffron, borderRadius: '50%', width: 18, height: 18, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
@@ -1069,7 +1109,7 @@ function OrderForm({ price, isCustomStory, setIsCustomStory }: { price: number; 
                           cursor: lockedOut || !s.available ? 'default' : 'pointer',
                         }}>
                         <div className="overflow-hidden relative" style={{ aspectRatio: '1/1', background: '#F5F5F5' }}>
-                          <img src={s.img} alt={s.label} className="w-full h-full object-cover object-top" />
+                          <img src={s.img} alt={s.label} loading="lazy" decoding="async" className="w-full h-full object-cover object-top" />
                           {discountPct > 0 && !lockedOut && (
                             <div className="absolute top-2 right-2 flex flex-col items-end gap-1">
                               <span className="text-[10px] font-extrabold px-2 py-0.5 rounded-full shadow-md"
@@ -1295,6 +1335,17 @@ export function BrochurePage() {
     return () => clearInterval(t);
   }, []);
 
+  // Pre-warm the next hero slide so it's ready by the time we cycle to it,
+  // without blocking initial paint.
+  useEffect(() => {
+    const next = (heroSlide + 1) % HERO_SLIDES.length;
+    const id = setTimeout(() => {
+      const img = new Image();
+      img.src = HERO_SLIDES[next].src;
+    }, 500);
+    return () => clearTimeout(id);
+  }, [heroSlide]);
+
   // Auto-scroll when arriving from another page via ?scroll= or ?theme=
   useEffect(() => {
     const anchor = searchParams.get('scroll') || (searchParams.get('theme') ? 'order' : null);
@@ -1370,12 +1421,15 @@ export function BrochurePage() {
             transition={{ duration: 0.6, delay: 0.15 }}
             className="flex-1 relative sm:rounded-tl-3xl overflow-hidden"
             style={{ aspectRatio: '1 / 1' }}>
-            {/* All images rendered once — opacity-animated so no re-fetches on slide change */}
+            {/* First slide eager (LCP), the rest lazy — pre-warmed via the next-slide useEffect */}
             {HERO_SLIDES.map((slide, i) => (
               <motion.img
                 key={slide.src}
                 src={slide.src}
                 alt={slide.caption}
+                loading={i === 0 ? 'eager' : 'lazy'}
+                fetchPriority={i === 0 ? 'high' : 'auto'}
+                decoding="async"
                 className="absolute inset-0 w-full h-full object-cover object-left"
                 animate={{ opacity: i === heroSlide ? 1 : 0, x: i === heroSlide ? 0 : (i < heroSlide ? -40 : 40) }}
                 transition={{ duration: 0.45, ease: 'easeInOut' }}
@@ -1569,7 +1623,7 @@ export function BrochurePage() {
             <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }} className="rounded-2xl overflow-hidden shadow-lg">
               <div className="overflow-hidden" style={{ background: C.navyCard }}>
-                <img src="/styles/boy_base.png" alt="Real photo" className="w-full h-auto block object-top" />
+                <img src="/styles/boy_base.webp" alt="Real photo" loading="lazy" decoding="async" className="w-full h-auto block object-top" />
               </div>
               <div className="py-2 text-center text-xs font-bold flex items-center justify-center gap-1.5"
                 style={{ background: C.saffron, color: C.white }}>
@@ -1581,7 +1635,7 @@ export function BrochurePage() {
                 viewport={{ once: true }} transition={{ delay: i * 0.1 }}
                 className="rounded-2xl overflow-hidden shadow-lg">
                 <div className="overflow-hidden" style={{ background: C.navyCard }}>
-                  <img src={s.img} alt={s.label} className="w-full h-auto block object-top" />
+                  <img src={s.img} alt={s.label} loading="lazy" decoding="async" className="w-full h-auto block object-top" />
                 </div>
                 <div className="py-2 text-center text-xs font-bold" style={{ background: C.navyCard, color: C.gold }}>{s.label}</div>
               </motion.div>
@@ -1594,7 +1648,7 @@ export function BrochurePage() {
             <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }} className="rounded-2xl overflow-hidden shadow-lg">
               <div className="overflow-hidden" style={{ background: C.navyCard }}>
-                <img src="/styles/girl_base.png" alt="Real photo" className="w-full h-auto block object-top" />
+                <img src="/styles/girl_base.webp" alt="Real photo" loading="lazy" decoding="async" className="w-full h-auto block object-top" />
               </div>
               <div className="py-2 text-center text-xs font-bold flex items-center justify-center gap-1.5"
                 style={{ background: C.saffron, color: C.white }}>
@@ -1606,7 +1660,7 @@ export function BrochurePage() {
                 viewport={{ once: true }} transition={{ delay: i * 0.1 }}
                 className="rounded-2xl overflow-hidden shadow-lg">
                 <div className="overflow-hidden" style={{ background: C.navyCard }}>
-                  <img src={s.img} alt={s.label} className="w-full h-auto block object-top" />
+                  <img src={s.img} alt={s.label} loading="lazy" decoding="async" className="w-full h-auto block object-top" />
                 </div>
                 <div className="py-2 text-center text-xs font-bold" style={{ background: C.navyCard, color: C.gold }}>{s.label}</div>
               </motion.div>
@@ -1638,7 +1692,7 @@ export function BrochurePage() {
                 <p className="text-sm font-semibold mt-1" style={{ color: 'rgba(255,255,255,0.9)' }}>Cinematic · Full-page · Film-like</p>
               </div>
               {/* Full scene — natural aspect ratio, no cropping */}
-              <img src="/styles/scene_immersive.png" alt="Immersive scene" className="w-full h-auto block" />
+              <img src="/styles/scene_immersive.webp" alt="Immersive scene" loading="lazy" decoding="async" className="w-full h-auto block" />
               <div className="px-6 py-5" style={{ background: C.white }}>
                 <p className="text-sm leading-relaxed mb-3" style={{ color: C.gray }}>
                   Each page is a <strong style={{ color: C.navy }}>full-bleed cinematic illustration</strong> — rich scenery,
@@ -1664,7 +1718,7 @@ export function BrochurePage() {
                 <p className="text-sm font-semibold mt-1" style={{ color: C.gold }}>Bold · Action panels · Graphic novel</p>
               </div>
               {/* Full comic spread — natural aspect ratio, no cropping */}
-              <img src="/styles/scene_comic.png" alt="Comic scene" className="w-full h-auto block" />
+              <img src="/styles/scene_comic.webp" alt="Comic scene" loading="lazy" decoding="async" className="w-full h-auto block" />
               <div className="px-6 py-5" style={{ background: C.white }}>
                 <p className="text-sm leading-relaxed mb-3" style={{ color: C.gray }}>
                   Each page is a <strong style={{ color: C.navy }}>bold comic panel spread</strong> — punchy action captions,
