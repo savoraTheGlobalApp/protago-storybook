@@ -550,7 +550,7 @@ function ReviewsSection() {
   );
 }
 
-function OrderForm({ price }: { price: number; scrollTo: (id: string) => void }) {
+function OrderForm({ price, isCustomStory, setIsCustomStory }: { price: number; scrollTo: (id: string) => void; isCustomStory: boolean; setIsCustomStory: (v: boolean) => void }) {
   const [searchParams] = useSearchParams();
   const preselectedTheme = searchParams.get('theme') || '';
 
@@ -569,6 +569,7 @@ function OrderForm({ price }: { price: number; scrollTo: (id: string) => void })
     storyFormat: savedDraft.storyFormat || '',
     address: savedDraft.address || '',
     notes: savedDraft.notes || '',
+    customStoryBrief: savedDraft.customStoryBrief || '',
   });
   type PhotoEntry = { file: File; preview: string; uploading: boolean; progress: number; uploadedPath: string | null; signedUrl: string | null };
   const [photos, setPhotos] = useState<PhotoEntry[]>([]);
@@ -582,8 +583,18 @@ function OrderForm({ price }: { price: number; scrollTo: (id: string) => void })
   const [couponError, setCouponError] = useState('');
   const [couponLoading, setCouponLoading] = useState(false);
 
+  const customStoryPrice = Number(import.meta.env.VITE_CUSTOM_STORY_PRICE) || 1999;
+
+  useEffect(() => {
+    if (isCustomStory) {
+      set('storyTheme', 'custom');
+      set('artStyle', 'Pixar 3D');
+    } else {
+      set('storyTheme', '');
+    }
+  }, [isCustomStory]);
   const stylePrice = STYLES.find(s => s.label === form.artStyle)?.price ?? null;
-  const effectivePrice = stylePrice ?? price;
+  const effectivePrice = isCustomStory ? customStoryPrice : (stylePrice ?? price);
 
   const API_BASE = import.meta.env.VITE_API_BASE_URL || '';
   const set = (k: string, v: string) => setForm(f => {
@@ -697,6 +708,8 @@ function OrderForm({ price }: { price: number; scrollTo: (id: string) => void })
           additionalPhotoPaths,
           additionalPhotoSignedUrls,
           couponCode: couponApplied?.code || null,
+          isCustomStory,
+          customStoryBrief: isCustomStory ? form.customStoryBrief : null,
           referralSource: localStorage.getItem('protago_ref') || null,
         }),
       });
@@ -947,14 +960,53 @@ function OrderForm({ price }: { price: number; scrollTo: (id: string) => void })
               </p>
               <div className="flex flex-col gap-4">
                 <div>
-                  <div className="flex items-center justify-between mb-1">
-                    <label style={labelStyle}>Theme *</label>
-                    <a href="/themes" className="text-xs font-bold"
-                      style={{ color: C.saffron, textDecoration: 'none' }}>
-                      Browse themes library →
-                    </a>
-                  </div>
-                  {(['3–5', '5–8', '8–12'] as const).map(range => {
+                  <label style={labelStyle}>Theme *</label>
+
+                  {/* Custom Story toggle */}
+                  <button type="button"
+                    onClick={() => setIsCustomStory(!isCustomStory)}
+                    className="w-full rounded-2xl p-4 mb-4 text-left transition-all"
+                    style={{
+                      border: `2px solid ${isCustomStory ? C.saffron : '#E5E7EB'}`,
+                      background: isCustomStory ? '#FFF8F0' : C.white,
+                    }}>
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-sm font-extrabold" style={{ color: C.navy, fontFamily: "'Baloo 2', sans-serif" }}>
+                          ✨ Custom Story
+                        </p>
+                        <p className="text-xs mt-0.5" style={{ color: C.gray }}>
+                          You write the plot — we bring it to life · Pixar 3D only · ₹{customStoryPrice}
+                        </p>
+                      </div>
+                      <div className="rounded-full flex-none flex items-center justify-center"
+                        style={{ width: 22, height: 22, background: isCustomStory ? C.saffron : '#F0F0F0' }}>
+                        {isCustomStory && <span style={{ color: '#fff', fontSize: 12, fontWeight: 800 }}>✓</span>}
+                      </div>
+                    </div>
+                    {isCustomStory && (
+                      <textarea
+                        onClick={e => e.stopPropagation()}
+                        value={form.customStoryBrief}
+                        onChange={e => set('customStoryBrief', e.target.value)}
+                        placeholder="Describe your story idea — characters, setting, what lesson or adventure you'd like..."
+                        rows={4}
+                        className="w-full mt-3 rounded-xl p-3 text-sm resize-none"
+                        style={{ border: '1.5px solid #E5E7EB', outline: 'none', fontFamily: 'inherit', color: C.navy }}
+                      />
+                    )}
+                  </button>
+
+                  {isCustomStory && (
+                    <button type="button"
+                      onClick={() => setIsCustomStory(false)}
+                      className="w-full py-2.5 rounded-xl text-sm font-bold mb-3 transition-opacity hover:opacity-80"
+                      style={{ background: '#F5F5F5', color: C.navy, border: 'none', cursor: 'pointer' }}>
+                      ← Browse existing themes instead
+                    </button>
+                  )}
+
+                  {!isCustomStory && (['3–5', '5–8', '8–12'] as const).map(range => {
                     const rangeThemes = THEMES.filter(t => t.ageRange === range);
                     const isRelevant = form.childAge ? ageToRange(Number(form.childAge)) === range : true;
                     return (
@@ -996,21 +1048,24 @@ function OrderForm({ price }: { price: number; scrollTo: (id: string) => void })
                 </div>
                 <div>
                   <label style={labelStyle}>Art style *</label>
+                  {isCustomStory && (
+                    <p className="text-xs mb-2" style={{ color: C.lgray }}>Custom stories are only available in Pixar 3D style.</p>
+                  )}
                   <div className="grid grid-cols-2 gap-3">
-                    {STYLES.map(s => (
+                    {STYLES.map(s => {
+                      const lockedOut = isCustomStory && s.label !== 'Pixar 3D';
+                      return (
                       <button type="button" key={s.label}
-                        onClick={() => s.available && set('artStyle', s.label)}
+                        onClick={() => !lockedOut && s.available && set('artStyle', s.label)}
                         className="rounded-xl overflow-hidden transition-all text-left relative"
                         style={{
                           border: `2px solid ${form.artStyle === s.label ? C.saffron : s.available ? '#E5E7EB' : '#F0F0F0'}`,
-                          opacity: s.available ? 1 : 0.6,
-                          cursor: s.available ? 'pointer' : 'default',
+                          opacity: lockedOut ? 0.35 : s.available ? 1 : 0.6,
+                          cursor: lockedOut || !s.available ? 'default' : 'pointer',
                         }}>
-                        {/* Style preview image */}
                         <div className="overflow-hidden" style={{ aspectRatio: '1/1', background: '#F5F5F5' }}>
                           <img src={s.img} alt={s.label} className="w-full h-full object-cover object-top" />
                         </div>
-                        {/* Label row */}
                         <div className="flex items-center justify-between px-2.5 py-2"
                           style={{ background: form.artStyle === s.label ? C.saffron : s.available ? C.navy : '#CCCCCC' }}>
                           <span className="text-xs font-bold text-white">{s.label}</span>
@@ -1020,7 +1075,7 @@ function OrderForm({ price }: { price: number; scrollTo: (id: string) => void })
                               Soon
                             </span>
                           )}
-                          {s.available && s.price && (
+                          {s.available && s.price && !lockedOut && (
                             <span className="text-[9px] font-bold rounded-full px-1.5 py-0.5"
                               style={{ background: 'rgba(255,255,255,0.2)', color: 'rgba(255,255,255,0.95)' }}>
                               ₹{s.price}
@@ -1030,7 +1085,6 @@ function OrderForm({ price }: { price: number; scrollTo: (id: string) => void })
                             <span className="text-xs text-white">✓</span>
                           )}
                         </div>
-                        {/* Coming soon overlay */}
                         {!s.available && (
                           <div className="absolute inset-0 flex items-center justify-center"
                             style={{ background: 'rgba(255,255,255,0.45)' }}>
@@ -1041,7 +1095,8 @@ function OrderForm({ price }: { price: number; scrollTo: (id: string) => void })
                           </div>
                         )}
                       </button>
-                    ))}
+                      );
+                    })}
                   </div>
                 </div>
                 <div>
@@ -1192,6 +1247,7 @@ export function BrochurePage() {
   const [themesTab, setThemesTab]     = useState<'3–5' | '5–8' | '8–12'>('3–5');
   const [selectedTheme, setSelectedTheme] = useState<ThemeEntry | null>(null);
   const [heroSlide, setHeroSlide]     = useState(0);
+  const [isCustomStory, setIsCustomStory] = useState(false);
   const price = Number(import.meta.env.VITE_STORYBOOK_PRICE) || 499;
   const [searchParams] = useSearchParams();
 
@@ -1370,6 +1426,42 @@ export function BrochurePage() {
 
                 <div className="mt-8 text-center">
                   <p className="text-xs" style={{ color: C.lgray }}>Click any theme to see how we personalise it for your child</p>
+
+                {/* Custom Story callout */}
+                <motion.div initial={{ opacity: 0, y: 12 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}
+                  className="mt-8 rounded-2xl p-6 flex flex-col sm:flex-row items-start sm:items-center gap-5"
+                  style={{ background: 'linear-gradient(135deg, #1A1A2E 0%, #2A1A3E 100%)', border: '1.5px solid rgba(247,183,49,0.3)' }}>
+                  <div className="text-4xl flex-none">✨</div>
+                  <div className="flex-1">
+                    <p className="font-extrabold text-lg mb-1" style={{ fontFamily: "'Baloo 2', sans-serif", color: '#fff' }}>
+                      Have your own story in mind?
+                    </p>
+                    <p className="text-sm leading-relaxed mb-3" style={{ color: 'rgba(255,255,255,0.65)' }}>
+                      Don't see a theme that fits? Write your own plot — characters, setting, the lesson you want to teach — and we'll bring it to life in Pixar 3D style. Every scene personalised with your child's face.
+                    </p>
+                    <div className="flex flex-wrap gap-3 items-center">
+                      <span className="text-xs font-bold px-3 py-1.5 rounded-full" style={{ background: 'rgba(247,183,49,0.15)', color: C.gold, border: '1px solid rgba(247,183,49,0.3)' }}>
+                        Pixar 3D only
+                      </span>
+                      <span className="text-xs font-bold px-3 py-1.5 rounded-full" style={{ background: 'rgba(247,183,49,0.15)', color: C.gold, border: '1px solid rgba(247,183,49,0.3)' }}>
+                        ₹1,999
+                      </span>
+                      <span className="text-xs font-bold px-3 py-1.5 rounded-full" style={{ background: 'rgba(247,183,49,0.15)', color: C.gold, border: '1px solid rgba(247,183,49,0.3)' }}>
+                        12 scenes · fully personalised
+                      </span>
+                    </div>
+                  </div>
+                  <button
+                    onClick={() => {
+                      setIsCustomStory(true);
+                      const el = document.getElementById('order');
+                      if (el) el.scrollIntoView({ behavior: 'smooth' });
+                    }}
+                    className="flex-none px-5 py-3 rounded-2xl text-sm font-extrabold transition-opacity hover:opacity-90 whitespace-nowrap"
+                    style={{ background: C.saffron, color: '#fff', border: 'none', cursor: 'pointer', fontFamily: "'Baloo 2', sans-serif" }}>
+                    Start custom story →
+                  </button>
+                </motion.div>
                 </div>
               </>
             );
@@ -1722,7 +1814,7 @@ export function BrochurePage() {
       {/* ══════════════════════════════════════════
           § 9  ORDER FORM — warm tint
       ══════════════════════════════════════════ */}
-      <OrderForm price={price} scrollTo={scrollTo} />
+      <OrderForm price={price} scrollTo={scrollTo} isCustomStory={isCustomStory} setIsCustomStory={setIsCustomStory} />
 
       {/* ══════════════════════════════════════════
           § 10  FAQ — white
