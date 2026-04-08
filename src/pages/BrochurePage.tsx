@@ -34,10 +34,6 @@ const faqs = [
     a: "Reach out within 7 days and we'll make it right or offer a full refund." },
 ];
 
-const artStyles = [
-  { label: 'Pixar 3D',  img: '/styles/boy_pixar.png',  caption: 'Warm, expressive · cinematic depth' },
-  { label: 'Realistic', img: '/styles/boy_base.png',   caption: 'Lifelike · rich detail · photographic feel' },
-];
 
 const boyStyles = [
   { label: 'Pixar 3D',  img: '/styles/boy_pixar.png' },
@@ -438,7 +434,7 @@ function BrochureThemeModal({ theme, onClose }: { theme: ThemeEntry; onClose: ()
 
 const STYLES = [
   { label: 'Pixar 3D',  img: '/styles/boy_pixar.png',     available: true,  price: null   },
-  { label: 'Realistic', img: '/styles/boy_realistic.png', available: true,  price: Number(import.meta.env.VITE_REALISTIC_PRICE) || 799 },
+  { label: 'Realistic', img: '/styles/boy_base.png',      available: true,  price: Number(import.meta.env.VITE_REALISTIC_PRICE) || 1699 },
 ];
 const FORMATS = [
   { label: 'Immersive (Cinematic)', available: true },
@@ -1343,7 +1339,6 @@ export function BrochurePage() {
               { range: '8–12' as const, label: 'Upper Primary', color: '#1A1A2E' },
             ];
             const tabThemes = THEMES.filter(t => t.ageRange === themesTab);
-            const activeColor = AGE_TABS.find(t => t.range === themesTab)!.color;
             return (
               <>
                 <div className="flex gap-2 mb-6">
@@ -1438,7 +1433,7 @@ export function BrochurePage() {
           </motion.div>
 
           {/* Boy row */}
-          <p className="text-xs font-bold uppercase tracking-widest mb-3" style={{ color: 'rgba(255,255,255,0.35)' }} className="text-center">Arjun, Age 7</p>
+          <p className="text-xs font-bold uppercase tracking-widest mb-3 text-center" style={{ color: 'rgba(255,255,255,0.35)' }}>Arjun, Age 7</p>
           <div className="grid grid-cols-3 gap-4 mb-10 mx-auto" style={{ maxWidth: 640 }}>
             <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }} className="rounded-2xl overflow-hidden shadow-lg">
