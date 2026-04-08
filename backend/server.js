@@ -920,6 +920,7 @@ app.post('/api/order-inquiry', async (req, res) => {
             theme, storyTheme, artStyle, storyFormat,
             deliveryType, address, notes,
             photoPath, photoSignedUrl, additionalPhotoPaths, additionalPhotoSignedUrls, couponCode, referralSource,
+            isCustomStory, customStoryBrief,
         } = req.body;
 
         if (!email || !phone || !childName) {
@@ -989,6 +990,8 @@ app.post('/api/order-inquiry', async (req, res) => {
                     status: 'pending',
                     amount: price,
                     currency: 'INR',
+                    is_custom_story: isCustomStory || false,
+                    custom_story_brief: customStoryBrief || null,
                 }),
             });
             if (!supabaseRes.ok) {

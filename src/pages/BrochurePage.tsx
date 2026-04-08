@@ -433,8 +433,8 @@ function BrochureThemeModal({ theme, onClose }: { theme: ThemeEntry; onClose: ()
 // ── ORDER FORM ─────────────────────────────────────────────────────────────
 
 const STYLES = [
-  { label: 'Pixar 3D',  img: '/styles/boy_pixar.png',     available: true,  price: null   },
-  { label: 'Realistic', img: '/styles/boy_base.png',      available: true,  price: Number(import.meta.env.VITE_REALISTIC_PRICE) || 1699 },
+  { label: 'Pixar 3D',  img: '/styles/boy_pixar.png',     available: true,  price: null,                                                       originalPrice: null },
+  { label: 'Realistic', img: '/styles/boy_base.png',      available: true,  price: Number(import.meta.env.VITE_REALISTIC_PRICE) || 1499,       originalPrice: 1699 },
 ];
 const FORMATS = [
   { label: 'Immersive (Cinematic)', available: true },
@@ -593,7 +593,9 @@ function OrderForm({ price, isCustomStory, setIsCustomStory }: { price: number; 
       set('storyTheme', '');
     }
   }, [isCustomStory]);
-  const stylePrice = STYLES.find(s => s.label === form.artStyle)?.price ?? null;
+  const selectedStyle = STYLES.find(s => s.label === form.artStyle);
+  const stylePrice = selectedStyle?.price ?? null;
+  const styleOriginalPrice = !isCustomStory ? selectedStyle?.originalPrice ?? null : null;
   const effectivePrice = isCustomStory ? customStoryPrice : (stylePrice ?? price);
 
   const API_BASE = import.meta.env.VITE_API_BASE_URL || '';
@@ -1054,6 +1056,9 @@ function OrderForm({ price, isCustomStory, setIsCustomStory }: { price: number; 
                   <div className="grid grid-cols-2 gap-3">
                     {STYLES.map(s => {
                       const lockedOut = isCustomStory && s.label !== 'Pixar 3D';
+                      const discountPct = s.originalPrice && s.price
+                        ? Math.round(((s.originalPrice - s.price) / s.originalPrice) * 100)
+                        : 0;
                       return (
                       <button type="button" key={s.label}
                         onClick={() => !lockedOut && s.available && set('artStyle', s.label)}
@@ -1063,8 +1068,16 @@ function OrderForm({ price, isCustomStory, setIsCustomStory }: { price: number; 
                           opacity: lockedOut ? 0.35 : s.available ? 1 : 0.6,
                           cursor: lockedOut || !s.available ? 'default' : 'pointer',
                         }}>
-                        <div className="overflow-hidden" style={{ aspectRatio: '1/1', background: '#F5F5F5' }}>
+                        <div className="overflow-hidden relative" style={{ aspectRatio: '1/1', background: '#F5F5F5' }}>
                           <img src={s.img} alt={s.label} className="w-full h-full object-cover object-top" />
+                          {discountPct > 0 && !lockedOut && (
+                            <div className="absolute top-2 right-2 flex flex-col items-end gap-1">
+                              <span className="text-[10px] font-extrabold px-2 py-0.5 rounded-full shadow-md"
+                                style={{ background: 'linear-gradient(135deg, #FF6B35 0%, #F7B731 100%)', color: '#fff', letterSpacing: 0.3 }}>
+                                {discountPct}% OFF
+                              </span>
+                            </div>
+                          )}
                         </div>
                         <div className="flex items-center justify-between px-2.5 py-2"
                           style={{ background: form.artStyle === s.label ? C.saffron : s.available ? C.navy : '#CCCCCC' }}>
@@ -1076,12 +1089,20 @@ function OrderForm({ price, isCustomStory, setIsCustomStory }: { price: number; 
                             </span>
                           )}
                           {s.available && s.price && !lockedOut && (
-                            <span className="text-[9px] font-bold rounded-full px-1.5 py-0.5"
-                              style={{ background: 'rgba(255,255,255,0.2)', color: 'rgba(255,255,255,0.95)' }}>
-                              ₹{s.price}
+                            <span className="flex items-center gap-1">
+                              {s.originalPrice && (
+                                <span className="text-[9px] font-semibold line-through"
+                                  style={{ color: 'rgba(255,255,255,0.6)' }}>
+                                  ₹{s.originalPrice}
+                                </span>
+                              )}
+                              <span className="text-[10px] font-extrabold rounded-full px-1.5 py-0.5"
+                                style={{ background: '#F7B731', color: C.navy }}>
+                                ₹{s.price}
+                              </span>
                             </span>
                           )}
-                          {form.artStyle === s.label && (
+                          {form.artStyle === s.label && !s.price && (
                             <span className="text-xs text-white">✓</span>
                           )}
                         </div>
@@ -1186,6 +1207,24 @@ function OrderForm({ price, isCustomStory, setIsCustomStory }: { price: number; 
             {/* ── Submit */}
             {submitError && (
               <p className="text-sm text-red-500 text-center">{submitError}</p>
+            )}
+            {styleOriginalPrice && styleOriginalPrice > effectivePrice && !couponApplied && (
+              <div className="rounded-2xl p-4" style={{ background: 'linear-gradient(135deg, rgba(255,107,53,0.08) 0%, rgba(247,183,49,0.12) 100%)', border: '1.5px dashed rgba(255,107,53,0.35)' }}>
+                <div className="flex items-center justify-between">
+                  <div className="flex flex-col">
+                    <span className="text-xs font-semibold uppercase tracking-wide" style={{ color: C.saffron }}>Launch offer</span>
+                    <span className="text-xs" style={{ color: C.gray }}>{form.artStyle} style</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm font-semibold line-through" style={{ color: C.lgray }}>₹{styleOriginalPrice}</span>
+                    <span className="text-lg font-extrabold" style={{ color: C.navy, fontFamily: "'Baloo 2', sans-serif" }}>₹{effectivePrice}</span>
+                    <span className="text-[10px] font-extrabold px-2 py-0.5 rounded-full"
+                      style={{ background: 'linear-gradient(135deg, #FF6B35 0%, #F7B731 100%)', color: '#fff' }}>
+                      {Math.round(((styleOriginalPrice - effectivePrice) / styleOriginalPrice) * 100)}% OFF
+                    </span>
+                  </div>
+                </div>
+              </div>
             )}
             {couponApplied && (
               <div className="flex items-center justify-between text-sm px-1">
