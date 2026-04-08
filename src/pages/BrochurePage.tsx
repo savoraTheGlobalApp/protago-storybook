@@ -3,7 +3,7 @@ import { useSearchParams } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ArrowRight, ChevronDown, MessageCircle } from 'lucide-react';
 import { NavBar } from '../components/NavBar';
-import { THEMES, ageToRange } from '../data/themes';
+import { THEMES, ThemeEntry, ageToRange } from '../data/themes';
 import { trackEvent } from '../utils/analytics';
 
 // ── Palette — two backgrounds (white / navy), one warm gradient, saffron + gold accents
@@ -35,24 +35,18 @@ const faqs = [
 ];
 
 const artStyles = [
-  { label: 'Pixar 3D',          img: '/styles/shreyansh_pixar.png',        caption: 'Warm, expressive · cinematic depth' },
-  { label: 'DreamWorks',        img: '/styles/shreyansh_dreamworks.png',   caption: 'Bold, dynamic · full of personality' },
-  { label: 'Comic Book',        img: '/styles/shreyansh_comic.png',        caption: 'Punchy panels · graphic novel energy' },
-  { label: 'Flat Illustration', img: '/styles/shreyansh_illustration.png', caption: 'Clean, colourful · great for young readers' },
+  { label: 'Pixar 3D',  img: '/styles/boy_pixar.png',  caption: 'Warm, expressive · cinematic depth' },
+  { label: 'Realistic', img: '/styles/boy_base.png',   caption: 'Lifelike · rich detail · photographic feel' },
 ];
 
 const boyStyles = [
-  { label: 'Pixar 3D',          img: '/styles/boy_pixar.png' },
-  { label: 'DreamWorks',        img: '/styles/boy_dreamworks.png' },
-  { label: 'Comic Book',        img: '/styles/boy_comic.png' },
-  { label: 'Flat Illustration', img: '/styles/boy_illustration.png' },
+  { label: 'Pixar 3D',  img: '/styles/boy_pixar.png' },
+  { label: 'Realistic', img: '/styles/boy_base.png' },
 ];
 
 const girlStyles = [
-  { label: 'Pixar 3D',          img: '/styles/girl_pixar.png' },
-  { label: 'DreamWorks',        img: '/styles/girl_dreamworks.png' },
-  { label: 'Comic Book',        img: '/styles/girl_comic.png' },
-  { label: 'Flat Illustration', img: '/styles/girl_illustration.png' },
+  { label: 'Pixar 3D',  img: '/styles/girl_pixar.png' },
+  { label: 'Realistic', img: '/styles/girl_base.png' },
 ];
 
 const ageTiers = [
@@ -238,7 +232,7 @@ function FaceToSceneAnimation() {
 
 const FACE_SIZE_BROCHURE = 110;
 
-function BrochureThemeCard({ slug, icon, name }: { slug: string; icon: string; name: string }) {
+function BrochureThemeCard({ slug, icon, name, onClick }: { slug: string; icon: string; name: string; onClick: () => void }) {
   const [activeIdx, setActiveIdx] = useState(0);
   useEffect(() => {
     const t = setInterval(() => setActiveIdx(i => (i + 1) % FACE_SAMPLES.length), 2000);
@@ -246,13 +240,12 @@ function BrochureThemeCard({ slug, icon, name }: { slug: string; icon: string; n
   }, []);
 
   return (
-    <motion.a
-      href="/themes"
-      onClick={e => { e.preventDefault(); window.location.href = '/themes'; }}
-      className="rounded-2xl overflow-hidden cursor-pointer block"
-      style={{ border: '1.5px solid #E5E7EB', background: C.white, textDecoration: 'none' }}
+    <motion.div
+      className="rounded-2xl overflow-hidden cursor-pointer"
+      style={{ border: '1.5px solid #E5E7EB', background: C.white }}
       whileHover={{ scale: 1.02, boxShadow: '0 8px 24px rgba(0,0,0,0.10)' }}
-      transition={{ type: 'spring', stiffness: 300, damping: 24 }}>
+      transition={{ type: 'spring', stiffness: 300, damping: 24 }}
+      onClick={onClick}>
       {slug === 'growth-mindset' ? (
         <div style={{ aspectRatio: '16/9', background: '#F0EEE8', position: 'relative', overflow: 'hidden' }}>
           <img src={`/themes/${slug}.png`} alt={name} style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
@@ -318,17 +311,134 @@ function BrochureThemeCard({ slug, icon, name }: { slug: string; icon: string; n
         </div>
       </div>
       )}
-    </motion.a>
+    </motion.div>
+  );
+}
+
+function BrochureThemeModal({ theme, onClose }: { theme: ThemeEntry; onClose: () => void }) {
+  const [activeIdx, setActiveIdx] = useState(0);
+  const AGE_COLOR: Record<string, string> = { '3–5': '#FF6B35', '5–8': '#F7B731', '8–12': '#1A1A2E' };
+  const color = AGE_COLOR[theme.ageRange] || C.saffron;
+
+  useEffect(() => {
+    const t = setInterval(() => setActiveIdx(i => (i + 1) % FACE_SAMPLES.length), 2000);
+    return () => clearInterval(t);
+  }, []);
+
+  const handleCreate = () => {
+    onClose();
+    setTimeout(() => {
+      const el = document.getElementById('order');
+      if (el) el.scrollIntoView({ behavior: 'smooth' });
+      window.history.replaceState(null, '', `/?theme=${theme.slug}#order`);
+    }, 50);
+  };
+
+  return (
+    <motion.div
+      initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+      style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.65)', zIndex: 50, display: 'flex', alignItems: 'flex-end', justifyContent: 'center' }}
+      onClick={onClose}>
+      <motion.div
+        initial={{ y: '100%' }} animate={{ y: 0 }} exit={{ y: '100%' }}
+        transition={{ type: 'spring', stiffness: 300, damping: 32 }}
+        style={{ background: C.white, borderRadius: '20px 20px 0 0', width: '100%', maxWidth: 720, maxHeight: '92vh', overflowY: 'auto' }}
+        onClick={e => e.stopPropagation()}>
+
+        {/* Face swap animation header */}
+        <div style={{ paddingTop: 55, position: 'relative' }}>
+          <div style={{ aspectRatio: '16/9', background: '#F0EEE8', position: 'relative', overflow: 'hidden' }}>
+            {theme.slug === 'growth-mindset' ? (
+              <img src={`/themes/${theme.slug}.png`} alt={theme.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+            ) : (
+              FACE_SAMPLES.map((sample, i) => (
+                <motion.img
+                  key={sample.key}
+                  src={`/themes_faceswap/${theme.slug}_${sample.key}.png`}
+                  alt=""
+                  style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }}
+                  animate={{ opacity: i === activeIdx ? 1 : 0 }}
+                  transition={{ duration: 0.5 }}
+                  onError={e => { (e.target as HTMLImageElement).style.display = 'none'; }}
+                />
+              ))
+            )}
+            {/* Arrow */}
+            {theme.slug !== 'growth-mindset' && (
+              <svg viewBox="0 0 160 90" preserveAspectRatio="none"
+                style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', zIndex: 5, pointerEvents: 'none' }}>
+                <motion.path d="M 148 4 Q 148 45 52 30" fill="none" stroke={C.saffron}
+                  strokeWidth="2" strokeDasharray="5 3" strokeLinecap="round"
+                  initial={{ pathLength: 0, opacity: 0 }} animate={{ pathLength: 1, opacity: 1 }}
+                  transition={{ pathLength: { duration: 1.0, delay: 0.2 }, opacity: { duration: 0.2 } }}
+                  key={activeIdx} />
+                <motion.path d="M 60 25 L 52 30 L 58 36" fill="none" stroke={C.saffron}
+                  strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
+                  initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 1.0 }}
+                  key={`ah-${activeIdx}`} />
+              </svg>
+            )}
+            <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, padding: '40px 20px 16px', background: 'linear-gradient(transparent, rgba(0,0,0,0.65))', zIndex: 4 }}>
+              <p className="font-extrabold text-2xl" style={{ fontFamily: "'Baloo 2', sans-serif", color: '#fff' }}>{theme.icon} {theme.name}</p>
+            </div>
+            <button onClick={onClose}
+              style={{ position: 'absolute', top: 12, right: 12, background: 'rgba(0,0,0,0.45)', border: 'none', borderRadius: '50%', width: 32, height: 32, color: '#fff', fontSize: 18, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 10 }}>
+              ×
+            </button>
+          </div>
+          {/* Face circle */}
+          {theme.slug !== 'growth-mindset' && (
+            <div style={{ position: 'absolute', top: 0, right: 20, width: 110, height: 110, zIndex: 10 }}>
+              {FACE_SAMPLES.map((sample, i) => (
+                <motion.img key={sample.face} src={sample.face} alt="" className="rounded-full"
+                  style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover',
+                    border: `4px solid ${C.saffron}`, boxShadow: '0 4px 16px rgba(255,107,53,0.35), 0 0 0 3px #fff' }}
+                  animate={{ opacity: i === activeIdx ? 1 : 0, scale: i === activeIdx ? 1 : 0.9 }}
+                  transition={{ duration: 0.4 }} />
+              ))}
+            </div>
+          )}
+        </div>
+
+        {/* Body */}
+        <div className="p-6 flex flex-col gap-4">
+          <p className="text-sm leading-relaxed" style={{ color: C.gray }}>{theme.description}</p>
+
+          <div>
+            <p className="text-xs font-bold uppercase tracking-widest mb-2" style={{ color: C.lgray }}>Personalisation</p>
+            <div className="flex flex-wrap gap-1.5">
+              {theme.personalizationLevers.map(l => (
+                <span key={l} className="text-xs font-semibold px-2.5 py-1 rounded-full"
+                  style={{ background: color + '18', color, border: `1px solid ${color}30` }}>
+                  {l}
+                </span>
+              ))}
+            </div>
+          </div>
+
+          <div style={{ background: C.navy, borderRadius: 12, padding: '14px 16px' }}>
+            <p className="text-xs font-bold mb-1.5" style={{ color: C.gold }}>Sample story prompt</p>
+            <p className="text-sm leading-relaxed" style={{ color: 'rgba(255,255,255,0.8)', fontStyle: 'italic' }}>
+              "{theme.samplePrompt}"
+            </p>
+          </div>
+
+          <button onClick={handleCreate}
+            className="w-full py-4 rounded-2xl font-extrabold text-base transition-all"
+            style={{ background: C.saffron, color: C.white, fontFamily: "'Baloo 2', sans-serif", border: 'none', cursor: 'pointer' }}>
+            Create this story for my child →
+          </button>
+        </div>
+      </motion.div>
+    </motion.div>
   );
 }
 
 // ── ORDER FORM ─────────────────────────────────────────────────────────────
 
 const STYLES = [
-  { label: 'Pixar 3D',          img: '/styles/boy_pixar.png',         available: true  },
-  { label: 'DreamWorks',        img: '/styles/boy_dreamworks.png',    available: false },
-  { label: 'Comic Book',        img: '/styles/boy_comic.png',         available: false },
-  { label: 'Flat Illustration', img: '/styles/boy_illustration.png',  available: false },
+  { label: 'Pixar 3D',  img: '/styles/boy_pixar.png',     available: true,  price: null   },
+  { label: 'Realistic', img: '/styles/boy_realistic.png', available: true,  price: Number(import.meta.env.VITE_REALISTIC_PRICE) || 799 },
 ];
 const FORMATS = [
   { label: 'Immersive (Cinematic)', available: true },
@@ -475,6 +585,9 @@ function OrderForm({ price }: { price: number; scrollTo: (id: string) => void })
   const [couponApplied, setCouponApplied] = useState<{ code: string; discountAmount: number; finalPrice: number; discountType: string; discountValue: number } | null>(null);
   const [couponError, setCouponError] = useState('');
   const [couponLoading, setCouponLoading] = useState(false);
+
+  const stylePrice = STYLES.find(s => s.label === form.artStyle)?.price ?? null;
+  const effectivePrice = stylePrice ?? price;
 
   const API_BASE = import.meta.env.VITE_API_BASE_URL || '';
   const set = (k: string, v: string) => setForm(f => {
@@ -625,7 +738,7 @@ function OrderForm({ price }: { price: number; scrollTo: (id: string) => void })
               theme: form.storyTheme,
               art_style: form.artStyle,
               coupon_code: couponApplied?.code || '',
-              value: couponApplied ? couponApplied.finalPrice : price,
+              value: couponApplied ? couponApplied.finalPrice : effectivePrice,
               currency: 'INR',
             });
             setSubmitted(true);
@@ -911,6 +1024,12 @@ function OrderForm({ price }: { price: number; scrollTo: (id: string) => void })
                               Soon
                             </span>
                           )}
+                          {s.available && s.price && (
+                            <span className="text-[9px] font-bold rounded-full px-1.5 py-0.5"
+                              style={{ background: 'rgba(255,255,255,0.2)', color: 'rgba(255,255,255,0.95)' }}>
+                              ₹{s.price}
+                            </span>
+                          )}
                           {form.artStyle === s.label && (
                             <span className="text-xs text-white">✓</span>
                           )}
@@ -1020,13 +1139,13 @@ function OrderForm({ price }: { price: number; scrollTo: (id: string) => void })
             {couponApplied && (
               <div className="flex items-center justify-between text-sm px-1">
                 <span style={{ color: C.lgray }}>Original price</span>
-                <span style={{ color: C.lgray, textDecoration: 'line-through' }}>₹{price}</span>
+                <span style={{ color: C.lgray, textDecoration: 'line-through' }}>₹{effectivePrice}</span>
               </div>
             )}
             <button type="submit" disabled={submitting || anyUploading}
               className="w-full py-4 rounded-2xl text-base font-extrabold text-white transition-opacity hover:opacity-90 flex items-center justify-center gap-2 disabled:opacity-60"
               style={{ background: C.gradient, fontFamily: "'Baloo 2', sans-serif" }}>
-              {submitting ? 'Processing…' : anyUploading ? `Uploading photos…` : <>Pay ₹{couponApplied ? couponApplied.finalPrice : price} & Order <ArrowRight size={16} /></>}
+              {submitting ? 'Processing…' : anyUploading ? `Uploading photos…` : <>Pay ₹{couponApplied ? couponApplied.finalPrice : effectivePrice} & Order <ArrowRight size={16} /></>}
             </button>
             <p className="text-center text-xs" style={{ color: C.lgray }}>
               We'll confirm your order via WhatsApp/email within 24 hours.
@@ -1073,9 +1192,10 @@ function OrderForm({ price }: { price: number; scrollTo: (id: string) => void })
 // ── Main page ───────────────────────────────────────────────────────────────
 
 export function BrochurePage() {
-  const [openFaq, setOpenFaq]       = useState<number | null>(null);
-  const [themesTab, setThemesTab]   = useState<'3–5' | '5–8' | '8–12'>('3–5');
-  const [heroSlide, setHeroSlide]   = useState(0);
+  const [openFaq, setOpenFaq]         = useState<number | null>(null);
+  const [themesTab, setThemesTab]     = useState<'3–5' | '5–8' | '8–12'>('3–5');
+  const [selectedTheme, setSelectedTheme] = useState<ThemeEntry | null>(null);
+  const [heroSlide, setHeroSlide]     = useState(0);
   const price = Number(import.meta.env.VITE_STORYBOOK_PRICE) || 499;
   const [searchParams] = useSearchParams();
 
@@ -1248,17 +1368,13 @@ export function BrochurePage() {
                     exit={{ opacity: 0, y: -10 }} transition={{ duration: 0.2 }}
                     style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: 20 }}>
                     {tabThemes.map(t => (
-                      <BrochureThemeCard key={t.slug} slug={t.slug} icon={t.icon} name={t.name} />
+                      <BrochureThemeCard key={t.slug} slug={t.slug} icon={t.icon} name={t.name} onClick={() => setSelectedTheme(t)} />
                     ))}
                   </motion.div>
                 </AnimatePresence>
 
                 <div className="mt-8 text-center">
-                  <a href="/themes"
-                    className="inline-flex items-center gap-2 px-6 py-3 rounded-full text-sm font-bold transition-opacity hover:opacity-90"
-                    style={{ background: activeColor, color: '#fff', textDecoration: 'none' }}>
-                    Explore all themes & personalisation →
-                  </a>
+                  <p className="text-xs" style={{ color: C.lgray }}>Click any theme to see how we personalise it for your child</p>
                 </div>
               </>
             );
@@ -1308,38 +1424,6 @@ export function BrochurePage() {
           </motion.div>
 
           <FaceToSceneAnimation />
-
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-8">
-            {artStyles.map((s, i) => (
-              <motion.div key={s.label} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }} transition={{ delay: i * 0.07 }}
-                className="rounded-2xl overflow-hidden shadow-md border" style={{ borderColor: '#F0F0F0' }}>
-                <div className="overflow-hidden bg-gray-50">
-                  <img src={s.img} alt={s.label} className="w-full h-auto block object-top" />
-                </div>
-                <div className="py-2.5 text-center text-xs font-bold" style={{ background: C.navyCard, color: C.gold }}>
-                  {s.label}
-                </div>
-              </motion.div>
-            ))}
-          </div>
-
-          {/* Photo tips */}
-          <motion.div initial={{ opacity: 0 }} whileInView={{ opacity: 1 }} viewport={{ once: true }}
-            className="rounded-2xl p-5 flex gap-4 items-start"
-            style={{ background: C.warmTint, borderLeft: `4px solid ${C.saffron}` }}>
-            <div>
-              <p className="text-sm font-bold mb-3" style={{ color: C.navy }}>For best results, your photo should be:</p>
-              <div className="grid grid-cols-2 gap-y-2 gap-x-8">
-                {['Clear face, looking at camera','Plain or simple background','Well lit, no harsh shadows','Any recent photo works'].map(t => (
-                  <p key={t} className="text-xs font-semibold" style={{ color: C.gray }}>✓ {t}</p>
-                ))}
-              </div>
-            </div>
-          </motion.div>
-          <p className="text-center text-xs mt-4" style={{ color: C.lgray }}>
-            Your photo is never stored or shared. Used only to generate your book.
-          </p>
         </div>
       </section>
 
@@ -1350,14 +1434,12 @@ export function BrochurePage() {
         <div className="max-w-6xl mx-auto px-5 sm:px-8">
           <motion.div initial={{ opacity: 0, y: 16 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} className="mb-10">
             {eyebrow('Step 1 · Choose your art style', true)}
-            {heading('Four worlds. One hero. Your child.', true)}
+            {heading('Two styles. One hero. Your child.', true)}
           </motion.div>
 
           {/* Boy row */}
-          <p className="text-xs font-bold uppercase tracking-widest mb-3" style={{ color: 'rgba(255,255,255,0.35)' }}>Arjun, Age 7</p>
-          <div className="grid grid-cols-2 sm:grid-cols-5 gap-4 mb-10">
-
-            {/* Real photo */}
+          <p className="text-xs font-bold uppercase tracking-widest mb-3" style={{ color: 'rgba(255,255,255,0.35)' }} className="text-center">Arjun, Age 7</p>
+          <div className="grid grid-cols-3 gap-4 mb-10 mx-auto" style={{ maxWidth: 640 }}>
             <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }} className="rounded-2xl overflow-hidden shadow-lg">
               <div className="overflow-hidden" style={{ background: C.navyCard }}>
@@ -1368,10 +1450,9 @@ export function BrochurePage() {
                 <span>📸</span> Real Photo
               </div>
             </motion.div>
-
             {boyStyles.map((s, i) => (
               <motion.div key={s.label} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }} transition={{ delay: i * 0.07 }}
+                viewport={{ once: true }} transition={{ delay: i * 0.1 }}
                 className="rounded-2xl overflow-hidden shadow-lg">
                 <div className="overflow-hidden" style={{ background: C.navyCard }}>
                   <img src={s.img} alt={s.label} className="w-full h-auto block object-top" />
@@ -1382,10 +1463,8 @@ export function BrochurePage() {
           </div>
 
           {/* Girl row */}
-          <p className="text-xs font-bold uppercase tracking-widest mb-3" style={{ color: 'rgba(255,255,255,0.35)' }}>Priya, Age 7</p>
-          <div className="grid grid-cols-2 sm:grid-cols-5 gap-4">
-
-            {/* Real photo */}
+          <p className="text-xs font-bold uppercase tracking-widest mb-3 text-center" style={{ color: 'rgba(255,255,255,0.35)' }}>Priya, Age 7</p>
+          <div className="grid grid-cols-3 gap-4 mx-auto" style={{ maxWidth: 640 }}>
             <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }} className="rounded-2xl overflow-hidden shadow-lg">
               <div className="overflow-hidden" style={{ background: C.navyCard }}>
@@ -1396,10 +1475,9 @@ export function BrochurePage() {
                 <span>📸</span> Real Photo
               </div>
             </motion.div>
-
             {girlStyles.map((s, i) => (
               <motion.div key={s.label} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }} transition={{ delay: i * 0.07 }}
+                viewport={{ once: true }} transition={{ delay: i * 0.1 }}
                 className="rounded-2xl overflow-hidden shadow-lg">
                 <div className="overflow-hidden" style={{ background: C.navyCard }}>
                   <img src={s.img} alt={s.label} className="w-full h-auto block object-top" />
@@ -1802,6 +1880,12 @@ export function BrochurePage() {
           </div>
         </div>
       </footer>
+
+      <AnimatePresence>
+        {selectedTheme && (
+          <BrochureThemeModal theme={selectedTheme} onClose={() => setSelectedTheme(null)} />
+        )}
+      </AnimatePresence>
     </div>
   );
 }

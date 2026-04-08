@@ -64,12 +64,6 @@ export function NavBar() {
               {label}
             </button>
           ))}
-          <button onClick={() => navigate('/themes')}
-            className="text-sm font-semibold transition-colors hover:opacity-70"
-            style={{ color: location.pathname === '/themes' ? C.saffron : C.gray, background: 'none', border: 'none', cursor: 'pointer',
-              fontWeight: location.pathname === '/themes' ? 800 : 600 }}>
-            Themes
-          </button>
           <button onClick={goOrder}
             className="px-5 py-2 rounded-full text-sm font-bold text-white transition-opacity hover:opacity-90"
             style={{ background: C.gradient, border: 'none', cursor: 'pointer' }}>
@@ -112,17 +106,8 @@ export function NavBar() {
                 </motion.button>
               ))}
               <motion.button
-                initial={{ opacity: 0, x: -12 }} animate={{ opacity: 1, x: 0 }}
-                transition={{ delay: NAV_LINKS.length * 0.04 }}
-                onClick={() => { setMobileOpen(false); navigate('/themes'); }}
-                className="py-4 font-semibold text-center w-full"
-                style={{ color: C.saffron, background: 'none', border: 'none', borderBottom: '1px solid #F5F5F5', cursor: 'pointer', fontSize: 18,
-                  fontWeight: location.pathname === '/themes' ? 800 : 600 }}>
-                Themes
-              </motion.button>
-              <motion.button
                 initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: (NAV_LINKS.length + 1) * 0.04 }}
+                transition={{ delay: (NAV_LINKS.length) * 0.04 }}
                 onClick={goOrder}
                 className="mt-3 mb-1 py-3 rounded-2xl text-sm font-bold text-white text-center"
                 style={{ background: C.gradient, border: 'none', cursor: 'pointer', fontSize: 18 }}>
