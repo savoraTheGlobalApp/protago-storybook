@@ -115,10 +115,17 @@ const FACE_SCENE_SAMPLES = [
 
 function FaceToSceneAnimation() {
   const [activeIdx, setActiveIdx] = useState(0);
+  const [hasLoaded, setHasLoaded] = useState(false);
   const FACE_SIZE = 220;
   const wrapperRef = useRef<HTMLDivElement>(null);
   const inView = useInView(wrapperRef, { margin: '200px 0px' });
 
+  // Latch: once the section enters the viewport, mount images and keep them mounted forever.
+  useEffect(() => {
+    if (inView && !hasLoaded) setHasLoaded(true);
+  }, [inView, hasLoaded]);
+
+  // Animation interval still pauses when offscreen — saves CPU without unmounting images.
   useEffect(() => {
     if (!inView) return;
     const t = setInterval(() => setActiveIdx(i => (i + 1) % FACE_SCENE_SAMPLES.length), 3500);
@@ -135,7 +142,7 @@ function FaceToSceneAnimation() {
           style={{ aspectRatio: '16 / 9', background: '#fff' }}>
 
           {/* Slide images — only mount once section enters viewport */}
-          {inView && FACE_SCENE_SAMPLES.map((sample, i) => (
+          {hasLoaded && FACE_SCENE_SAMPLES.map((sample, i) => (
             <motion.img
               key={sample.scene}
               src={sample.scene}
@@ -187,7 +194,7 @@ function FaceToSceneAnimation() {
         {/* Face circle — hovering top-right corner, half above the scene */}
         <div className="absolute"
           style={{ top: 0, right: 20, width: FACE_SIZE, height: FACE_SIZE, zIndex: 10 }}>
-          {inView && FACE_SCENE_SAMPLES.map((sample, i) => (
+          {hasLoaded && FACE_SCENE_SAMPLES.map((sample, i) => (
             <motion.img
               key={sample.face}
               src={sample.face}
@@ -237,9 +244,16 @@ const FACE_SIZE_BROCHURE = 110;
 
 function BrochureThemeCard({ slug, icon, name, onClick }: { slug: string; icon: string; name: string; onClick: () => void }) {
   const [activeIdx, setActiveIdx] = useState(0);
+  const [hasLoaded, setHasLoaded] = useState(false);
   const cardRef = useRef<HTMLDivElement>(null);
   const inView = useInView(cardRef, { margin: '300px 0px' });
 
+  // Latch: once the card has been visible once, keep its full image set mounted forever.
+  useEffect(() => {
+    if (inView && !hasLoaded) setHasLoaded(true);
+  }, [inView, hasLoaded]);
+
+  // Cycle interval pauses while offscreen, but the images themselves stay in the DOM.
   useEffect(() => {
     if (!inView) return;
     const t = setInterval(() => setActiveIdx(i => (i + 1) % FACE_SAMPLES.length), 2000);
@@ -265,7 +279,7 @@ function BrochureThemeCard({ slug, icon, name, onClick }: { slug: string; icon: 
       <div style={{ paddingTop: FACE_SIZE_BROCHURE / 2, position: 'relative' }}>
         {/* Scene */}
         <div style={{ aspectRatio: '16/9', background: '#F0EEE8', position: 'relative', overflow: 'hidden' }}>
-          {!inView ? (
+          {!hasLoaded ? (
             <img
               src={`/themes_faceswap/${slug}_${FACE_SAMPLES[0].key}@thumb.webp`}
               alt=""
@@ -312,7 +326,7 @@ function BrochureThemeCard({ slug, icon, name, onClick }: { slug: string; icon: 
         </div>
         {/* Face circle */}
         <div style={{ position: 'absolute', top: 0, right: 12, width: FACE_SIZE_BROCHURE, height: FACE_SIZE_BROCHURE, zIndex: 10 }}>
-          {!inView ? (
+          {!hasLoaded ? (
             <img
               src={FACE_SAMPLES[0].face}
               alt=""
