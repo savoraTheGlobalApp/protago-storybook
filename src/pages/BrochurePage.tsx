@@ -113,10 +113,11 @@ const FACE_SCENE_SAMPLES = [
   { name: 'Girl', face: '/faces/face_girl_medium.webp', scene: '/themes_faceswap/bedtime-routines_girl.webp' },
 ];
 
+const FACE_SIZE_CSS = 'clamp(70px, 18vw, 140px)';
+
 function FaceToSceneAnimation() {
   const [activeIdx, setActiveIdx] = useState(0);
   const [hasLoaded, setHasLoaded] = useState(false);
-  const FACE_SIZE = 220;
   const wrapperRef = useRef<HTMLDivElement>(null);
   const inView = useInView(wrapperRef, { margin: '200px 0px' });
 
@@ -133,9 +134,9 @@ function FaceToSceneAnimation() {
   }, [inView]);
 
   return (
-    <div className="mb-12" ref={wrapperRef}>
+    <div className="mb-4" ref={wrapperRef}>
       {/* Outer wrapper — extra top padding so face circle can overflow upward */}
-      <div className="relative" style={{ paddingTop: FACE_SIZE / 2 }}>
+      <div className="relative" style={{ paddingTop: `calc(${FACE_SIZE_CSS} / 2)` }}>
 
         {/* Scene spread */}
         <div className="relative rounded-2xl overflow-hidden shadow-2xl w-full"
@@ -193,7 +194,7 @@ function FaceToSceneAnimation() {
 
         {/* Face circle — hovering top-right corner, half above the scene */}
         <div className="absolute"
-          style={{ top: 0, right: 20, width: FACE_SIZE, height: FACE_SIZE, zIndex: 10 }}>
+          style={{ top: 0, right: 12, width: FACE_SIZE_CSS, height: FACE_SIZE_CSS, zIndex: 10 }}>
           {hasLoaded && FACE_SCENE_SAMPLES.map((sample, i) => (
             <motion.img
               key={sample.face}
@@ -212,7 +213,7 @@ function FaceToSceneAnimation() {
           ))}
           {/* Name label */}
           <div className="absolute left-1/2 flex flex-col items-center"
-            style={{ top: FACE_SIZE + 8, transform: 'translateX(-50%)', whiteSpace: 'nowrap' }}>
+            style={{ top: `calc(${FACE_SIZE_CSS} + 6px)`, transform: 'translateX(-50%)', whiteSpace: 'nowrap' }}>
             <AnimatePresence mode="wait">
               <motion.p key={activeIdx} initial={{ opacity: 0, y: 3 }} animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -3 }} transition={{ duration: 0.2 }}
@@ -225,7 +226,7 @@ function FaceToSceneAnimation() {
       </div>
 
       {/* Indicator dots */}
-      <div className="flex justify-center gap-2 mt-10">
+      <div className="flex justify-center gap-2 mt-4">
         {FACE_SCENE_SAMPLES.map((_, i) => (
           <button key={i} onClick={() => setActiveIdx(i)}
             className="rounded-full transition-all duration-300"
@@ -1384,6 +1385,52 @@ export function BrochurePage() {
 
       {/* ── HEADER ─────────────────────────────── */}
       <NavBar />
+
+      {/* ══════════════════════════════════════════
+          § 0  TOP HERO — face-swap animation + video testimonial
+      ══════════════════════════════════════════ */}
+      <section style={{ background: C.navy }} className="pt-36 pb-14 sm:pt-32 sm:pb-20">
+        <div className="max-w-6xl mx-auto px-5 sm:px-8">
+          <motion.h2 initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4 }}
+            className="text-center mb-6 sm:mb-8"
+            style={{ fontFamily: "'Baloo 2', sans-serif", fontWeight: 800, color: C.white,
+              fontSize: 'clamp(1.3rem, 3vw, 2rem)', lineHeight: 1.1 }}>
+            Your child's face in every scene
+          </motion.h2>
+          {/* Two-panel: animation + video — same height, aligned top-to-bottom */}
+          <div className="flex flex-col-reverse sm:flex-row gap-4 sm:gap-6 items-stretch">
+
+            {/* Left on desktop, bottom on mobile — face-swap animation (50%) */}
+            <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }}
+              transition={{ duration: 0.5, delay: 0.1 }}
+              className="w-full sm:w-1/2 min-w-0 flex flex-col">
+              <FaceToSceneAnimation />
+            </motion.div>
+
+            {/* Right on desktop, top on mobile — video testimonial (50%) */}
+            {/* On mobile: portrait 9:16. On desktop: stretch to match animation height */}
+            <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }}
+              transition={{ duration: 0.5, delay: 0.2 }}
+              className="w-full sm:w-1/2 mx-auto sm:mx-0">
+              <div className="relative rounded-2xl overflow-hidden shadow-2xl mx-auto aspect-[9/16] sm:aspect-auto sm:h-full">
+                <iframe
+                  src="https://www.youtube.com/embed/OsUGHz9LILY?autoplay=1&mute=1&playsinline=1&loop=1&playlist=OsUGHz9LILY&controls=0&modestbranding=1&rel=0"
+                  title="Parent testimonial"
+                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                  allowFullScreen
+                  className="w-full h-full border-0"
+                />
+                <div className="absolute bottom-0 left-0 right-0 px-3 py-2.5"
+                  style={{ background: 'linear-gradient(transparent, rgba(0,0,0,0.75))' }}>
+                  <p className="text-[11px] font-bold text-white">Real parent reaction</p>
+                  <p className="text-[9px] mt-0.5" style={{ color: 'rgba(255,255,255,0.7)' }}>Watch Shreyansh's story unfold</p>
+                </div>
+              </div>
+            </motion.div>
+
+          </div>
+        </div>
+      </section>
 
       {/* ══════════════════════════════════════════
           § 1  HERO  — warm gradient
