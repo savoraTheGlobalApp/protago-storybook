@@ -1412,7 +1412,7 @@ export function BrochurePage() {
             <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }}
               transition={{ duration: 0.5, delay: 0.2 }}
               className="w-full sm:w-1/2 mx-auto sm:mx-0">
-              <div className="relative rounded-2xl overflow-hidden shadow-2xl mx-auto aspect-[9/16] sm:aspect-auto sm:h-full">
+              <div className="relative rounded-2xl overflow-hidden shadow-2xl mx-auto aspect-[9/16] max-h-[55vh] sm:aspect-auto sm:max-h-none sm:h-full">
                 <iframe
                   src="https://www.youtube.com/embed/OsUGHz9LILY?autoplay=1&mute=1&playsinline=1&loop=1&playlist=OsUGHz9LILY&controls=0&modestbranding=1&rel=0"
                   title="Parent testimonial"
