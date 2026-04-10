@@ -1370,6 +1370,60 @@ function OrderForm({ price, isCustomStory, setIsCustomStory }: { price: number; 
   );
 }
 
+// ── Hero video with mute toggle ─────────────────────────────────────────────
+
+function HeroVideo() {
+  const iframeRef = useRef<HTMLIFrameElement>(null);
+  const [muted, setMuted] = useState(true);
+
+  const toggleMute = () => {
+    const cmd = muted ? 'unMute' : 'mute';
+    iframeRef.current?.contentWindow?.postMessage(
+      JSON.stringify({ event: 'command', func: cmd, args: [] }), '*'
+    );
+    setMuted(m => !m);
+  };
+
+  return (
+    <div className="relative rounded-2xl overflow-hidden shadow-2xl mx-auto aspect-[9/16] max-h-[55vh] sm:aspect-auto sm:max-h-none sm:h-full">
+      <iframe
+        ref={iframeRef}
+        src="https://www.youtube.com/embed/OsUGHz9LILY?autoplay=1&mute=1&playsinline=1&loop=1&playlist=OsUGHz9LILY&controls=0&modestbranding=1&rel=0&enablejsapi=1"
+        title="Parent testimonial"
+        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+        allowFullScreen
+        className="w-full h-full border-0"
+      />
+      {/* Mute toggle */}
+      <button
+        onClick={toggleMute}
+        className="absolute top-3 right-3 rounded-full flex items-center justify-center transition-opacity hover:opacity-90"
+        style={{ width: 36, height: 36, background: 'rgba(0,0,0,0.55)', backdropFilter: 'blur(4px)', border: 'none', cursor: 'pointer', zIndex: 10 }}
+        aria-label={muted ? 'Unmute video' : 'Mute video'}>
+        {muted ? (
+          /* muted icon */
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/>
+            <line x1="23" y1="9" x2="17" y2="15"/><line x1="17" y1="9" x2="23" y2="15"/>
+          </svg>
+        ) : (
+          /* unmuted icon */
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/>
+            <path d="M19.07 4.93a10 10 0 0 1 0 14.14"/>
+            <path d="M15.54 8.46a5 5 0 0 1 0 7.07"/>
+          </svg>
+        )}
+      </button>
+      <div className="absolute bottom-0 left-0 right-0 px-3 py-2.5"
+        style={{ background: 'linear-gradient(transparent, rgba(0,0,0,0.75))' }}>
+        <p className="text-[11px] font-bold text-white">Real child reaction</p>
+        <p className="text-[9px] mt-0.5" style={{ color: 'rgba(255,255,255,0.7)' }}>Watch Shreyansh's story unfold</p>
+      </div>
+    </div>
+  );
+}
+
 // ── Main page ───────────────────────────────────────────────────────────────
 
 export function BrochurePage() {
@@ -1448,20 +1502,7 @@ export function BrochurePage() {
             <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }}
               transition={{ duration: 0.5, delay: 0.2 }}
               className="w-full sm:w-1/2 mx-auto sm:mx-0">
-              <div className="relative rounded-2xl overflow-hidden shadow-2xl mx-auto aspect-[9/16] max-h-[55vh] sm:aspect-auto sm:max-h-none sm:h-full">
-                <iframe
-                  src="https://www.youtube.com/embed/OsUGHz9LILY?autoplay=1&mute=1&playsinline=1&loop=1&playlist=OsUGHz9LILY&controls=0&modestbranding=1&rel=0"
-                  title="Parent testimonial"
-                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                  allowFullScreen
-                  className="w-full h-full border-0"
-                />
-                <div className="absolute bottom-0 left-0 right-0 px-3 py-2.5"
-                  style={{ background: 'linear-gradient(transparent, rgba(0,0,0,0.75))' }}>
-                  <p className="text-[11px] font-bold text-white">Real child reaction</p>
-                  <p className="text-[9px] mt-0.5" style={{ color: 'rgba(255,255,255,0.7)' }}>Watch Shreyansh's story unfold</p>
-                </div>
-              </div>
+              <HeroVideo />
             </motion.div>
 
           </div>
