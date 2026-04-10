@@ -3,6 +3,7 @@ export type ThemeEntry = {
   name: string;
   icon: string;
   ageRange: '3–5' | '5–8' | '8–12';
+  category?: 'mythology';
   description: string;
   personalizationLevers: string[];
   samplePrompt: string;
@@ -101,6 +102,25 @@ export const THEMES: ThemeEntry[] = [
     description: 'Adventure where the child solves a real ecological problem in their own city or region.',
     personalizationLevers: ['City/region', 'Environmental issue (pollution/water/trees)', 'Child name & photo'],
     samplePrompt: '[Krish] notices the lake near [his school in Bengaluru] is turning green. He sets out to find out why.',
+  },
+  // Mythology
+  {
+    slug: 'ram-setu-squirrel', name: 'Ram Setu — The Squirrel', icon: '🐿️', ageRange: '5–8', category: 'mythology',
+    description: 'Child joins the squirrels at Ram Setu — rolling in sand and shaking it into the sea to help build the bridge to Lanka. Even the tiniest act of devotion counts.',
+    personalizationLevers: ['Child\'s role (squirrel / builder / scout)', 'Child name & photo'],
+    samplePrompt: '[Arjun] is too small to carry rocks. But when he rolls in the sand and shakes it off into the sea at Ram Setu, Ram himself smiles.',
+  },
+  {
+    slug: 'hanuman-leap', name: 'Hanuman\'s Leap', icon: '🌅', ageRange: '5–8', category: 'mythology',
+    description: 'Child soars alongside Hanuman on his legendary leap across the ocean to Lanka — discovering that belief and courage can carry you further than you imagine.',
+    personalizationLevers: ['Child\'s challenge to overcome', 'Favourite Hanuman moment', 'Child name & photo'],
+    samplePrompt: '[Priya] is afraid she isn\'t strong enough. Then Hanuman shows her his leap — and asks her to jump with him.',
+  },
+  {
+    slug: 'sudama-poha', name: 'Sudama\'s Poha', icon: '🤲', ageRange: '5–8', category: 'mythology',
+    description: 'Child walks with Sudama as he brings a handful of poha to his childhood friend Krishna — learning that true friendship needs no grand gift, only a full heart.',
+    personalizationLevers: ['Child\'s best friend to include', 'A humble gift they\'d share', 'Child name & photo'],
+    samplePrompt: '[Rohan] has only a small box of poha to bring. But when he reaches [Kartik\'s] door, something extraordinary happens.',
   },
 ];
 

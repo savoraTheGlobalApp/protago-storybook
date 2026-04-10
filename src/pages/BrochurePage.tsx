@@ -1063,7 +1063,7 @@ function OrderForm({ price, isCustomStory, setIsCustomStory }: { price: number; 
                   )}
 
                   {!isCustomStory && (['3–5', '5–8', '8–12'] as const).map(range => {
-                    const rangeThemes = THEMES.filter(t => t.ageRange === range);
+                    const rangeThemes = THEMES.filter(t => !t.category && t.ageRange === range);
                     const isRelevant = form.childAge ? ageToRange(Number(form.childAge)) === range : true;
                     return (
                       <div key={range} className="mb-3">
@@ -1102,6 +1102,42 @@ function OrderForm({ price, isCustomStory, setIsCustomStory }: { price: number; 
                       </div>
                     );
                   })}
+
+                  {/* Mythology themes group */}
+                  {!isCustomStory && (() => {
+                    const mythThemes = THEMES.filter(t => t.category === 'mythology');
+                    if (!mythThemes.length) return null;
+                    return (
+                      <div className="mb-3">
+                        <p className="text-xs font-bold mb-2" style={{ color: C.gold }}>🪬 Mythology</p>
+                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 8 }}>
+                          {mythThemes.map(t => {
+                            const selected = form.storyTheme === t.slug;
+                            return (
+                              <button type="button" key={t.slug}
+                                onClick={() => set('storyTheme', t.slug)}
+                                className="rounded-xl overflow-hidden text-left transition-all"
+                                style={{ border: `2.5px solid ${selected ? C.saffron : '#E5E7EB'}`, outline: 'none' }}>
+                                <div style={{ aspectRatio: '16/9', background: '#F0EEE8', position: 'relative' }}>
+                                  <img src={`/themes_faceswap/${t.slug}_boy_young@thumb.webp`} alt={t.name}
+                                    loading="lazy" decoding="async"
+                                    style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
+                                  {selected && (
+                                    <div style={{ position: 'absolute', top: 4, right: 4, background: C.saffron, borderRadius: '50%', width: 18, height: 18, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                      <span style={{ color: '#fff', fontSize: 10, fontWeight: 800 }}>✓</span>
+                                    </div>
+                                  )}
+                                </div>
+                                <div style={{ padding: '4px 6px 5px', background: selected ? C.saffron : C.navy }}>
+                                  <p style={{ fontSize: 10, fontWeight: 700, color: '#fff', lineHeight: 1.3 }}>{t.icon} {t.name}</p>
+                                </div>
+                              </button>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    );
+                  })()}
                 </div>
                 <div>
                   <label style={labelStyle}>Art style *</label>
@@ -1536,7 +1572,7 @@ export function BrochurePage() {
         <div className="max-w-6xl mx-auto px-5 sm:px-8">
           <motion.div initial={{ opacity: 0, y: 16 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} className="mb-8">
             {eyebrow('What will their story be about?')}
-            {heading(<>15 themes across<br />every age group</>)}
+            {heading(<>18 themes across<br />every age group</>)}
             <p className="text-sm mt-3 leading-relaxed" style={{ color: C.gray }}>
               From bedtime routines for toddlers to financial literacy for tweens — every theme is built around real learning moments. Click any to explore.
             </p>
@@ -1548,7 +1584,8 @@ export function BrochurePage() {
               { range: '5–8'  as const, label: 'Early School',  color: '#F7B731' },
               { range: '8–12' as const, label: 'Upper Primary', color: '#1A1A2E' },
             ];
-            const tabThemes = THEMES.filter(t => t.ageRange === themesTab);
+            const tabThemes = THEMES.filter(t => !t.category && t.ageRange === themesTab);
+            const mythologyThemes = THEMES.filter(t => t.category === 'mythology');
             return (
               <>
                 <div className="flex gap-2 mb-6">
@@ -1577,6 +1614,31 @@ export function BrochurePage() {
                     ))}
                   </motion.div>
                 </AnimatePresence>
+
+                {/* ── Mythology Themes ─────────────────────────────── */}
+                {mythologyThemes.length > 0 && (
+                  <motion.div initial={{ opacity: 0, y: 16 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}
+                    className="mt-10 rounded-3xl p-6 sm:p-8"
+                    style={{ background: 'linear-gradient(135deg, #1A1A2E 0%, #2D1B4E 100%)', border: '1.5px solid rgba(247,183,49,0.25)' }}>
+                    <div className="mb-5">
+                      <span className="text-xs font-extrabold tracking-widest uppercase px-3 py-1 rounded-full"
+                        style={{ background: 'rgba(247,183,49,0.15)', color: C.gold, border: '1px solid rgba(247,183,49,0.3)' }}>
+                        🪬 Mythology Themes
+                      </span>
+                      <p className="mt-3 font-extrabold text-lg" style={{ fontFamily: "'Baloo 2', sans-serif", color: '#fff' }}>
+                        Epics reimagined — your child as the hero
+                      </p>
+                      <p className="text-sm mt-1" style={{ color: 'rgba(255,255,255,0.6)' }}>
+                        Step into Ramayana and Mahabharata scenes with your child's face in every illustration.
+                      </p>
+                    </div>
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: 20 }}>
+                      {mythologyThemes.map(t => (
+                        <BrochureThemeCard key={t.slug} slug={t.slug} icon={t.icon} name={t.name} onClick={() => setSelectedTheme(t)} />
+                      ))}
+                    </div>
+                  </motion.div>
+                )}
 
                 <div className="mt-8 text-center">
                   <p className="text-xs" style={{ color: C.lgray }}>Click any theme to see how we personalise it for your child</p>
