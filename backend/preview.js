@@ -39,7 +39,7 @@ async function triggerModalPreview({ jobId, storySlug, photoUrl, steps = 4 }) {
       steps,
       // Supabase DB only — for job status updates, not storage
       supabase_url:         process.env.SUPABASE_URL_STORY || process.env.SUPABASE_URL,
-      supabase_service_key: process.env.SUPABASE_SERVICE_KEY,
+      supabase_service_key: process.env.SUPABASE_SERVICE_KEY_STORY || process.env.SUPABASE_SERVICE_KEY,
     }),
   });
 
