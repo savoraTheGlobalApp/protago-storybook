@@ -1134,6 +1134,7 @@ app.post('/api/preview/trigger', async (req, res) => {
 
     const [job] = await createRes.json();
 
+    console.log(`Preview job ${job.id}: photoUrl=${photoUrl}`);
     // Fire Modal async (don't await — client polls for result)
     triggerPreview({ jobId: job.id, storySlug, photoUrl }).catch(err =>
       console.error(`Preview job ${job.id} trigger failed:`, err.message)
