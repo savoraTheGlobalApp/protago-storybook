@@ -66,4 +66,4 @@ async function triggerPreview(args) {
   return triggerModalPreview(args);
 }
 
-module.exports = { triggerPreview, getSceneUrls, HERO_SCENES };
+export { triggerPreview, getSceneUrls, HERO_SCENES };
