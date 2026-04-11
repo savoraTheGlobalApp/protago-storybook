@@ -631,6 +631,41 @@ function OrderForm({ price, isCustomStory, setIsCustomStory }: { price: number; 
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState('');
   const [showConfirm, setShowConfirm] = useState(false);
+  const [previewJobId, setPreviewJobId] = useState<string | null>(null);
+  const [previewStatus, setPreviewStatus] = useState<string>('');
+  const [previewUrls, setPreviewUrls] = useState<string[]>([]);
+  const PREVIEW_SLUGS = ['bedtime-routines', 'colours-shapes', 'first-day-school', 'new-sibling', 'sharing-sorry', 'numbers-maths', 'indian-festivals', 'body-safety', 'managing-emotions', 'phonics-reading', 'growth-mindset', 'internet-safety', 'history-india', 'financial-literacy', 'environmental-science', 'hanuman-leap', 'ram-setu-squirrel', 'sudama-poha'];
+  const [previewSlug, setPreviewSlug] = useState('bedtime-routines');
+
+  async function handleTestPreview() {
+    const photoUrl = photos[0]?.signedUrl;
+    const slug = previewSlug;
+    if (!photoUrl) { alert('Upload a photo first'); return; }
+    setPreviewStatus('triggering...');
+    setPreviewUrls([]);
+    const res = await fetch(`${API_BASE}/api/preview/trigger`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ storySlug: slug, photoUrl, childName: form.childName }),
+    });
+    const data = await res.json();
+    if (!res.ok) { setPreviewStatus(`Error: ${data.error}`); return; }
+    const jobId = data.jobId;
+    setPreviewJobId(jobId);
+    setPreviewStatus('processing...');
+    const interval = setInterval(async () => {
+      const r = await fetch(`${API_BASE}/api/preview/status/${jobId}`);
+      const d = await r.json();
+      setPreviewStatus(d.status);
+      if (d.status === 'done') {
+        clearInterval(interval);
+        setPreviewUrls([d.resultScene1, d.resultScene2].filter(Boolean));
+      } else if (d.status === 'failed') {
+        clearInterval(interval);
+        setPreviewStatus(`failed: ${d.error_message}`);
+      }
+    }, 3000);
+  }
 
   const [couponInput, setCouponInput] = useState('');
   const [couponApplied, setCouponApplied] = useState<{ code: string; discountAmount: number; finalPrice: number; discountType: string; discountValue: number } | null>(null);
@@ -1006,6 +1041,24 @@ function OrderForm({ price, isCustomStory, setIsCustomStory }: { price: number; 
                 </div>
               </div>
             </div>
+
+            {/* ── TEST: Preview button */}
+            {photos.some(p => p.signedUrl) && (
+              <div style={{ padding: '12px 0', display: 'flex', flexDirection: 'column', gap: 8 }}>
+                <select value={previewSlug} onChange={e => setPreviewSlug(e.target.value)}
+                  style={{ borderRadius: 8, border: '1px solid #D1D5DB', padding: '6px 10px', fontSize: 13 }}>
+                  {PREVIEW_SLUGS.map(s => <option key={s} value={s}>{s}</option>)}
+                </select>
+                <button type="button" onClick={handleTestPreview}
+                  style={{ background: '#7C3AED', color: '#fff', border: 'none', borderRadius: 10, padding: '10px 20px', fontWeight: 700, cursor: 'pointer', fontSize: 14 }}>
+                  🧪 Test Preview ({previewSlug})
+                </button>
+                {previewStatus && <p style={{ fontSize: 12, color: '#666' }}>Status: {previewStatus}</p>}
+                {previewUrls.map((url, i) => (
+                  <img key={i} src={url} alt={`preview ${i+1}`} style={{ width: '100%', borderRadius: 8 }} />
+                ))}
+              </div>
+            )}
 
             <div style={{ height: 1, background: '#F0F0F0' }} />
 

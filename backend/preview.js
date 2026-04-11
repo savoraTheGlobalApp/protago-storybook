@@ -22,7 +22,7 @@ function getSceneUrls(storySlug) {
 }
 
 // ── Modal backend ─────────────────────────────────────────────────────────────
-async function triggerModalPreview({ jobId, storySlug, photoUrl, steps = 4 }) {
+async function triggerModalPreview({ jobId, storySlug, photoUrl, steps = 10 }) {
   const MODAL_URL = process.env.MODAL_PREVIEW_URL;
   if (!MODAL_URL) throw new Error('MODAL_PREVIEW_URL not set');
 
