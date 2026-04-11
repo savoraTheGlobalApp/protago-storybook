@@ -1112,7 +1112,7 @@ app.post('/api/preview/trigger', async (req, res) => {
     }
 
     const SUPABASE_URL = process.env.SUPABASE_URL_STORY || process.env.SUPABASE_URL;
-    const SUPABASE_KEY = process.env.SUPABASE_SERVICE_KEY;
+    const SUPABASE_KEY = process.env.SUPABASE_SERVICE_KEY_STORY || process.env.SUPABASE_SERVICE_KEY;
 
     // Create DB row
     const createRes = await fetch(`${SUPABASE_URL}/rest/v1/preview_jobs`, {
@@ -1152,7 +1152,7 @@ app.get('/api/preview/status/:jobId', async (req, res) => {
   try {
     const { jobId } = req.params;
     const SUPABASE_URL = process.env.SUPABASE_URL_STORY || process.env.SUPABASE_URL;
-    const SUPABASE_KEY = process.env.SUPABASE_SERVICE_KEY;
+    const SUPABASE_KEY = process.env.SUPABASE_SERVICE_KEY_STORY || process.env.SUPABASE_SERVICE_KEY;
 
     const pollRes = await fetch(
       `${SUPABASE_URL}/rest/v1/preview_jobs?id=eq.${jobId}&select=status,result_scene_1,result_scene_2,error_message`,
