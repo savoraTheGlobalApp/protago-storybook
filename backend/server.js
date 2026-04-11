@@ -478,6 +478,7 @@ app.post('/api/create-order', async (req, res) => {
                     const signJson = await signRes.json();
                     photoSignedUrl = signJson.signedURL || signJson.signed_url || null;
                     if (photoSignedUrl && photoSignedUrl.startsWith('/')) {
+                        if (!photoSignedUrl.startsWith('/storage/v1')) photoSignedUrl = `/storage/v1${photoSignedUrl}`;
                         photoSignedUrl = `${process.env.SUPABASE_URL_STORY}${photoSignedUrl}`;
                     }
                 } else {
@@ -564,6 +565,7 @@ app.post('/api/create-order', async (req, res) => {
                                         const signJson = await signRes.json();
                                         photoSignedUrl = signJson.signedURL || signJson.signed_url || null;
                                         if (photoSignedUrl && photoSignedUrl.startsWith('/')) {
+                                            if (!photoSignedUrl.startsWith('/storage/v1')) photoSignedUrl = `/storage/v1${photoSignedUrl}`;
                                             photoSignedUrl = `${process.env.SUPABASE_URL_STORY}${photoSignedUrl}`;
                                         }
                                     } else {
@@ -739,6 +741,10 @@ app.post('/api/upload-photo', async (req, res) => {
             const signJson = await signRes.json();
             photoSignedUrl = signJson.signedURL || signJson.signed_url || null;
             if (photoSignedUrl && photoSignedUrl.startsWith('/')) {
+                // Ensure /storage/v1 prefix is present
+                if (!photoSignedUrl.startsWith('/storage/v1')) {
+                    photoSignedUrl = `/storage/v1${photoSignedUrl}`;
+                }
                 photoSignedUrl = `${process.env.SUPABASE_URL_STORY}${photoSignedUrl}`;
             }
         } else {
@@ -821,7 +827,10 @@ app.get('/api/orders/:orderId/photo', async (req, res) => {
 
         const signJson = await signRes.json();
         let signedUrl = signJson.signedURL || signJson.signed_url || null;
-        if (signedUrl && signedUrl.startsWith('/')) signedUrl = `${process.env.SUPABASE_URL_STORY}${signedUrl}`;
+        if (signedUrl && signedUrl.startsWith('/')) {
+            if (!signedUrl.startsWith('/storage/v1')) signedUrl = `/storage/v1${signedUrl}`;
+            signedUrl = `${process.env.SUPABASE_URL_STORY}${signedUrl}`;
+        }
 
         return res.status(200).json({ signed_url: signedUrl });
     } catch (err) {
