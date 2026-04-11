@@ -7,6 +7,7 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import crypto from 'crypto';
 import Razorpay from 'razorpay';
+import { triggerPreview } from './preview.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -1096,6 +1097,84 @@ app.post('/api/order-alert', async (req, res) => {
         console.error('Discord alert failed:', err);
         res.status(200).json({ ok: true }); // don't fail the Supabase webhook
     }
+});
+
+// ── Face swap preview ─────────────────────────────────────────────────────────
+
+// POST /api/preview/trigger
+// Creates a preview_jobs row in Supabase DB, fires Modal async.
+// Body: { storySlug, photoUrl, childName? }
+app.post('/api/preview/trigger', async (req, res) => {
+  try {
+    const { storySlug, photoUrl, childName } = req.body;
+    if (!storySlug || !photoUrl) {
+      return res.status(400).json({ error: 'storySlug and photoUrl are required' });
+    }
+
+    const SUPABASE_URL = process.env.SUPABASE_URL_STORY || process.env.SUPABASE_URL;
+    const SUPABASE_KEY = process.env.SUPABASE_SERVICE_KEY;
+
+    // Create DB row
+    const createRes = await fetch(`${SUPABASE_URL}/rest/v1/preview_jobs`, {
+      method: 'POST',
+      headers: {
+        'apikey': SUPABASE_KEY,
+        'Authorization': `Bearer ${SUPABASE_KEY}`,
+        'Content-Type': 'application/json',
+        'Prefer': 'return=representation',
+      },
+      body: JSON.stringify({ story_slug: storySlug, photo_path: photoUrl, child_name: childName || null }),
+    });
+
+    if (!createRes.ok) {
+      const err = await createRes.text();
+      console.error('preview_jobs insert failed:', err);
+      return res.status(500).json({ error: 'Failed to create preview job' });
+    }
+
+    const [job] = await createRes.json();
+
+    // Fire Modal async (don't await — client polls for result)
+    triggerPreview({ jobId: job.id, storySlug, photoUrl }).catch(err =>
+      console.error(`Preview job ${job.id} trigger failed:`, err.message)
+    );
+
+    return res.json({ jobId: job.id, status: 'pending' });
+  } catch (err) {
+    console.error('preview/trigger error:', err);
+    return res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// GET /api/preview/status/:jobId
+// Polls Supabase DB for job status + result URLs.
+app.get('/api/preview/status/:jobId', async (req, res) => {
+  try {
+    const { jobId } = req.params;
+    const SUPABASE_URL = process.env.SUPABASE_URL_STORY || process.env.SUPABASE_URL;
+    const SUPABASE_KEY = process.env.SUPABASE_SERVICE_KEY;
+
+    const pollRes = await fetch(
+      `${SUPABASE_URL}/rest/v1/preview_jobs?id=eq.${jobId}&select=status,result_scene_1,result_scene_2,error_message`,
+      {
+        headers: {
+          'apikey': SUPABASE_KEY,
+          'Authorization': `Bearer ${SUPABASE_KEY}`,
+        },
+      }
+    );
+
+    if (!pollRes.ok) return res.status(500).json({ error: 'DB error' });
+
+    const rows = await pollRes.json();
+    if (!rows.length) return res.status(404).json({ error: 'Job not found' });
+
+    const { status, result_scene_1, result_scene_2, error_message } = rows[0];
+    return res.json({ status, resultScene1: result_scene_1, resultScene2: result_scene_2, error: error_message });
+  } catch (err) {
+    console.error('preview/status error:', err);
+    return res.status(500).json({ error: 'Internal server error' });
+  }
 });
 
 // ── Google Reviews ────────────────────────────────────────────────────────────

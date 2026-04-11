@@ -25,6 +25,7 @@
             "dev": "vite",
             "build": "vite build",
             "optimize:images": "node scripts/optimize-images.mjs",
+            "export:animation": "node scripts/export-animation.mjs",
             "postinstall": "cd backend && npm install",
             "start": "node backend/server.js"
       }
