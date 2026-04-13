@@ -411,28 +411,30 @@ function BrochureThemeModal({ theme, onClose }: { theme: ThemeEntry; onClose: ()
     reader.readAsDataURL(file);
   };
 
-  const handleGenerate = async () => {
+  // Non-async so window.open fires in a synchronous user-gesture context (Safari requires this)
+  const handleGenerate = () => {
     if (!photo?.signedUrl) return;
     setGenerating(true);
     setJobStatus('');
-    // Open the tab synchronously (must happen before any await or browser blocks it)
     const newTab = window.open('/preview/loading', '_blank');
-    const res = await fetch(`${API_BASE}/api/preview/trigger`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ storySlug: theme.slug, photoUrl: photo.signedUrl, childName }),
-    });
-    const data = await res.json();
-    if (!res.ok) {
-      newTab?.close();
-      setJobStatus(`Error: ${data.error}`);
+    (async () => {
+      const res = await fetch(`${API_BASE}/api/preview/trigger`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ storySlug: theme.slug, photoUrl: photo.signedUrl, childName }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        newTab?.close();
+        setJobStatus(`Error: ${data.error}`);
+        setGenerating(false);
+        return;
+      }
+      const params = new URLSearchParams({ name: childName, theme: theme.slug });
+      if (newTab) newTab.location.href = `/preview/${data.jobId}?${params}`;
       setGenerating(false);
-      return;
-    }
-    const params = new URLSearchParams({ name: childName, theme: theme.slug });
-    if (newTab) newTab.location.href = `/preview/${data.jobId}?${params}`;
-    setGenerating(false);
-    setJobStatus('opened');
+      setJobStatus('opened');
+    })();
   };
 
   const canGenerate = !!photo?.signedUrl && !generating;
