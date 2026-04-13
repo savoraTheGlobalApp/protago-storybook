@@ -22,7 +22,7 @@ function getSceneUrls(storySlug) {
 }
 
 // ── Modal backend ─────────────────────────────────────────────────────────────
-async function triggerModalPreview({ jobId, storySlug, photoUrl, steps = 10 }) {
+async function triggerModalPreview({ jobId, storySlug, photoUrl, childName = '', steps = 10 }) {
   const MODAL_URL = process.env.MODAL_PREVIEW_URL;
   if (!MODAL_URL) throw new Error('MODAL_PREVIEW_URL not set');
 
@@ -38,6 +38,7 @@ async function triggerModalPreview({ jobId, storySlug, photoUrl, steps = 10 }) {
       scene_urls:           sceneUrls,
       steps,
       // Supabase DB only — for job status updates, not storage
+      child_name:           childName || '',
       supabase_url:         process.env.SUPABASE_URL_STORY || process.env.SUPABASE_URL,
       supabase_service_key: process.env.SUPABASE_SERVICE_KEY_STORY || process.env.SUPABASE_SERVICE_KEY,
     }),
