@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { useSearchParams, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence, useInView } from 'framer-motion';
 import { ArrowRight, ChevronDown, MessageCircle } from 'lucide-react';
 import { NavBar } from '../components/NavBar';
@@ -366,6 +366,7 @@ function BrochureThemeCard({ slug, icon, name, onClick }: { slug: string; icon: 
 
 function BrochureThemeModal({ theme, onClose }: { theme: ThemeEntry; onClose: () => void }) {
   const API_BASE = import.meta.env.VITE_API_BASE_URL || '';
+  const navigate = useNavigate();
   const [activeIdx, setActiveIdx] = useState(0);
   const AGE_COLOR: Record<string, string> = { '3–5': '#FF6B35', '5–8': '#F7B731', '8–12': '#1A1A2E' };
   const color = AGE_COLOR[theme.ageRange] || C.saffron;
@@ -383,11 +384,10 @@ function BrochureThemeModal({ theme, onClose }: { theme: ThemeEntry; onClose: ()
 
   const handleCreate = () => {
     onClose();
+    navigate(`/?theme=${theme.slug}`);
     setTimeout(() => {
-      const el = document.getElementById('order');
-      if (el) el.scrollIntoView({ behavior: 'smooth' });
-      window.history.replaceState(null, '', `/?theme=${theme.slug}#order`);
-    }, 50);
+      document.getElementById('order')?.scrollIntoView({ behavior: 'smooth' });
+    }, 100);
   };
 
   const handlePhotoAdd = (file: File) => {
@@ -781,6 +781,11 @@ function OrderForm({ price, isCustomStory, setIsCustomStory }: { price: number; 
     try { localStorage.setItem(FORM_STORAGE_KEY, JSON.stringify(next)); } catch { /* non-fatal */ }
     return next;
   });
+
+  // Sync storyTheme when ?theme= param changes (e.g. navigating from modal)
+  useEffect(() => {
+    if (preselectedTheme) setForm(f => ({ ...f, storyTheme: preselectedTheme }));
+  }, [preselectedTheme]);
 
   const handleApplyCoupon = async () => {
     if (!couponInput.trim()) return;
