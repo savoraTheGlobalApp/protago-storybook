@@ -415,15 +415,22 @@ function BrochureThemeModal({ theme, onClose }: { theme: ThemeEntry; onClose: ()
     if (!photo?.signedUrl) return;
     setGenerating(true);
     setJobStatus('');
+    // Open the tab synchronously (must happen before any await or browser blocks it)
+    const newTab = window.open('/preview/loading', '_blank');
     const res = await fetch(`${API_BASE}/api/preview/trigger`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ storySlug: theme.slug, photoUrl: photo.signedUrl, childName }),
     });
     const data = await res.json();
-    if (!res.ok) { setJobStatus(`Error: ${data.error}`); setGenerating(false); return; }
+    if (!res.ok) {
+      newTab?.close();
+      setJobStatus(`Error: ${data.error}`);
+      setGenerating(false);
+      return;
+    }
     const params = new URLSearchParams({ name: childName, theme: theme.slug });
-    window.open(`/preview/${data.jobId}?${params}`, '_blank');
+    if (newTab) newTab.location.href = `/preview/${data.jobId}?${params}`;
     setGenerating(false);
     setJobStatus('opened');
   };
