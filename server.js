@@ -137,6 +137,73 @@ app.post('/.netlify/functions/waitlist-signup', async (req, res) => {
   }
 });
 
+// ── Preview API routes ────────────────────────────────────────────────────────
+const { triggerPreview } = require('./backend/preview');
+const { createClient } = require('@supabase/supabase-js');
+
+function getSupabaseAdmin() {
+  return createClient(
+    process.env.SUPABASE_URL,
+    process.env.SUPABASE_SERVICE_KEY || process.env.SUPABASE_ANON_KEY,
+  );
+}
+
+// POST /api/preview/trigger
+// Body: { story_slug, photo_url, child_name? }
+// Returns: { job_id }
+app.post('/api/preview/trigger', async (req, res) => {
+  try {
+    const { story_slug, photo_url, child_name } = req.body;
+    if (!story_slug || !photo_url) {
+      return res.status(400).json({ error: 'story_slug and photo_url required' });
+    }
+
+    const supabase = getSupabaseAdmin();
+
+    // Create preview job row
+    const { data, error } = await supabase
+      .from('preview_jobs')
+      .insert({ story_slug, photo_path: photo_url, child_name, status: 'pending' })
+      .select('id')
+      .single();
+
+    if (error) throw error;
+    const jobId = data.id;
+
+    // Trigger face swap (fire-and-forget — Modal runs async)
+    triggerPreview({ jobId, storySlug: story_slug, photoUrl: photo_url })
+      .catch(err => {
+        console.error(`Preview job ${jobId} failed to trigger:`, err.message);
+        supabase.from('preview_jobs')
+          .update({ status: 'failed', error_message: err.message })
+          .eq('id', jobId);
+      });
+
+    res.json({ job_id: jobId });
+  } catch (err) {
+    console.error('Preview trigger error:', err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// GET /api/preview/status/:jobId
+// Returns: { status, result_scene_1?, result_scene_2?, error_message? }
+app.get('/api/preview/status/:jobId', async (req, res) => {
+  try {
+    const supabase = getSupabaseAdmin();
+    const { data, error } = await supabase
+      .from('preview_jobs')
+      .select('status, result_scene_1, result_scene_2, error_message')
+      .eq('id', req.params.jobId)
+      .single();
+
+    if (error) return res.status(404).json({ error: 'Job not found' });
+    res.json(data);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // Handle all other routes - serve index.html for SPA-like behavior if needed
 app.get('*', (req, res) => {
   // If the request is for a file that exists, express.static will handle it

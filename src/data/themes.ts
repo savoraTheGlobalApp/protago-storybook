@@ -116,12 +116,6 @@ export const THEMES: ThemeEntry[] = [
     personalizationLevers: ['Child\'s challenge to overcome', 'Favourite Hanuman moment', 'Child name & photo'],
     samplePrompt: '[Priya] is afraid she isn\'t strong enough. Then Hanuman shows her his leap — and asks her to jump with him.',
   },
-  {
-    slug: 'sudama-poha', name: 'Sudama\'s Poha', icon: '🤲', ageRange: '5–8', category: 'mythology',
-    description: 'Child walks with Sudama as he brings a handful of poha to his childhood friend Krishna — learning that true friendship needs no grand gift, only a full heart.',
-    personalizationLevers: ['Child\'s best friend to include', 'A humble gift they\'d share', 'Child name & photo'],
-    samplePrompt: '[Rohan] has only a small box of poha to bring. But when he reaches [Kartik\'s] door, something extraordinary happens.',
-  },
 ];
 
 export function ageToRange(age: number): '3–5' | '5–8' | '8–12' | null {

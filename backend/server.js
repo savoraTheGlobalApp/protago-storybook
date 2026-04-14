@@ -478,6 +478,7 @@ app.post('/api/create-order', async (req, res) => {
                     const signJson = await signRes.json();
                     photoSignedUrl = signJson.signedURL || signJson.signed_url || null;
                     if (photoSignedUrl && photoSignedUrl.startsWith('/')) {
+                        if (!photoSignedUrl.startsWith('/storage/v1')) photoSignedUrl = `/storage/v1${photoSignedUrl}`;
                         photoSignedUrl = `${process.env.SUPABASE_URL_STORY}${photoSignedUrl}`;
                     }
                 } else {
@@ -564,6 +565,7 @@ app.post('/api/create-order', async (req, res) => {
                                         const signJson = await signRes.json();
                                         photoSignedUrl = signJson.signedURL || signJson.signed_url || null;
                                         if (photoSignedUrl && photoSignedUrl.startsWith('/')) {
+                                            if (!photoSignedUrl.startsWith('/storage/v1')) photoSignedUrl = `/storage/v1${photoSignedUrl}`;
                                             photoSignedUrl = `${process.env.SUPABASE_URL_STORY}${photoSignedUrl}`;
                                         }
                                     } else {
@@ -739,6 +741,10 @@ app.post('/api/upload-photo', async (req, res) => {
             const signJson = await signRes.json();
             photoSignedUrl = signJson.signedURL || signJson.signed_url || null;
             if (photoSignedUrl && photoSignedUrl.startsWith('/')) {
+                // Ensure /storage/v1 prefix is present
+                if (!photoSignedUrl.startsWith('/storage/v1')) {
+                    photoSignedUrl = `/storage/v1${photoSignedUrl}`;
+                }
                 photoSignedUrl = `${process.env.SUPABASE_URL_STORY}${photoSignedUrl}`;
             }
         } else {
@@ -821,7 +827,10 @@ app.get('/api/orders/:orderId/photo', async (req, res) => {
 
         const signJson = await signRes.json();
         let signedUrl = signJson.signedURL || signJson.signed_url || null;
-        if (signedUrl && signedUrl.startsWith('/')) signedUrl = `${process.env.SUPABASE_URL_STORY}${signedUrl}`;
+        if (signedUrl && signedUrl.startsWith('/')) {
+            if (!signedUrl.startsWith('/storage/v1')) signedUrl = `/storage/v1${signedUrl}`;
+            signedUrl = `${process.env.SUPABASE_URL_STORY}${signedUrl}`;
+        }
 
         return res.status(200).json({ signed_url: signedUrl });
     } catch (err) {
@@ -1112,7 +1121,7 @@ app.post('/api/preview/trigger', async (req, res) => {
     }
 
     const SUPABASE_URL = process.env.SUPABASE_URL_STORY || process.env.SUPABASE_URL;
-    const SUPABASE_KEY = process.env.SUPABASE_SERVICE_KEY;
+    const SUPABASE_KEY = process.env.SUPABASE_SERVICE_KEY_STORY || process.env.SUPABASE_SERVICE_KEY;
 
     // Create DB row
     const createRes = await fetch(`${SUPABASE_URL}/rest/v1/preview_jobs`, {
@@ -1134,8 +1143,9 @@ app.post('/api/preview/trigger', async (req, res) => {
 
     const [job] = await createRes.json();
 
+    console.log(`Preview job ${job.id}: photoUrl=${photoUrl}`);
     // Fire Modal async (don't await — client polls for result)
-    triggerPreview({ jobId: job.id, storySlug, photoUrl }).catch(err =>
+    triggerPreview({ jobId: job.id, storySlug, photoUrl, childName }).catch(err =>
       console.error(`Preview job ${job.id} trigger failed:`, err.message)
     );
 
@@ -1152,7 +1162,7 @@ app.get('/api/preview/status/:jobId', async (req, res) => {
   try {
     const { jobId } = req.params;
     const SUPABASE_URL = process.env.SUPABASE_URL_STORY || process.env.SUPABASE_URL;
-    const SUPABASE_KEY = process.env.SUPABASE_SERVICE_KEY;
+    const SUPABASE_KEY = process.env.SUPABASE_SERVICE_KEY_STORY || process.env.SUPABASE_SERVICE_KEY;
 
     const pollRes = await fetch(
       `${SUPABASE_URL}/rest/v1/preview_jobs?id=eq.${jobId}&select=status,result_scene_1,result_scene_2,error_message`,

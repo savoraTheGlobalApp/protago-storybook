@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { useSearchParams, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence, useInView } from 'framer-motion';
 import { ArrowRight, ChevronDown, MessageCircle } from 'lucide-react';
 import { NavBar } from '../components/NavBar';
@@ -365,9 +365,17 @@ function BrochureThemeCard({ slug, icon, name, onClick }: { slug: string; icon: 
 }
 
 function BrochureThemeModal({ theme, onClose }: { theme: ThemeEntry; onClose: () => void }) {
+  const API_BASE = import.meta.env.VITE_API_BASE_URL || '';
+  const navigate = useNavigate();
   const [activeIdx, setActiveIdx] = useState(0);
   const AGE_COLOR: Record<string, string> = { '3–5': '#FF6B35', '5–8': '#F7B731', '8–12': '#1A1A2E' };
   const color = AGE_COLOR[theme.ageRange] || C.saffron;
+
+  // Preview form state
+  const [childName, setChildName] = useState('');
+  const [photo, setPhoto] = useState<{ preview: string; uploading: boolean; signedUrl: string | null } | null>(null);
+  const [jobStatus, setJobStatus] = useState('');
+  const [generating, setGenerating] = useState(false);
 
   useEffect(() => {
     const t = setInterval(() => setActiveIdx(i => (i + 1) % FACE_SAMPLES.length), 2000);
@@ -376,12 +384,60 @@ function BrochureThemeModal({ theme, onClose }: { theme: ThemeEntry; onClose: ()
 
   const handleCreate = () => {
     onClose();
+    navigate(`/?theme=${theme.slug}`);
     setTimeout(() => {
-      const el = document.getElementById('order');
-      if (el) el.scrollIntoView({ behavior: 'smooth' });
-      window.history.replaceState(null, '', `/?theme=${theme.slug}#order`);
-    }, 50);
+      document.getElementById('order')?.scrollIntoView({ behavior: 'smooth' });
+    }, 100);
   };
+
+  const handlePhotoAdd = (file: File) => {
+    const preview = URL.createObjectURL(file);
+    setPhoto({ preview, uploading: true, signedUrl: null });
+    const reader = new FileReader();
+    reader.onload = () => {
+      const xhr = new XMLHttpRequest();
+      xhr.open('POST', `${API_BASE}/api/upload-photo`);
+      xhr.setRequestHeader('Content-Type', 'application/json');
+      xhr.onload = () => {
+        try {
+          const data = JSON.parse(xhr.responseText);
+          setPhoto(p => p ? { ...p, uploading: false, signedUrl: data.photo_signed_url || null } : null);
+        } catch { setPhoto(p => p ? { ...p, uploading: false } : null); }
+      };
+      xhr.onerror = () => setPhoto(p => p ? { ...p, uploading: false } : null);
+      xhr.send(JSON.stringify({ photo: reader.result }));
+    };
+    reader.onerror = () => setPhoto(p => p ? { ...p, uploading: false } : null);
+    reader.readAsDataURL(file);
+  };
+
+  // Non-async so window.open fires in a synchronous user-gesture context (Safari requires this)
+  const handleGenerate = () => {
+    if (!photo?.signedUrl) return;
+    setGenerating(true);
+    setJobStatus('');
+    const newTab = window.open('/preview/loading', '_blank');
+    (async () => {
+      const res = await fetch(`${API_BASE}/api/preview/trigger`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ storySlug: theme.slug, photoUrl: photo.signedUrl, childName }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        newTab?.close();
+        setJobStatus(`Error: ${data.error}`);
+        setGenerating(false);
+        return;
+      }
+      const params = new URLSearchParams({ name: childName, theme: theme.slug });
+      if (newTab) newTab.location.href = `/preview/${data.jobId}?${params}`;
+      setGenerating(false);
+      setJobStatus('opened');
+    })();
+  };
+
+  const canGenerate = !!photo?.signedUrl && !generating;
 
   return (
     <motion.div
@@ -391,93 +447,160 @@ function BrochureThemeModal({ theme, onClose }: { theme: ThemeEntry; onClose: ()
       <motion.div
         initial={{ y: '100%' }} animate={{ y: 0 }} exit={{ y: '100%' }}
         transition={{ type: 'spring', stiffness: 300, damping: 32 }}
-        style={{ background: C.white, borderRadius: '20px 20px 0 0', width: '100%', maxWidth: 720, maxHeight: '92vh', overflowY: 'auto' }}
+        style={{ background: C.white, borderRadius: '20px 20px 0 0', width: '100%', maxWidth: 860, maxHeight: '92vh' }}
         onClick={e => e.stopPropagation()}>
 
-        {/* Face swap animation header */}
-        <div style={{ paddingTop: 55, position: 'relative' }}>
-          <div style={{ aspectRatio: '16/9', background: '#F0EEE8', position: 'relative', overflow: 'hidden' }}>
-            {theme.slug === 'growth-mindset' ? (
-              <img src={`/themes/${theme.slug}.webp`} alt={theme.name} decoding="async" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+        {/* Close button — top right corner of whole modal */}
+        <button onClick={onClose}
+          style={{ position: 'absolute', top: 14, right: 14, background: 'rgba(0,0,0,0.12)', border: 'none', borderRadius: '50%', width: 32, height: 32, color: C.navy, fontSize: 18, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 20 }}>
+          ×
+        </button>
+
+        {/* Two-panel layout */}
+        <div className="flex flex-col sm:flex-row" style={{ maxHeight: '92vh', overflow: 'hidden' }}>
+
+          {/* ── LEFT: theme animation + info ── */}
+          <div className="sm:w-1/2 flex-shrink-0 overflow-y-auto" style={{ borderRight: '1px solid #F0EEE8' }}>
+            {/* Animation area */}
+            <div style={{ paddingTop: 55, position: 'relative' }}>
+              <div style={{ aspectRatio: '16/9', background: '#F0EEE8', position: 'relative', overflow: 'hidden' }}>
+                {theme.slug === 'growth-mindset' ? (
+                  <img src={`/themes/${theme.slug}.webp`} alt={theme.name} decoding="async"
+                    style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                ) : (
+                  FACE_SAMPLES.map((sample, i) => (
+                    <motion.img key={sample.key}
+                      src={`/themes_faceswap/${theme.slug}_${sample.key}.webp`}
+                      alt="" decoding="async"
+                      style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }}
+                      animate={{ opacity: i === activeIdx ? 1 : 0 }}
+                      transition={{ duration: 0.5 }}
+                      onError={e => { (e.target as HTMLImageElement).style.display = 'none'; }}
+                    />
+                  ))
+                )}
+                {theme.slug !== 'growth-mindset' && (
+                  <svg viewBox="0 0 160 90" preserveAspectRatio="none"
+                    style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', zIndex: 5, pointerEvents: 'none' }}>
+                    <motion.path d="M 148 4 Q 148 45 52 30" fill="none" stroke={C.saffron}
+                      strokeWidth="2" strokeDasharray="5 3" strokeLinecap="round"
+                      initial={{ pathLength: 0, opacity: 0 }} animate={{ pathLength: 1, opacity: 1 }}
+                      transition={{ pathLength: { duration: 1.0, delay: 0.2 }, opacity: { duration: 0.2 } }}
+                      key={activeIdx} />
+                    <motion.path d="M 60 25 L 52 30 L 58 36" fill="none" stroke={C.saffron}
+                      strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
+                      initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 1.0 }}
+                      key={`ah-${activeIdx}`} />
+                  </svg>
+                )}
+                <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, padding: '30px 16px 12px', background: 'linear-gradient(transparent, rgba(0,0,0,0.65))', zIndex: 4 }}>
+                  <p className="font-extrabold text-xl" style={{ fontFamily: "'Baloo 2', sans-serif", color: '#fff' }}>{theme.icon} {theme.name}</p>
+                </div>
+              </div>
+              {theme.slug !== 'growth-mindset' && (
+                <div style={{ position: 'absolute', top: 0, right: 16, width: 90, height: 90, zIndex: 10 }}>
+                  {FACE_SAMPLES.map((sample, i) => (
+                    <motion.img key={sample.face} src={sample.face} alt="" decoding="async" className="rounded-full"
+                      style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover',
+                        border: `3px solid ${C.saffron}`, boxShadow: '0 4px 16px rgba(255,107,53,0.35), 0 0 0 3px #fff' }}
+                      animate={{ opacity: i === activeIdx ? 1 : 0, scale: i === activeIdx ? 1 : 0.9 }}
+                      transition={{ duration: 0.4 }} />
+                  ))}
+                </div>
+              )}
+            </div>
+            {/* Theme info */}
+            <div style={{ padding: '16px 20px 24px', display: 'flex', flexDirection: 'column', gap: 12 }}>
+              <p className="text-sm leading-relaxed" style={{ color: C.gray }}>{theme.description}</p>
+              <div className="flex flex-wrap gap-1.5">
+                {theme.personalizationLevers.map(l => (
+                  <span key={l} className="text-xs font-semibold px-2.5 py-1 rounded-full"
+                    style={{ background: color + '18', color, border: `1px solid ${color}30` }}>{l}</span>
+                ))}
+              </div>
+              <div style={{ background: C.navy, borderRadius: 10, padding: '12px 14px' }}>
+                <p className="text-xs font-bold mb-1" style={{ color: C.gold }}>Sample story prompt</p>
+                <p className="text-xs leading-relaxed" style={{ color: 'rgba(255,255,255,0.8)', fontStyle: 'italic' }}>
+                  "{theme.samplePrompt}"
+                </p>
+              </div>
+              {/* Skip preview CTA */}
+              <button onClick={handleCreate}
+                style={{ background: 'none', border: `1.5px solid ${C.saffron}`, borderRadius: 12, padding: '10px 16px', fontWeight: 800, fontSize: 13, color: C.saffron, cursor: 'pointer', fontFamily: "'Baloo 2', sans-serif" }}>
+                Skip preview — Order this story →
+              </button>
+            </div>
+          </div>
+
+          {/* ── RIGHT: preview form ── */}
+          <div className="sm:w-1/2 flex-shrink-0 overflow-y-auto" style={{ padding: '24px 22px 32px' }}>
+            <p style={{ fontSize: 11, fontWeight: 700, color: C.saffron, textTransform: 'uppercase', letterSpacing: 1, marginBottom: 4 }}>Free Preview</p>
+            <h3 style={{ fontFamily: "'Baloo 2', sans-serif", fontWeight: 800, fontSize: 18, color: C.navy, margin: '0 0 18px' }}>
+              {jobStatus === 'opened'
+                ? `Preview opening…`
+                : `See ${childName || 'your child'} in this story`}
+            </h3>
+
+            {/* Opened state */}
+            {jobStatus === 'opened' ? (
+              <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}
+                style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 14, padding: '24px 0', textAlign: 'center' }}>
+                <div style={{ fontSize: 48 }}>✨</div>
+                <p style={{ fontWeight: 700, color: C.navy, fontSize: 15, margin: 0 }}>
+                  Your preview is generating in the new tab!
+                </p>
+                <p style={{ fontSize: 12, color: C.lgray, margin: 0 }}>
+                  It takes about 2 minutes. You can close this panel.
+                </p>
+                <button onClick={() => { setJobStatus(''); setPhoto(null); setChildName(''); setGenerating(false); }}
+                  style={{ background: 'none', border: `1.5px solid #E5E7EB`, borderRadius: 10, padding: '9px 18px', fontSize: 13, color: C.lgray, cursor: 'pointer', fontWeight: 600 }}>
+                  Generate another →
+                </button>
+              </motion.div>
+            ) : generating ? (
+              /* Triggering spinner */
+              <div style={{ textAlign: 'center', padding: '32px 0' }}>
+                <motion.div animate={{ rotate: 360 }} transition={{ repeat: Infinity, duration: 1.5, ease: 'linear' }}
+                  style={{ fontSize: 36, display: 'inline-block', marginBottom: 10 }}>⚙️</motion.div>
+                <p style={{ fontSize: 13, color: C.lgray }}>Starting your preview…</p>
+              </div>
+            ) : jobStatus.startsWith('Error') ? (
+              <div style={{ padding: '12px 14px', background: '#FFF0F0', borderRadius: 10, marginBottom: 12 }}>
+                <p style={{ fontSize: 13, color: '#C0392B', margin: 0 }}>{jobStatus}</p>
+              </div>
             ) : (
-              FACE_SAMPLES.map((sample, i) => (
-                <motion.img
-                  key={sample.key}
-                  src={`/themes_faceswap/${theme.slug}_${sample.key}.webp`}
-                  alt=""
-                  decoding="async"
-                  style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }}
-                  animate={{ opacity: i === activeIdx ? 1 : 0 }}
-                  transition={{ duration: 0.5 }}
-                  onError={e => { (e.target as HTMLImageElement).style.display = 'none'; }}
-                />
-              ))
+              /* Form */
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+                <input placeholder="Child's name" value={childName} onChange={e => setChildName(e.target.value)}
+                  style={{ border: '1.5px solid #E5E7EB', borderRadius: 10, padding: '11px 14px', fontSize: 15, outline: 'none', width: '100%', boxSizing: 'border-box' }} />
+
+                {!photo ? (
+                  <label style={{ border: '2px dashed #D1D5DB', borderRadius: 12, padding: '20px 14px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 7, cursor: 'pointer', background: '#FAFAFA' }}>
+                    <span style={{ fontSize: 32 }}>📸</span>
+                    <span style={{ fontWeight: 700, color: C.navy, fontSize: 13 }}>Upload child's photo</span>
+                    <span style={{ fontSize: 11, color: C.lgray }}>Clear, front-facing works best</span>
+                    <input type="file" accept="image/*" style={{ display: 'none' }} onChange={e => { const f = e.target.files?.[0]; if (f) handlePhotoAdd(f); }} />
+                  </label>
+                ) : (
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: 10, background: '#F8F8F8', borderRadius: 10, border: '1.5px solid #E5E7EB' }}>
+                    <img src={photo.preview} style={{ width: 48, height: 48, borderRadius: 8, objectFit: 'cover' }} alt="" />
+                    <div style={{ flex: 1 }}>
+                      <div style={{ fontWeight: 700, fontSize: 12, color: C.navy }}>{photo.uploading ? 'Uploading…' : '✓ Photo ready'}</div>
+                      {photo.uploading && <div style={{ fontSize: 11, color: C.lgray }}>Please wait…</div>}
+                    </div>
+                    {!photo.uploading && <button onClick={() => setPhoto(null)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: C.lgray, fontSize: 20 }}>×</button>}
+                  </div>
+                )}
+
+                <button disabled={!canGenerate} onClick={handleGenerate}
+                  style={{ background: canGenerate ? C.saffron : '#D1D5DB', color: '#fff', border: 'none', borderRadius: 12, padding: '13px 18px', fontWeight: 800, fontSize: 15, cursor: canGenerate ? 'pointer' : 'default', fontFamily: "'Baloo 2', sans-serif", transition: 'background 0.2s' }}>
+                  ✨ Generate Free Preview
+                </button>
+                <p style={{ fontSize: 11, color: C.lgray, textAlign: 'center', margin: 0 }}>Free · ~2 min · No card required</p>
+              </div>
             )}
-            {/* Arrow */}
-            {theme.slug !== 'growth-mindset' && (
-              <svg viewBox="0 0 160 90" preserveAspectRatio="none"
-                style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', zIndex: 5, pointerEvents: 'none' }}>
-                <motion.path d="M 148 4 Q 148 45 52 30" fill="none" stroke={C.saffron}
-                  strokeWidth="2" strokeDasharray="5 3" strokeLinecap="round"
-                  initial={{ pathLength: 0, opacity: 0 }} animate={{ pathLength: 1, opacity: 1 }}
-                  transition={{ pathLength: { duration: 1.0, delay: 0.2 }, opacity: { duration: 0.2 } }}
-                  key={activeIdx} />
-                <motion.path d="M 60 25 L 52 30 L 58 36" fill="none" stroke={C.saffron}
-                  strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
-                  initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 1.0 }}
-                  key={`ah-${activeIdx}`} />
-              </svg>
-            )}
-            <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, padding: '40px 20px 16px', background: 'linear-gradient(transparent, rgba(0,0,0,0.65))', zIndex: 4 }}>
-              <p className="font-extrabold text-2xl" style={{ fontFamily: "'Baloo 2', sans-serif", color: '#fff' }}>{theme.icon} {theme.name}</p>
-            </div>
-            <button onClick={onClose}
-              style={{ position: 'absolute', top: 12, right: 12, background: 'rgba(0,0,0,0.45)', border: 'none', borderRadius: '50%', width: 32, height: 32, color: '#fff', fontSize: 18, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 10 }}>
-              ×
-            </button>
-          </div>
-          {/* Face circle */}
-          {theme.slug !== 'growth-mindset' && (
-            <div style={{ position: 'absolute', top: 0, right: 20, width: 110, height: 110, zIndex: 10 }}>
-              {FACE_SAMPLES.map((sample, i) => (
-                <motion.img key={sample.face} src={sample.face} alt="" decoding="async" className="rounded-full"
-                  style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover',
-                    border: `4px solid ${C.saffron}`, boxShadow: '0 4px 16px rgba(255,107,53,0.35), 0 0 0 3px #fff' }}
-                  animate={{ opacity: i === activeIdx ? 1 : 0, scale: i === activeIdx ? 1 : 0.9 }}
-                  transition={{ duration: 0.4 }} />
-              ))}
-            </div>
-          )}
-        </div>
-
-        {/* Body */}
-        <div className="p-6 flex flex-col gap-4">
-          <p className="text-sm leading-relaxed" style={{ color: C.gray }}>{theme.description}</p>
-
-          <div>
-            <p className="text-xs font-bold uppercase tracking-widest mb-2" style={{ color: C.lgray }}>Personalisation</p>
-            <div className="flex flex-wrap gap-1.5">
-              {theme.personalizationLevers.map(l => (
-                <span key={l} className="text-xs font-semibold px-2.5 py-1 rounded-full"
-                  style={{ background: color + '18', color, border: `1px solid ${color}30` }}>
-                  {l}
-                </span>
-              ))}
-            </div>
           </div>
 
-          <div style={{ background: C.navy, borderRadius: 12, padding: '14px 16px' }}>
-            <p className="text-xs font-bold mb-1.5" style={{ color: C.gold }}>Sample story prompt</p>
-            <p className="text-sm leading-relaxed" style={{ color: 'rgba(255,255,255,0.8)', fontStyle: 'italic' }}>
-              "{theme.samplePrompt}"
-            </p>
-          </div>
-
-          <button onClick={handleCreate}
-            className="w-full py-4 rounded-2xl font-extrabold text-base transition-all"
-            style={{ background: C.saffron, color: C.white, fontFamily: "'Baloo 2', sans-serif", border: 'none', cursor: 'pointer' }}>
-            Create this story for my child →
-          </button>
         </div>
       </motion.div>
     </motion.div>
@@ -658,6 +781,11 @@ function OrderForm({ price, isCustomStory, setIsCustomStory }: { price: number; 
     try { localStorage.setItem(FORM_STORAGE_KEY, JSON.stringify(next)); } catch { /* non-fatal */ }
     return next;
   });
+
+  // Sync storyTheme when ?theme= param changes (e.g. navigating from modal)
+  useEffect(() => {
+    if (preselectedTheme) setForm(f => ({ ...f, storyTheme: preselectedTheme }));
+  }, [preselectedTheme]);
 
   const handleApplyCoupon = async () => {
     if (!couponInput.trim()) return;
@@ -1495,6 +1623,18 @@ export function BrochurePage() {
               transition={{ duration: 0.5, delay: 0.1 }}
               className="w-full sm:w-1/2 min-w-0 flex flex-col">
               <FaceToSceneAnimation />
+              {/* Free preview CTA */}
+              <motion.button
+                initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.4, delay: 0.6 }}
+                onClick={() => scrollTo('themes')}
+                className="w-full py-4 rounded-2xl font-extrabold text-base mt-2"
+                style={{ background: C.saffron, color: '#fff', border: 'none', cursor: 'pointer', fontFamily: "'Baloo 2', sans-serif", fontSize: 16, boxShadow: '0 4px 20px rgba(255,107,53,0.45)' }}>
+                ✨ Generate Free Preview
+              </motion.button>
+              <p className="text-center mt-2 text-xs font-semibold" style={{ color: 'rgba(255,255,255,0.55)' }}>
+                Free · ~2 min · No card required
+              </p>
             </motion.div>
 
             {/* Right on desktop, top on mobile — video testimonial (50%) */}
