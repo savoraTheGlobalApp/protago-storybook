@@ -40,6 +40,10 @@ export function ThemePage() {
   const [orderSubmitting, setOrderSubmitting] = useState(false);
   const [orderSubmitted, setOrderSubmitted] = useState(false);
   const [orderError, setOrderError] = useState('');
+  const [couponInput, setCouponInput] = useState('');
+  const [couponApplied, setCouponApplied] = useState<{ code: string; discountAmount: number; finalPrice: number; discountType: string; discountValue: number } | null>(null);
+  const [couponError, setCouponError] = useState('');
+  const [couponLoading, setCouponLoading] = useState(false);
   const [generating, setGenerating] = useState(false);
 
   useEffect(() => {
@@ -92,6 +96,27 @@ export function ThemePage() {
     reader.readAsDataURL(file);
   };
 
+  const handleApplyCoupon = async () => {
+    if (!couponInput.trim()) return;
+    setCouponError('');
+    setCouponLoading(true);
+    try {
+      const res = await fetch(`${API_BASE}/api/validate-coupon`, {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ code: couponInput.trim() }),
+      });
+      const data = await res.json();
+      if (res.ok && data.valid) {
+        setCouponApplied({ code: couponInput.trim().toUpperCase(), discountAmount: data.discountAmount, finalPrice: data.finalPrice, discountType: data.discountType, discountValue: data.discountValue });
+        setCouponError('');
+      } else {
+        setCouponApplied(null);
+        setCouponError(data.error || 'Invalid coupon code');
+      }
+    } catch { setCouponError('Could not validate coupon. Try again.'); }
+    setCouponLoading(false);
+  };
+
   const handleOrderSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!orderConsent) return;
@@ -106,6 +131,7 @@ export function ThemePage() {
           storyTheme: theme.slug,
           photoSignedUrl: orderPhoto?.signedUrl || null,
           photoPath: orderPhoto?.uploadedPath || null,
+          coupon_code: couponApplied?.code || null,
           referralSource: localStorage.getItem('protago_ref') || null,
         }),
       });
@@ -333,6 +359,28 @@ export function ThemePage() {
                     <label style={{ fontSize: 12, fontWeight: 700, color: C.navy, display: 'block', marginBottom: 6 }}>
                       Child's photo <span style={{ color: C.saffron }}>*</span>
                     </label>
+                    {/* Photo tips */}
+                    <div style={{ background: '#F9FAFB', border: '1px solid #E5E7EB', borderRadius: 10, padding: '10px 12px', marginBottom: 8 }}>
+                      <p style={{ fontSize: 9, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', color: C.lgray, textAlign: 'center', margin: '0 0 8px' }}>Tips</p>
+                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 6 }}>
+                        {[
+                          { img: '/photo-tips/good.avif',       label: 'Clear front-facing', good: true },
+                          { img: '/photo-tips/group.jpg',       label: 'Only one person',    good: false },
+                          { img: '/photo-tips/sunglasses.avif', label: 'No accessories',     good: false },
+                          { img: '/photo-tips/sideangle.jpg',   label: 'No side angle',      good: false },
+                        ].map(({ img, label, good }) => (
+                          <div key={label} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4 }}>
+                            <div style={{ position: 'relative', width: 52, height: 52 }}>
+                              <img src={img} alt={label} style={{ width: 52, height: 52, borderRadius: '50%', objectFit: 'cover', objectPosition: 'top', border: `2.5px solid ${good ? '#22C55E' : '#EF4444'}` }} />
+                              <div style={{ position: 'absolute', bottom: 0, right: 0, width: 16, height: 16, borderRadius: '50%', background: good ? '#22C55E' : '#EF4444', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 9, color: '#fff', fontWeight: 800, border: '1.5px solid #fff' }}>
+                                {good ? '✓' : '✕'}
+                              </div>
+                            </div>
+                            <p style={{ fontSize: 8, color: C.gray, textAlign: 'center', lineHeight: 1.3, margin: 0 }}>{label}</p>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
                     {!photo ? (
                       <label style={{
                         border: '2px dashed #E5E7EB', borderRadius: 12, padding: '22px 14px',
@@ -456,7 +504,7 @@ export function ThemePage() {
                   <div>
                     <label style={{ fontSize: 10, fontWeight: 700, color: '#9CA3AF', display: 'block', marginBottom: 4, textTransform: 'uppercase', letterSpacing: '0.07em' }}>Gender *</label>
                     <div style={{ display: 'flex', gap: 6 }}>
-                      {['Boy', 'Girl', 'Other'].map(g => (
+                      {['Boy', 'Girl'].map(g => (
                         <button type="button" key={g} onClick={() => setOf('childGender', g)}
                           style={{ flex: 1, padding: '9px 0', borderRadius: 9, fontSize: 13, fontWeight: 700, cursor: 'pointer', border: `1.5px solid ${orderForm.childGender === g ? C.saffron : '#E5E7EB'}`, background: orderForm.childGender === g ? '#FFF3EE' : '#fff', color: orderForm.childGender === g ? C.saffron : '#9CA3AF' }}>
                           {g}
@@ -466,34 +514,84 @@ export function ThemePage() {
                   </div>
                 </div>
 
-                {/* Row 3: photo + address side by side */}
+                {/* Row 3: photo (with tips) + address */}
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 2fr', gap: 10 }}>
-                  <div>
-                    <label style={{ fontSize: 10, fontWeight: 700, color: '#9CA3AF', display: 'block', marginBottom: 4, textTransform: 'uppercase', letterSpacing: '0.07em' }}>Child's photo *</label>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                    <label style={{ fontSize: 10, fontWeight: 700, color: '#9CA3AF', display: 'block', textTransform: 'uppercase', letterSpacing: '0.07em' }}>Child's photo *</label>
+                    {/* Photo tips 2×2 */}
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 6 }}>
+                      {[
+                        { img: '/photo-tips/good.avif',       label: 'Front-facing', good: true },
+                        { img: '/photo-tips/group.jpg',       label: 'One person',   good: false },
+                        { img: '/photo-tips/sunglasses.avif', label: 'No glasses',   good: false },
+                        { img: '/photo-tips/sideangle.jpg',   label: 'No side angle',good: false },
+                      ].map(({ img, label, good }) => (
+                        <div key={label} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 3 }}>
+                          <div style={{ position: 'relative' }}>
+                            <img src={img} alt={label} style={{ width: 56, height: 56, borderRadius: '50%', objectFit: 'cover', objectPosition: 'top', border: `2.5px solid ${good ? '#22C55E' : '#EF4444'}`, display: 'block' }} />
+                            <div style={{ position: 'absolute', bottom: 0, right: 0, width: 17, height: 17, borderRadius: '50%', background: good ? '#22C55E' : '#EF4444', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 10, color: '#fff', fontWeight: 800, border: '2px solid #fff' }}>
+                              {good ? '✓' : '✕'}
+                            </div>
+                          </div>
+                          <p style={{ fontSize: 9, color: C.gray, textAlign: 'center', lineHeight: 1.3, margin: 0 }}>{label}</p>
+                        </div>
+                      ))}
+                    </div>
                     {!orderPhoto ? (
-                      <label style={{ border: '2px dashed #D1D5DB', borderRadius: 10, padding: '14px 10px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4, cursor: 'pointer', background: '#FAFAFA', height: 'calc(100% - 18px)', justifyContent: 'center', boxSizing: 'border-box' }}
+                      <label style={{ border: '2px dashed #D1D5DB', borderRadius: 10, padding: '12px 10px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4, cursor: 'pointer', background: '#FAFAFA', flex: 1, justifyContent: 'center' }}
                         onMouseEnter={e => (e.currentTarget.style.borderColor = C.saffron)}
                         onMouseLeave={e => (e.currentTarget.style.borderColor = '#D1D5DB')}>
-                        <span style={{ fontSize: 26 }}>📸</span>
+                        <span style={{ fontSize: 24 }}>📸</span>
                         <span style={{ fontWeight: 700, color: C.navy, fontSize: 12, textAlign: 'center' }}>Upload photo</span>
-                        <span style={{ fontSize: 10, color: C.lgray, textAlign: 'center' }}>Front-facing works best</span>
                         <input type="file" accept="image/*" style={{ display: 'none' }} onChange={e => { const f = e.target.files?.[0]; if (f) handleOrderPhotoAdd(f); }} />
                       </label>
                     ) : (
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 12px', background: '#F0FDF4', borderRadius: 10, border: '1.5px solid #BBF7D0', height: 'calc(100% - 18px)', boxSizing: 'border-box' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 12px', background: '#F0FDF4', borderRadius: 10, border: '1.5px solid #BBF7D0' }}>
                         <img src={orderPhoto.preview} style={{ width: 44, height: 44, borderRadius: 8, objectFit: 'cover', flexShrink: 0 }} alt="" />
                         <div style={{ flex: 1, fontSize: 12, fontWeight: 700, color: '#166534' }}>{orderPhoto.uploading ? '⏳ Uploading…' : '✓ Ready'}</div>
                         {!orderPhoto.uploading && <button type="button" onClick={() => setOrderPhoto(null)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#9CA3AF', fontSize: 20, lineHeight: 1, padding: 0 }}>×</button>}
                       </div>
                     )}
                   </div>
-                  <div>
-                    <label style={{ fontSize: 10, fontWeight: 700, color: '#9CA3AF', display: 'block', marginBottom: 4, textTransform: 'uppercase', letterSpacing: '0.07em' }}>Delivery address *</label>
-                    <textarea required rows={4} placeholder="Full address with pincode" value={orderForm.address} onChange={e => setOf('address', e.target.value)}
-                      style={{ width: '100%', border: '1.5px solid #E5E7EB', borderRadius: 9, padding: '10px 12px', fontSize: 14, outline: 'none', boxSizing: 'border-box', fontFamily: 'inherit', resize: 'none', background: '#fff' }}
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                    <label style={{ fontSize: 10, fontWeight: 700, color: '#9CA3AF', display: 'block', textTransform: 'uppercase', letterSpacing: '0.07em' }}>Delivery address *</label>
+                    <textarea required placeholder="Full address with pincode" value={orderForm.address} onChange={e => setOf('address', e.target.value)}
+                      style={{ width: '100%', border: '1.5px solid #E5E7EB', borderRadius: 9, padding: '10px 12px', fontSize: 14, outline: 'none', boxSizing: 'border-box', fontFamily: 'inherit', resize: 'none', background: '#fff', flex: 1, minHeight: 180 }}
                       onFocus={e => (e.target.style.borderColor = C.saffron)}
                       onBlur={e => (e.target.style.borderColor = '#E5E7EB')} />
                   </div>
+                </div>
+
+                {/* Coupon code */}
+                <div>
+                  <label style={{ fontSize: 10, fontWeight: 700, color: '#9CA3AF', display: 'block', marginBottom: 4, textTransform: 'uppercase', letterSpacing: '0.07em' }}>Promo code (optional)</label>
+                  <div style={{ display: 'flex', gap: 8 }}>
+                    <input
+                      placeholder="e.g. WELCOME20"
+                      value={couponInput}
+                      onChange={e => { setCouponInput(e.target.value.toUpperCase()); setCouponApplied(null); setCouponError(''); }}
+                      onKeyDown={e => e.key === 'Enter' && (e.preventDefault(), handleApplyCoupon())}
+                      style={{ flex: 1, border: '1.5px solid #E5E7EB', borderRadius: 9, padding: '10px 12px', fontSize: 14, outline: 'none', fontFamily: 'inherit', background: '#fff' }}
+                      onFocus={e => (e.target.style.borderColor = C.saffron)}
+                      onBlur={e => (e.target.style.borderColor = '#E5E7EB')} />
+                    <button type="button" onClick={handleApplyCoupon} disabled={couponLoading || !couponInput.trim()}
+                      style={{ background: C.navy, color: '#fff', border: 'none', borderRadius: 9, padding: '10px 18px', fontSize: 13, fontWeight: 700, cursor: couponLoading || !couponInput.trim() ? 'default' : 'pointer', opacity: couponLoading || !couponInput.trim() ? 0.5 : 1, whiteSpace: 'nowrap', fontFamily: 'inherit' }}>
+                      {couponLoading ? '…' : 'Apply'}
+                    </button>
+                  </div>
+                  {couponApplied && (
+                    <div style={{ marginTop: 8, display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: '#F0FFF4', border: '1.5px solid #22C55E', borderRadius: 9, padding: '8px 12px' }}>
+                      <div>
+                        <span style={{ fontSize: 12, fontWeight: 700, color: '#16A34A' }}>✓ {couponApplied.code} applied! </span>
+                        <span style={{ fontSize: 12, color: '#16A34A' }}>
+                          {couponApplied.discountType === 'percent' ? `${couponApplied.discountValue}% off` : `₹${couponApplied.discountAmount} off`}
+                        </span>
+                      </div>
+                      <button type="button" onClick={() => { setCouponApplied(null); setCouponInput(''); }}
+                        style={{ fontSize: 12, color: '#6B7280', background: 'none', border: 'none', cursor: 'pointer' }}>Remove</button>
+                    </div>
+                  )}
+                  {couponError && <p style={{ fontSize: 12, color: '#EF4444', margin: '6px 0 0' }}>{couponError}</p>}
                 </div>
 
                 {/* Consent + submit */}
