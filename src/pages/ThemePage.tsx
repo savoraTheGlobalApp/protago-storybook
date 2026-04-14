@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { MessageCircle } from 'lucide-react';
 import { THEMES } from '../data/themes';
@@ -23,6 +23,8 @@ const FACE_SAMPLES = [
 export function ThemePage() {
   const { slug } = useParams<{ slug: string }>();
   const navigate = useNavigate();
+  const location = useLocation();
+  const locationState = location.state as { previewUrls?: [string | null, string | null]; childName?: string; fromPreview?: boolean } | null;
   const API_BASE = import.meta.env.VITE_API_BASE_URL || '';
 
   const theme = THEMES.find(t => t.slug === slug);
@@ -47,8 +49,19 @@ export function ThemePage() {
   const [generating, setGenerating] = useState(false);
 
   useEffect(() => {
-    window.scrollTo({ top: 0, behavior: 'instant' });
-  }, [slug]);
+    if (locationState?.fromPreview) {
+      // Arriving from PreviewResultPage — open order form and pre-fill child name
+      setShowOrder(true);
+      if (locationState.childName) {
+        setOrderForm(f => ({ ...f, childName: locationState.childName! }));
+      }
+      setTimeout(() => {
+        document.getElementById('inline-order')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }, 150);
+    } else {
+      window.scrollTo({ top: 0, behavior: 'instant' });
+    }
+  }, [slug]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     const t = setInterval(() => setActiveIdx(i => (i + 1) % FACE_SAMPLES.length), 2000);
@@ -252,45 +265,67 @@ export function ThemePage() {
           {/* LEFT: animation + info */}
           <div style={{ flex: '1 1 340px', display: 'flex', flexDirection: 'column', borderRight: '1px solid #F5F5F5' }}>
 
-            {/* Scene animation */}
+            {/* Scene animation — or actual preview images if coming from PreviewResultPage */}
             <div style={{ position: 'relative', flexShrink: 0 }}>
-              <div style={{ aspectRatio: '16/9', background: '#F0EEE8', position: 'relative', overflow: 'hidden' }}>
-                {theme.slug === 'growth-mindset' ? (
-                  <img src={`/themes/${theme.slug}.webp`} alt={theme.name} decoding="async"
-                    style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                ) : (
-                  FACE_SAMPLES.map((sample, i) => (
-                    <motion.img key={sample.key}
-                      src={`/themes_faceswap/${theme.slug}_${sample.key}.webp`}
-                      alt="" decoding="async"
-                      style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }}
-                      animate={{ opacity: i === activeIdx ? 1 : 0 }}
-                      transition={{ duration: 0.5 }}
-                      onError={e => { (e.target as HTMLImageElement).style.display = 'none'; }}
-                    />
-                  ))
-                )}
-                {theme.slug !== 'growth-mindset' && (
-                  <svg viewBox="0 0 160 90" preserveAspectRatio="none"
-                    style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', zIndex: 5, pointerEvents: 'none' }}>
-                    <motion.path d="M 148 4 Q 148 45 52 30" fill="none" stroke={C.saffron}
-                      strokeWidth="2" strokeDasharray="5 3" strokeLinecap="round"
-                      initial={{ pathLength: 0, opacity: 0 }} animate={{ pathLength: 1, opacity: 1 }}
-                      transition={{ pathLength: { duration: 1.0, delay: 0.2 }, opacity: { duration: 0.2 } }}
-                      key={activeIdx} />
-                    <motion.path d="M 60 25 L 52 30 L 58 36" fill="none" stroke={C.saffron}
-                      strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
-                      initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 1.0 }}
-                      key={`ah-${activeIdx}`} />
-                  </svg>
-                )}
-                <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, padding: '30px 16px 12px', background: 'linear-gradient(transparent, rgba(0,0,0,0.7))', zIndex: 4 }}>
-                  <p style={{ fontFamily: "'Baloo 2', sans-serif", fontWeight: 800, fontSize: 20, color: '#fff', margin: 0 }}>
-                    {theme.icon} {theme.name}
-                  </p>
+              {locationState?.previewUrls?.some(u => u) ? (
+                /* ── Actual generated preview images ── */
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 0 }}>
+                  {locationState.previewUrls.filter(Boolean).map((url, i) => (
+                    <div key={i} style={{ position: 'relative', aspectRatio: '16/9', background: '#F0EEE8', overflow: 'hidden', borderBottom: i === 0 ? '2px solid #F0EEE8' : undefined }}>
+                      <motion.img src={url!} alt={`Preview scene ${i + 1}`}
+                        initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.6, delay: i * 0.15 }}
+                        style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
+                      {i === 0 && (
+                        <div style={{ position: 'absolute', top: 8, left: 10, background: 'rgba(0,0,0,0.55)', borderRadius: 20, padding: '3px 10px', fontSize: 10, fontWeight: 700, color: '#fff', backdropFilter: 'blur(4px)' }}>
+                          ✨ Your preview
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                  <div style={{ padding: '10px 16px 12px', background: '#F0FDF4', borderTop: '1px solid #BBF7D0' }}>
+                    <p style={{ fontSize: 11, fontWeight: 700, color: '#166534', margin: 0 }}>✓ Preview generated — your child's face in every scene</p>
+                  </div>
                 </div>
-              </div>
-              {theme.slug !== 'growth-mindset' && (
+              ) : (
+                /* ── Default face-swap animation ── */
+                <div style={{ aspectRatio: '16/9', background: '#F0EEE8', position: 'relative', overflow: 'hidden' }}>
+                  {theme.slug === 'growth-mindset' ? (
+                    <img src={`/themes/${theme.slug}.webp`} alt={theme.name} decoding="async"
+                      style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                  ) : (
+                    FACE_SAMPLES.map((sample, i) => (
+                      <motion.img key={sample.key}
+                        src={`/themes_faceswap/${theme.slug}_${sample.key}.webp`}
+                        alt="" decoding="async"
+                        style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }}
+                        animate={{ opacity: i === activeIdx ? 1 : 0 }}
+                        transition={{ duration: 0.5 }}
+                        onError={e => { (e.target as HTMLImageElement).style.display = 'none'; }}
+                      />
+                    ))
+                  )}
+                  {theme.slug !== 'growth-mindset' && (
+                    <svg viewBox="0 0 160 90" preserveAspectRatio="none"
+                      style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', zIndex: 5, pointerEvents: 'none' }}>
+                      <motion.path d="M 148 4 Q 148 45 52 30" fill="none" stroke={C.saffron}
+                        strokeWidth="2" strokeDasharray="5 3" strokeLinecap="round"
+                        initial={{ pathLength: 0, opacity: 0 }} animate={{ pathLength: 1, opacity: 1 }}
+                        transition={{ pathLength: { duration: 1.0, delay: 0.2 }, opacity: { duration: 0.2 } }}
+                        key={activeIdx} />
+                      <motion.path d="M 60 25 L 52 30 L 58 36" fill="none" stroke={C.saffron}
+                        strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
+                        initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 1.0 }}
+                        key={`ah-${activeIdx}`} />
+                    </svg>
+                  )}
+                  <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, padding: '30px 16px 12px', background: 'linear-gradient(transparent, rgba(0,0,0,0.7))', zIndex: 4 }}>
+                    <p style={{ fontFamily: "'Baloo 2', sans-serif", fontWeight: 800, fontSize: 20, color: '#fff', margin: 0 }}>
+                      {theme.icon} {theme.name}
+                    </p>
+                  </div>
+                </div>
+              )}
+              {!locationState?.previewUrls?.some(u => u) && theme.slug !== 'growth-mindset' && (
                 <div style={{ position: 'absolute', top: 12, right: 16, width: 72, height: 72, zIndex: 10 }}>
                   {FACE_SAMPLES.map((sample, i) => (
                     <motion.img key={sample.face} src={sample.face} alt="" decoding="async"

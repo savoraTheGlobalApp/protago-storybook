@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { useParams, useSearchParams } from 'react-router-dom';
+import { useParams, useSearchParams, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 
 const C = {
@@ -73,6 +73,7 @@ export function PreviewResultPage() {
   const themeName = themeSlug.replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
 
   const API_BASE = import.meta.env.VITE_API_BASE_URL || '';
+  const navigate = useNavigate();
 
   const [resultUrls, setResultUrls] = useState<[string | null, string | null]>([null, null]);
   const [status, setStatus] = useState<'processing' | 'done' | 'failed'>('processing');
@@ -109,7 +110,9 @@ export function PreviewResultPage() {
   }, [jobId, API_BASE]);
 
   const handleOrder = () => {
-    window.location.href = `/theme/${themeSlug}#inline-order`;
+    navigate(`/theme/${themeSlug}`, {
+      state: { previewUrls: resultUrls, childName, fromPreview: true },
+    });
   };
 
   const done = status === 'done';
