@@ -1216,7 +1216,7 @@ app.post('/api/preview/send-email', async (req, res) => {
 
     const childName = job.child_name || 'Your child';
     const themeName = job.story_slug.replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
-    const siteUrl = process.env.SITE_URL || 'https://protago.in';
+    const siteUrl = (process.env.SITE_URL || 'https://protago.in').replace(/\/$/, '');
     const themeUrl = `${siteUrl}/theme/${job.story_slug}`;
     const previewUrl = `${siteUrl}/preview/${jobId}?name=${encodeURIComponent(childName)}&theme=${job.story_slug}`;
 
