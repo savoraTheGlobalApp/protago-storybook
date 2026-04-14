@@ -1214,7 +1214,9 @@ app.post('/api/preview/send-email', async (req, res) => {
 
     const childName = job.child_name || 'Your child';
     const themeName = job.story_slug.replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
-    const themeUrl = `${process.env.SITE_URL || 'https://protago.in'}/theme/${job.story_slug}`;
+    const siteUrl = process.env.SITE_URL || 'https://protago.in';
+    const themeUrl = `${siteUrl}/theme/${job.story_slug}`;
+    const previewUrl = `${siteUrl}/preview/${jobId}?name=${encodeURIComponent(childName)}&theme=${job.story_slug}`;
 
     const html = `<!DOCTYPE html>
 <html>
@@ -1251,6 +1253,10 @@ app.post('/api/preview/send-email', async (req, res) => {
 
         <!-- CTA -->
         <tr><td style="padding:24px 32px 32px;text-align:center">
+          <a href="${previewUrl}"
+            style="display:inline-block;background:#1A1A2E;color:#ffffff;text-decoration:none;font-weight:700;font-size:15px;padding:13px 32px;border-radius:50px;margin-bottom:16px">
+            View your full preview →
+          </a>
           <p style="font-size:15px;color:#444;margin:0 0 20px;line-height:1.6">
             Loved what you see? Turn this into a real printed book —<br>delivered to your door in 5–7 days.
           </p>
