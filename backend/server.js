@@ -9,7 +9,9 @@ import crypto from 'crypto';
 import dns from 'dns/promises';
 import Razorpay from 'razorpay';
 import { Resend } from 'resend';
-import disposableDomains from 'disposable-email-domains';
+import { createRequire } from 'module';
+const _require = createRequire(import.meta.url);
+const disposableDomains = _require('disposable-email-domains');
 import { triggerPreview } from './preview.js';
 
 const __filename = fileURLToPath(import.meta.url);
