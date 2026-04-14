@@ -131,15 +131,54 @@ export function ThemePage() {
           storyTheme: theme.slug,
           photoSignedUrl: orderPhoto?.signedUrl || null,
           photoPath: orderPhoto?.uploadedPath || null,
-          coupon_code: couponApplied?.code || null,
+          couponCode: couponApplied?.code || null,
           referralSource: localStorage.getItem('protago_ref') || null,
         }),
       });
-      if (!res.ok) { const d = await res.json().catch(() => ({})); throw new Error(d.error || 'Failed'); }
-      setOrderSubmitted(true);
+      if (!res.ok) { const d = await res.json().catch(() => ({})); throw new Error(d.error || 'Failed to create order'); }
+      const { orderId, razorpayKeyId, amount, currency } = await res.json();
+
+      // Dev/mock mode — no real Razorpay keys
+      if (!razorpayKeyId || razorpayKeyId.includes('your_')) {
+        setOrderSubmitted(true);
+        setOrderSubmitting(false);
+        return;
+      }
+
+      const options: RazorpayOptions = {
+        key: razorpayKeyId,
+        amount,
+        currency,
+        name: 'Protago',
+        description: `Personalised Storybook — ${theme.name}`,
+        order_id: orderId,
+        handler: async (response: RazorpayResponse) => {
+          try {
+            const verifyRes = await fetch(`${API_BASE}/api/verify-payment`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify(response),
+            });
+            if (!verifyRes.ok) throw new Error('Payment verification failed');
+            setOrderSubmitted(true);
+          } catch {
+            setOrderError('Payment verification failed. Please contact support.');
+          } finally {
+            setOrderSubmitting(false);
+          }
+        },
+        prefill: { name: orderForm.parentName, email: orderForm.email, contact: orderForm.phone },
+        theme: { color: '#FF6B35' },
+        modal: {
+          ondismiss: () => {
+            setOrderSubmitting(false);
+            setOrderError('Payment was cancelled. Please try again.');
+          },
+        },
+      };
+      new window.Razorpay(options).open();
     } catch (err: unknown) {
       setOrderError(err instanceof Error ? err.message : 'Something went wrong. Please try again.');
-    } finally {
       setOrderSubmitting(false);
     }
   };
@@ -606,7 +645,7 @@ export function ThemePage() {
 
                 <button type="submit" disabled={orderSubmitting || !orderConsent}
                   style={{ background: (!orderConsent || orderSubmitting) ? '#E5E7EB' : `linear-gradient(135deg, ${C.saffron} 0%, #FF8C42 100%)`, color: (!orderConsent || orderSubmitting) ? '#9CA3AF' : '#fff', border: 'none', borderRadius: 12, padding: '14px 20px', fontWeight: 800, fontSize: 16, cursor: (!orderConsent || orderSubmitting) ? 'default' : 'pointer', fontFamily: "'Baloo 2', sans-serif", boxShadow: (!orderConsent || orderSubmitting) ? 'none' : '0 4px 16px rgba(255,107,53,0.4)' }}>
-                  {orderSubmitting ? 'Placing order…' : 'Place Order →'}
+                  {orderSubmitting ? 'Processing…' : `Pay ₹${couponApplied ? couponApplied.finalPrice : (Number(import.meta.env.VITE_STORYBOOK_PRICE) || 499)} & Order →`}
                 </button>
                 <p style={{ fontSize: 11, color: C.lgray, textAlign: 'center', margin: '-4px 0 0' }}>We'll confirm within 24 hours · Delivered in 5–7 days</p>
 
