@@ -269,14 +269,6 @@ function BrochureThemeCard({ slug, icon, name, onClick }: { slug: string; icon: 
       whileHover={{ scale: 1.02, boxShadow: '0 8px 24px rgba(0,0,0,0.10)' }}
       transition={{ type: 'spring', stiffness: 300, damping: 24 }}
       onClick={onClick}>
-      {slug === 'growth-mindset' ? (
-        <div style={{ aspectRatio: '16/9', background: '#F0EEE8', position: 'relative', overflow: 'hidden' }}>
-          <img src={`/themes/${slug}.webp`} alt={name} loading="lazy" decoding="async" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
-          <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, padding: '20px 14px 10px', background: 'linear-gradient(transparent, rgba(0,0,0,0.55))' }}>
-            <p className="font-extrabold text-sm" style={{ fontFamily: "'Baloo 2', sans-serif", color: '#fff' }}>{icon} {name}</p>
-          </div>
-        </div>
-      ) : (
       <div style={{ paddingTop: FACE_SIZE_BROCHURE / 2, position: 'relative' }}>
         {/* Scene */}
         <div style={{ aspectRatio: '16/9', background: '#F0EEE8', position: 'relative', overflow: 'hidden' }}>
@@ -359,7 +351,6 @@ function BrochureThemeCard({ slug, icon, name, onClick }: { slug: string; icon: 
           ))}
         </div>
       </div>
-      )}
     </motion.div>
   );
 }
@@ -2030,13 +2021,15 @@ export function BrochurePage() {
             <p className="text-sm mb-10" style={{ color: C.lgray }}>An initiative by IIT Kanpur alumni</p>
             <div className="flex flex-col sm:flex-row justify-center gap-8">
               {[
-                { name: 'Piyush Kumar', role: 'Co-Founder & CEO', edu: 'B.Tech, IIT Kanpur', photo: '/team/piyush.jpg', linkedin: 'https://linkedin.com/in/kpiyush25', twitter: 'https://x.com/PiyushKThisSide/' },
-                { name: 'Shorya Kumar', role: 'Co-Founder & CTO', edu: 'B.Tech, IIT Kanpur', photo: '/team/shorya.jpg', linkedin: 'https://www.linkedin.com/in/shoryak/', twitter: 'https://x.com/meet_shoryak' },
-              ].map(({ name, role, edu, photo, linkedin, twitter }) => (
+                { name: 'Piyush Kumar', role: 'Co-Founder & CEO', edu: 'B.Tech, IIT Kanpur', photo: '/team/piyush.jpg', objectPosition: 'top', scale: 1, linkedin: 'https://linkedin.com/in/kpiyush25', twitter: 'https://x.com/PiyushKThisSide/' },
+                { name: 'Shorya Kumar', role: 'Co-Founder & CTO', edu: 'B.Tech, IIT Kanpur', photo: '/team/shorya.jpg', objectPosition: 'center 30%', scale: 1.8, linkedin: 'https://www.linkedin.com/in/shoryak/', twitter: 'https://x.com/meet_shoryak' },
+              ].map(({ name, role, edu, photo, objectPosition, scale, linkedin, twitter }) => (
                 <div key={name} className="flex flex-col items-center gap-3 flex-1 max-w-xs mx-auto">
-                  <img src={photo} alt={name}
-                    className="w-72 h-72 rounded-full object-cover object-top"
-                    style={{ border: `3px solid ${C.saffron}` }} />
+                  <div className="w-72 h-72 rounded-full overflow-hidden flex-shrink-0"
+                    style={{ border: `3px solid ${C.saffron}` }}>
+                    <img src={photo} alt={name}
+                      style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition, transform: `scale(${scale})`, transformOrigin: 'center' }} />
+                  </div>
                   <div className="text-center">
                     <p className="font-extrabold text-lg" style={{ fontFamily: "'Baloo 2', sans-serif", color: C.navy }}>{name}</p>
                     <p className="text-sm font-semibold" style={{ color: C.saffron }}>{role}</p>

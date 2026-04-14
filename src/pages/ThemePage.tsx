@@ -296,22 +296,17 @@ export function ThemePage() {
               ) : (
                 /* ── Default face-swap animation ── */
                 <div style={{ aspectRatio: '16/9', background: '#F0EEE8', position: 'relative', overflow: 'hidden' }}>
-                  {theme.slug === 'growth-mindset' ? (
-                    <img src={`/themes/${theme.slug}.webp`} alt={theme.name} decoding="async"
-                      style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                  ) : (
-                    FACE_SAMPLES.map((sample, i) => (
-                      <motion.img key={sample.key}
-                        src={`/themes_faceswap/${theme.slug}_${sample.key}.webp`}
-                        alt="" decoding="async"
-                        style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }}
-                        animate={{ opacity: i === activeIdx ? 1 : 0 }}
-                        transition={{ duration: 0.5 }}
-                        onError={e => { (e.target as HTMLImageElement).style.display = 'none'; }}
-                      />
-                    ))
-                  )}
-                  {theme.slug !== 'growth-mindset' && (
+                  {FACE_SAMPLES.map((sample, i) => (
+                    <motion.img key={sample.key}
+                      src={`/themes_faceswap/${theme.slug}_${sample.key}.webp`}
+                      alt="" decoding="async"
+                      style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }}
+                      animate={{ opacity: i === activeIdx ? 1 : 0 }}
+                      transition={{ duration: 0.5 }}
+                      onError={e => { (e.target as HTMLImageElement).style.display = 'none'; }}
+                    />
+                  ))}
+                  {true && (
                     <svg viewBox="0 0 160 90" preserveAspectRatio="none"
                       style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', zIndex: 5, pointerEvents: 'none' }}>
                       <motion.path d="M 148 4 Q 148 45 52 30" fill="none" stroke={C.saffron}
@@ -332,7 +327,7 @@ export function ThemePage() {
                   </div>
                 </div>
               )}
-              {!locationState?.previewUrls?.some(u => u) && theme.slug !== 'growth-mindset' && (
+              {!locationState?.previewUrls?.some(u => u) && (
                 <div style={{ position: 'absolute', top: 12, right: 16, width: 72, height: 72, zIndex: 10 }}>
                   {FACE_SAMPLES.map((sample, i) => (
                     <motion.img key={sample.face} src={sample.face} alt="" decoding="async"
@@ -347,9 +342,14 @@ export function ThemePage() {
 
             {/* Info */}
             <div style={{ padding: '18px 20px 22px', display: 'flex', flexDirection: 'column', gap: 10 }}>
-              <span style={{ fontSize: 11, fontWeight: 700, color, background: color + '18', padding: '3px 10px', borderRadius: 20, border: `1px solid ${color}30`, display: 'inline-block', alignSelf: 'flex-start' }}>
-                Ages {theme.ageRange}
-              </span>
+              <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                <span style={{ fontSize: 11, fontWeight: 700, color, background: color + '18', padding: '3px 10px', borderRadius: 20, border: `1px solid ${color}30` }}>
+                  Ages {theme.ageRange}
+                </span>
+                <span style={{ fontSize: 11, fontWeight: 700, color: '#6B7280', background: '#F3F4F6', padding: '3px 10px', borderRadius: 20, border: '1px solid #E5E7EB' }}>
+                  26 pages
+                </span>
+              </div>
               <p style={{ fontSize: 14, lineHeight: 1.65, color: C.gray, margin: 0 }}>{theme.description}</p>
 
               {/* Feature bullets */}

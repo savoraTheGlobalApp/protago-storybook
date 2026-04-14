@@ -9,7 +9,7 @@ const C = {
 };
 
 const NAV_LINKS = [
-  { label: 'Books',        anchor: 'books' },
+  { label: 'Themes',       anchor: 'themes' },
   { label: 'Art Styles',   anchor: 'art-styles' },
   { label: 'How It Works', anchor: 'how-it-works' },
   { label: 'Team',         anchor: 'team' },
