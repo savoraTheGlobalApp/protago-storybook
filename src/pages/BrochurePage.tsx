@@ -364,248 +364,6 @@ function BrochureThemeCard({ slug, icon, name, onClick }: { slug: string; icon: 
   );
 }
 
-function BrochureThemeModal({ theme, onClose }: { theme: ThemeEntry; onClose: () => void }) {
-  const API_BASE = import.meta.env.VITE_API_BASE_URL || '';
-  const navigate = useNavigate();
-  const [activeIdx, setActiveIdx] = useState(0);
-  const AGE_COLOR: Record<string, string> = { '3–5': '#FF6B35', '5–8': '#F7B731', '8–12': '#1A1A2E' };
-  const color = AGE_COLOR[theme.ageRange] || C.saffron;
-
-  // Preview form state
-  const [childName, setChildName] = useState('');
-  const [photo, setPhoto] = useState<{ preview: string; uploading: boolean; signedUrl: string | null } | null>(null);
-  const [jobStatus, setJobStatus] = useState('');
-  const [generating, setGenerating] = useState(false);
-
-  useEffect(() => {
-    const t = setInterval(() => setActiveIdx(i => (i + 1) % FACE_SAMPLES.length), 2000);
-    return () => clearInterval(t);
-  }, []);
-
-  const handleCreate = () => {
-    onClose();
-    navigate(`/?theme=${theme.slug}`);
-    setTimeout(() => {
-      document.getElementById('order')?.scrollIntoView({ behavior: 'smooth' });
-    }, 100);
-  };
-
-  const handlePhotoAdd = (file: File) => {
-    const preview = URL.createObjectURL(file);
-    setPhoto({ preview, uploading: true, signedUrl: null });
-    const reader = new FileReader();
-    reader.onload = () => {
-      const xhr = new XMLHttpRequest();
-      xhr.open('POST', `${API_BASE}/api/upload-photo`);
-      xhr.setRequestHeader('Content-Type', 'application/json');
-      xhr.onload = () => {
-        try {
-          const data = JSON.parse(xhr.responseText);
-          setPhoto(p => p ? { ...p, uploading: false, signedUrl: data.photo_signed_url || null } : null);
-        } catch { setPhoto(p => p ? { ...p, uploading: false } : null); }
-      };
-      xhr.onerror = () => setPhoto(p => p ? { ...p, uploading: false } : null);
-      xhr.send(JSON.stringify({ photo: reader.result }));
-    };
-    reader.onerror = () => setPhoto(p => p ? { ...p, uploading: false } : null);
-    reader.readAsDataURL(file);
-  };
-
-  // Non-async so window.open fires in a synchronous user-gesture context (Safari requires this)
-  const handleGenerate = () => {
-    if (!photo?.signedUrl) return;
-    setGenerating(true);
-    setJobStatus('');
-    const newTab = window.open('/preview/loading', '_blank');
-    (async () => {
-      const res = await fetch(`${API_BASE}/api/preview/trigger`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ storySlug: theme.slug, photoUrl: photo.signedUrl, childName }),
-      });
-      const data = await res.json();
-      if (!res.ok) {
-        newTab?.close();
-        setJobStatus(`Error: ${data.error}`);
-        setGenerating(false);
-        return;
-      }
-      const params = new URLSearchParams({ name: childName, theme: theme.slug });
-      if (newTab) newTab.location.href = `/preview/${data.jobId}?${params}`;
-      setGenerating(false);
-      setJobStatus('opened');
-    })();
-  };
-
-  const canGenerate = !!photo?.signedUrl && !generating;
-
-  return (
-    <motion.div
-      initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-      style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.65)', zIndex: 50, display: 'flex', alignItems: 'flex-end', justifyContent: 'center' }}
-      onClick={onClose}>
-      <motion.div
-        initial={{ y: '100%' }} animate={{ y: 0 }} exit={{ y: '100%' }}
-        transition={{ type: 'spring', stiffness: 300, damping: 32 }}
-        style={{ background: C.white, borderRadius: '20px 20px 0 0', width: '100%', maxWidth: 860, maxHeight: '92vh' }}
-        onClick={e => e.stopPropagation()}>
-
-        {/* Close button — top right corner of whole modal */}
-        <button onClick={onClose}
-          style={{ position: 'absolute', top: 14, right: 14, background: 'rgba(0,0,0,0.12)', border: 'none', borderRadius: '50%', width: 32, height: 32, color: C.navy, fontSize: 18, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 20 }}>
-          ×
-        </button>
-
-        {/* Two-panel layout */}
-        <div className="flex flex-col sm:flex-row" style={{ maxHeight: '92vh', overflow: 'hidden' }}>
-
-          {/* ── LEFT: theme animation + info ── */}
-          <div className="sm:w-1/2 flex-shrink-0 overflow-y-auto" style={{ borderRight: '1px solid #F0EEE8' }}>
-            {/* Animation area */}
-            <div style={{ paddingTop: 55, position: 'relative' }}>
-              <div style={{ aspectRatio: '16/9', background: '#F0EEE8', position: 'relative', overflow: 'hidden' }}>
-                {theme.slug === 'growth-mindset' ? (
-                  <img src={`/themes/${theme.slug}.webp`} alt={theme.name} decoding="async"
-                    style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                ) : (
-                  FACE_SAMPLES.map((sample, i) => (
-                    <motion.img key={sample.key}
-                      src={`/themes_faceswap/${theme.slug}_${sample.key}.webp`}
-                      alt="" decoding="async"
-                      style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }}
-                      animate={{ opacity: i === activeIdx ? 1 : 0 }}
-                      transition={{ duration: 0.5 }}
-                      onError={e => { (e.target as HTMLImageElement).style.display = 'none'; }}
-                    />
-                  ))
-                )}
-                {theme.slug !== 'growth-mindset' && (
-                  <svg viewBox="0 0 160 90" preserveAspectRatio="none"
-                    style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', zIndex: 5, pointerEvents: 'none' }}>
-                    <motion.path d="M 148 4 Q 148 45 52 30" fill="none" stroke={C.saffron}
-                      strokeWidth="2" strokeDasharray="5 3" strokeLinecap="round"
-                      initial={{ pathLength: 0, opacity: 0 }} animate={{ pathLength: 1, opacity: 1 }}
-                      transition={{ pathLength: { duration: 1.0, delay: 0.2 }, opacity: { duration: 0.2 } }}
-                      key={activeIdx} />
-                    <motion.path d="M 60 25 L 52 30 L 58 36" fill="none" stroke={C.saffron}
-                      strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
-                      initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 1.0 }}
-                      key={`ah-${activeIdx}`} />
-                  </svg>
-                )}
-                <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, padding: '30px 16px 12px', background: 'linear-gradient(transparent, rgba(0,0,0,0.65))', zIndex: 4 }}>
-                  <p className="font-extrabold text-xl" style={{ fontFamily: "'Baloo 2', sans-serif", color: '#fff' }}>{theme.icon} {theme.name}</p>
-                </div>
-              </div>
-              {theme.slug !== 'growth-mindset' && (
-                <div style={{ position: 'absolute', top: 0, right: 16, width: 90, height: 90, zIndex: 10 }}>
-                  {FACE_SAMPLES.map((sample, i) => (
-                    <motion.img key={sample.face} src={sample.face} alt="" decoding="async" className="rounded-full"
-                      style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover',
-                        border: `3px solid ${C.saffron}`, boxShadow: '0 4px 16px rgba(255,107,53,0.35), 0 0 0 3px #fff' }}
-                      animate={{ opacity: i === activeIdx ? 1 : 0, scale: i === activeIdx ? 1 : 0.9 }}
-                      transition={{ duration: 0.4 }} />
-                  ))}
-                </div>
-              )}
-            </div>
-            {/* Theme info */}
-            <div style={{ padding: '16px 20px 24px', display: 'flex', flexDirection: 'column', gap: 12 }}>
-              <p className="text-sm leading-relaxed" style={{ color: C.gray }}>{theme.description}</p>
-              <div className="flex flex-wrap gap-1.5">
-                {theme.personalizationLevers.map(l => (
-                  <span key={l} className="text-xs font-semibold px-2.5 py-1 rounded-full"
-                    style={{ background: color + '18', color, border: `1px solid ${color}30` }}>{l}</span>
-                ))}
-              </div>
-              <div style={{ background: C.navy, borderRadius: 10, padding: '12px 14px' }}>
-                <p className="text-xs font-bold mb-1" style={{ color: C.gold }}>Sample story prompt</p>
-                <p className="text-xs leading-relaxed" style={{ color: 'rgba(255,255,255,0.8)', fontStyle: 'italic' }}>
-                  "{theme.samplePrompt}"
-                </p>
-              </div>
-              {/* Skip preview CTA */}
-              <button onClick={handleCreate}
-                style={{ background: 'none', border: `1.5px solid ${C.saffron}`, borderRadius: 12, padding: '10px 16px', fontWeight: 800, fontSize: 13, color: C.saffron, cursor: 'pointer', fontFamily: "'Baloo 2', sans-serif" }}>
-                Skip preview — Order this story →
-              </button>
-            </div>
-          </div>
-
-          {/* ── RIGHT: preview form ── */}
-          <div className="sm:w-1/2 flex-shrink-0 overflow-y-auto" style={{ padding: '24px 22px 32px' }}>
-            <p style={{ fontSize: 11, fontWeight: 700, color: C.saffron, textTransform: 'uppercase', letterSpacing: 1, marginBottom: 4 }}>Free Preview</p>
-            <h3 style={{ fontFamily: "'Baloo 2', sans-serif", fontWeight: 800, fontSize: 18, color: C.navy, margin: '0 0 18px' }}>
-              {jobStatus === 'opened'
-                ? `Preview opening…`
-                : `See ${childName || 'your child'} in this story`}
-            </h3>
-
-            {/* Opened state */}
-            {jobStatus === 'opened' ? (
-              <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}
-                style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 14, padding: '24px 0', textAlign: 'center' }}>
-                <div style={{ fontSize: 48 }}>✨</div>
-                <p style={{ fontWeight: 700, color: C.navy, fontSize: 15, margin: 0 }}>
-                  Your preview is generating in the new tab!
-                </p>
-                <p style={{ fontSize: 12, color: C.lgray, margin: 0 }}>
-                  It takes about 2 minutes. You can close this panel.
-                </p>
-                <button onClick={() => { setJobStatus(''); setPhoto(null); setChildName(''); setGenerating(false); }}
-                  style={{ background: 'none', border: `1.5px solid #E5E7EB`, borderRadius: 10, padding: '9px 18px', fontSize: 13, color: C.lgray, cursor: 'pointer', fontWeight: 600 }}>
-                  Generate another →
-                </button>
-              </motion.div>
-            ) : generating ? (
-              /* Triggering spinner */
-              <div style={{ textAlign: 'center', padding: '32px 0' }}>
-                <motion.div animate={{ rotate: 360 }} transition={{ repeat: Infinity, duration: 1.5, ease: 'linear' }}
-                  style={{ fontSize: 36, display: 'inline-block', marginBottom: 10 }}>⚙️</motion.div>
-                <p style={{ fontSize: 13, color: C.lgray }}>Starting your preview…</p>
-              </div>
-            ) : jobStatus.startsWith('Error') ? (
-              <div style={{ padding: '12px 14px', background: '#FFF0F0', borderRadius: 10, marginBottom: 12 }}>
-                <p style={{ fontSize: 13, color: '#C0392B', margin: 0 }}>{jobStatus}</p>
-              </div>
-            ) : (
-              /* Form */
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-                <input placeholder="Child's name" value={childName} onChange={e => setChildName(e.target.value)}
-                  style={{ border: '1.5px solid #E5E7EB', borderRadius: 10, padding: '11px 14px', fontSize: 15, outline: 'none', width: '100%', boxSizing: 'border-box' }} />
-
-                {!photo ? (
-                  <label style={{ border: '2px dashed #D1D5DB', borderRadius: 12, padding: '20px 14px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 7, cursor: 'pointer', background: '#FAFAFA' }}>
-                    <span style={{ fontSize: 32 }}>📸</span>
-                    <span style={{ fontWeight: 700, color: C.navy, fontSize: 13 }}>Upload child's photo</span>
-                    <span style={{ fontSize: 11, color: C.lgray }}>Clear, front-facing works best</span>
-                    <input type="file" accept="image/*" style={{ display: 'none' }} onChange={e => { const f = e.target.files?.[0]; if (f) handlePhotoAdd(f); }} />
-                  </label>
-                ) : (
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: 10, background: '#F8F8F8', borderRadius: 10, border: '1.5px solid #E5E7EB' }}>
-                    <img src={photo.preview} style={{ width: 48, height: 48, borderRadius: 8, objectFit: 'cover' }} alt="" />
-                    <div style={{ flex: 1 }}>
-                      <div style={{ fontWeight: 700, fontSize: 12, color: C.navy }}>{photo.uploading ? 'Uploading…' : '✓ Photo ready'}</div>
-                      {photo.uploading && <div style={{ fontSize: 11, color: C.lgray }}>Please wait…</div>}
-                    </div>
-                    {!photo.uploading && <button onClick={() => setPhoto(null)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: C.lgray, fontSize: 20 }}>×</button>}
-                  </div>
-                )}
-
-                <button disabled={!canGenerate} onClick={handleGenerate}
-                  style={{ background: canGenerate ? C.saffron : '#D1D5DB', color: '#fff', border: 'none', borderRadius: 12, padding: '13px 18px', fontWeight: 800, fontSize: 15, cursor: canGenerate ? 'pointer' : 'default', fontFamily: "'Baloo 2', sans-serif", transition: 'background 0.2s' }}>
-                  ✨ Generate Free Preview
-                </button>
-                <p style={{ fontSize: 11, color: C.lgray, textAlign: 'center', margin: 0 }}>Free · ~2 min · No card required</p>
-              </div>
-            )}
-          </div>
-
-        </div>
-      </motion.div>
-    </motion.div>
-  );
-}
 
 // ── ORDER FORM ─────────────────────────────────────────────────────────────
 
@@ -1557,11 +1315,11 @@ function HeroVideo() {
 export function BrochurePage() {
   const [openFaq, setOpenFaq]         = useState<number | null>(null);
   const [themesTab, setThemesTab]     = useState<'3–5' | '5–8' | '8–12'>('3–5');
-  const [selectedTheme, setSelectedTheme] = useState<ThemeEntry | null>(null);
   const [heroSlide, setHeroSlide]     = useState(0);
   const [isCustomStory, setIsCustomStory] = useState(false);
   const price = Number(import.meta.env.VITE_STORYBOOK_PRICE) || 499;
   const [searchParams] = useSearchParams();
+  const navigate = useNavigate();
 
   useEffect(() => {
     const t = setInterval(() => setHeroSlide(i => (i + 1) % HERO_SLIDES.length), 3000);
@@ -1650,103 +1408,6 @@ export function BrochurePage() {
       </section>
 
       {/* ══════════════════════════════════════════
-          § 1  HERO  — warm gradient
-      ══════════════════════════════════════════ */}
-      <section id="hero" style={{ background: C.gradient }} className="pt-16 overflow-hidden">
-        <div className="max-w-6xl mx-auto px-5 sm:px-8 flex flex-col sm:flex-row items-start gap-0">
-
-          {/* Text — left column */}
-          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}
-            className="flex-none w-full sm:w-[44%] pt-10 sm:pt-16 pb-8 sm:pb-16 pr-0 sm:pr-8 flex flex-col justify-center">
-            <div className="inline-flex items-center gap-2 rounded-full px-3 py-1 mb-5 text-xs font-bold uppercase tracking-widest w-fit"
-              style={{ background: 'rgba(0,0,0,0.15)', color: 'rgba(255,255,255,0.9)' }}>
-              Ages 3–12
-            </div>
-            <h1 style={{ fontFamily: "'Baloo 2', sans-serif", fontWeight: 800, color: '#3D1A00', lineHeight: 1.05, fontSize: 'clamp(1.9rem,3.5vw,3rem)' }}
-              className="mb-4">
-              Every child is the{' '}
-              <span style={{ color: C.white }}>protagonist</span>{' '}
-              of their story.
-            </h1>
-            <p className="text-base font-semibold mb-2 leading-relaxed" style={{ color: '#5C2E00' }}>
-              Personalised storybooks written and illustrated by AI — with your child's name, face, and world on every page.
-            </p>
-            <p className="text-sm italic font-semibold mb-8" style={{ color: '#7B3F00' }}>
-              Because every child deserves to be the protagonist.
-            </p>
-            <div className="flex flex-wrap gap-3">
-              <button onClick={() => scrollTo('order')}
-                className="px-6 py-3 rounded-full font-bold text-sm flex items-center gap-2 transition-opacity hover:opacity-90"
-                style={{ background: C.navy, color: C.white }}>
-                Order Your Book <ArrowRight size={14} />
-              </button>
-              <button onClick={() => scrollTo('art-styles')}
-                className="px-6 py-3 rounded-full font-bold text-sm transition-opacity hover:opacity-80"
-                style={{ background: 'rgba(255,255,255,0.28)', color: '#3D1A00' }}>
-                See Art Styles
-              </button>
-            </div>
-            <div className="flex items-center gap-2 mt-6">
-              <span style={{ color: C.navy, fontSize: 13 }}>★★★★★</span>
-              <span className="text-xs font-semibold" style={{ color: 'rgba(255,255,255,0.85)' }}>
-                Loved by 500+ families · from ₹{price}
-              </span>
-            </div>
-          </motion.div>
-
-          {/* Carousel — right column, fixed square aspect ratio, scenes anchored left */}
-          <motion.div initial={{ opacity: 0, x: 30 }} animate={{ opacity: 1, x: 0 }}
-            transition={{ duration: 0.6, delay: 0.15 }}
-            className="flex-1 relative sm:rounded-tl-3xl overflow-hidden"
-            style={{ aspectRatio: '1 / 1' }}>
-            {/* First slide eager (LCP), the rest lazy — pre-warmed via the next-slide useEffect */}
-            {HERO_SLIDES.map((slide, i) => (
-              <motion.img
-                key={slide.src}
-                src={slide.src}
-                alt={slide.caption}
-                loading={i === 0 ? 'eager' : 'lazy'}
-                fetchPriority={i === 0 ? 'high' : 'auto'}
-                decoding="async"
-                className="absolute inset-0 w-full h-full object-cover object-left"
-                animate={{ opacity: i === heroSlide ? 1 : 0, x: i === heroSlide ? 0 : (i < heroSlide ? -40 : 40) }}
-                transition={{ duration: 0.45, ease: 'easeInOut' }}
-                style={{ zIndex: i === heroSlide ? 1 : 0 }}
-              />
-            ))}
-
-            {/* Bottom gradient */}
-            <div className="absolute bottom-0 left-0 right-0 h-20"
-              style={{ background: 'linear-gradient(to top, #F7B731, transparent)', zIndex: 2 }} />
-
-            {/* Caption */}
-            <div className="absolute bottom-9 left-0 right-0 flex justify-center px-4" style={{ zIndex: 3 }}>
-              <AnimatePresence mode="wait">
-                <motion.span key={heroSlide}
-                  initial={{ opacity: 0, y: 5 }} animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -5 }} transition={{ duration: 0.25 }}
-                  className="text-xs font-semibold px-4 py-1.5 rounded-full"
-                  style={{ background: 'rgba(0,0,0,0.5)', color: 'rgba(255,255,255,0.95)', backdropFilter: 'blur(4px)' }}>
-                  {HERO_SLIDES[heroSlide].caption}
-                </motion.span>
-              </AnimatePresence>
-            </div>
-
-            {/* Dot indicators */}
-            <div className="absolute bottom-2.5 left-0 right-0 flex justify-center gap-1.5">
-              {HERO_SLIDES.map((_, i) => (
-                <button key={i} onClick={() => setHeroSlide(i)}
-                  className="rounded-full transition-all duration-300"
-                  style={{ width: i === heroSlide ? 18 : 6, height: 6, background: i === heroSlide ? C.white : 'rgba(255,255,255,0.4)' }}
-                />
-              ))}
-            </div>
-          </motion.div>
-
-        </div>
-      </section>
-
-      {/* ══════════════════════════════════════════
           § THEMES — white
       ══════════════════════════════════════════ */}
       <section id="themes" style={{ background: C.white }} className="py-16 sm:py-20">
@@ -1791,7 +1452,7 @@ export function BrochurePage() {
                     exit={{ opacity: 0, y: -10 }} transition={{ duration: 0.2 }}
                     style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: 20 }}>
                     {tabThemes.map(t => (
-                      <BrochureThemeCard key={t.slug} slug={t.slug} icon={t.icon} name={t.name} onClick={() => setSelectedTheme(t)} />
+                      <BrochureThemeCard key={t.slug} slug={t.slug} icon={t.icon} name={t.name} onClick={() => navigate(`/theme/${t.slug}`)} />
                     ))}
                   </motion.div>
                 </AnimatePresence>
@@ -1815,7 +1476,7 @@ export function BrochurePage() {
                     </div>
                     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: 20 }}>
                       {mythologyThemes.map(t => (
-                        <BrochureThemeCard key={t.slug} slug={t.slug} icon={t.icon} name={t.name} onClick={() => setSelectedTheme(t)} />
+                        <BrochureThemeCard key={t.slug} slug={t.slug} icon={t.icon} name={t.name} onClick={() => navigate(`/theme/${t.slug}`)} />
                       ))}
                     </div>
                   </motion.div>
@@ -1865,6 +1526,102 @@ export function BrochurePage() {
           })()}
         </div>
       </section>
+
+      {/* ══════════════════════════════════════════
+          § HERO  — warm gradient (hidden)
+      ══════════════════════════════════════════ */}
+      {false && <section id="hero" style={{ background: C.gradient }} className="pt-16 overflow-hidden">
+        <div className="max-w-6xl mx-auto px-5 sm:px-8 flex flex-col sm:flex-row items-start gap-0">
+
+          {/* Text — left column */}
+          <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ duration: 0.5 }}
+            className="flex-none w-full sm:w-[44%] pt-10 sm:pt-16 pb-8 sm:pb-16 pr-0 sm:pr-8 flex flex-col justify-center">
+            <div className="inline-flex items-center gap-2 rounded-full px-3 py-1 mb-5 text-xs font-bold uppercase tracking-widest w-fit"
+              style={{ background: 'rgba(0,0,0,0.15)', color: 'rgba(255,255,255,0.9)' }}>
+              Ages 3–12
+            </div>
+            <h1 style={{ fontFamily: "'Baloo 2', sans-serif", fontWeight: 800, color: '#3D1A00', lineHeight: 1.05, fontSize: 'clamp(1.9rem,3.5vw,3rem)' }}
+              className="mb-4">
+              Every child is the{' '}
+              <span style={{ color: C.white }}>protagonist</span>{' '}
+              of their story.
+            </h1>
+            <p className="text-base font-semibold mb-2 leading-relaxed" style={{ color: '#5C2E00' }}>
+              Personalised storybooks written and illustrated by AI — with your child's name, face, and world on every page.
+            </p>
+            <p className="text-sm italic font-semibold mb-8" style={{ color: '#7B3F00' }}>
+              Because every child deserves to be the protagonist.
+            </p>
+            <div className="flex flex-wrap gap-3">
+              <button onClick={() => scrollTo('order')}
+                className="px-6 py-3 rounded-full font-bold text-sm flex items-center gap-2 transition-opacity hover:opacity-90"
+                style={{ background: C.navy, color: C.white }}>
+                Order Your Book <ArrowRight size={14} />
+              </button>
+              <button onClick={() => scrollTo('art-styles')}
+                className="px-6 py-3 rounded-full font-bold text-sm transition-opacity hover:opacity-80"
+                style={{ background: 'rgba(255,255,255,0.28)', color: '#3D1A00' }}>
+                See Art Styles
+              </button>
+            </div>
+            <div className="flex items-center gap-2 mt-6">
+              <span style={{ color: C.navy, fontSize: 13 }}>★★★★★</span>
+              <span className="text-xs font-semibold" style={{ color: 'rgba(255,255,255,0.85)' }}>
+                Loved by 500+ families · from ₹{price}
+              </span>
+            </div>
+          </motion.div>
+
+          {/* Carousel — right column, fixed square aspect ratio, scenes anchored left */}
+          <motion.div initial={{ opacity: 0, x: 30 }} whileInView={{ opacity: 1, x: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.6, delay: 0.15 }}
+            className="flex-1 relative sm:rounded-tl-3xl overflow-hidden"
+            style={{ aspectRatio: '1 / 1' }}>
+            {HERO_SLIDES.map((slide, i) => (
+              <motion.img
+                key={slide.src}
+                src={slide.src}
+                alt={slide.caption}
+                loading="lazy"
+                decoding="async"
+                className="absolute inset-0 w-full h-full object-cover object-left"
+                animate={{ opacity: i === heroSlide ? 1 : 0, x: i === heroSlide ? 0 : (i < heroSlide ? -40 : 40) }}
+                transition={{ duration: 0.45, ease: 'easeInOut' }}
+                style={{ zIndex: i === heroSlide ? 1 : 0 }}
+              />
+            ))}
+
+            {/* Bottom gradient */}
+            <div className="absolute bottom-0 left-0 right-0 h-20"
+              style={{ background: 'linear-gradient(to top, #F7B731, transparent)', zIndex: 2 }} />
+
+            {/* Caption */}
+            <div className="absolute bottom-9 left-0 right-0 flex justify-center px-4" style={{ zIndex: 3 }}>
+              <AnimatePresence mode="wait">
+                <motion.span key={heroSlide}
+                  initial={{ opacity: 0, y: 5 }} animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -5 }} transition={{ duration: 0.25 }}
+                  className="text-xs font-semibold px-4 py-1.5 rounded-full"
+                  style={{ background: 'rgba(0,0,0,0.5)', color: 'rgba(255,255,255,0.95)', backdropFilter: 'blur(4px)' }}>
+                  {HERO_SLIDES[heroSlide].caption}
+                </motion.span>
+              </AnimatePresence>
+            </div>
+
+            {/* Dot indicators */}
+            <div className="absolute bottom-2.5 left-0 right-0 flex justify-center gap-1.5">
+              {HERO_SLIDES.map((_, i) => (
+                <button key={i} onClick={() => setHeroSlide(i)}
+                  className="rounded-full transition-all duration-300"
+                  style={{ width: i === heroSlide ? 18 : 6, height: 6, background: i === heroSlide ? C.white : 'rgba(255,255,255,0.4)' }}
+                />
+              ))}
+            </div>
+          </motion.div>
+
+        </div>
+      </section>}
 
       {/* ══════════════════════════════════════════
           § 1.5  TESTIMONIAL VIDEO — soft bg
@@ -1974,10 +1731,9 @@ export function BrochurePage() {
       </section>
 
       {/* ══════════════════════════════════════════
-          § 4  STORY FORMATS — white
-           Scenes shown full-size, no cropping
+          § 4  STORY FORMATS — hidden
       ══════════════════════════════════════════ */}
-      <section id="books" style={{ background: C.white }} className="py-16 sm:py-20">
+      {false && <section id="books" style={{ background: C.white }} className="py-16 sm:py-20">
         <div className="max-w-5xl mx-auto px-5 sm:px-8">
           <motion.div initial={{ opacity: 0, y: 16 }} whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }} className="text-center mb-10">
@@ -2037,7 +1793,7 @@ export function BrochurePage() {
             </motion.div>
           </div>
         </div>
-      </section>
+      </section>}
 
       {/* ══════════════════════════════════════════
           § 5  AGE INTELLIGENCE — warm tint
@@ -2086,9 +1842,9 @@ export function BrochurePage() {
       </section>
 
       {/* ══════════════════════════════════════════
-          § 6  QUALITY & TRUST — white
+          § 6  QUALITY & TRUST — hidden
       ══════════════════════════════════════════ */}
-      <section style={{ background: C.white }} className="py-16 sm:py-20">
+      {false && <section style={{ background: C.white }} className="py-16 sm:py-20">
         <div className="max-w-3xl mx-auto px-5 sm:px-8">
           <motion.div initial={{ opacity: 0, y: 16 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} className="mb-10">
             {eyebrow('Quality you can trust')}
@@ -2128,17 +1884,12 @@ export function BrochurePage() {
             </div>
           </motion.div>
         </div>
-      </section>
+      </section>}
 
       {/* ══════════════════════════════════════════
-          § 6.5  GOOGLE REVIEWS — hidden until live
+          § 7  WHY IT MATTERS — hidden
       ══════════════════════════════════════════ */}
-      {/* <ReviewsSection /> */}
-
-      {/* ══════════════════════════════════════════
-          § 7  WHY IT MATTERS — navy
-      ══════════════════════════════════════════ */}
-      <section style={{ background: C.navy }} className="py-16 sm:py-20">
+      {false && <section style={{ background: C.navy }} className="py-16 sm:py-20">
         <div className="max-w-3xl mx-auto px-5 sm:px-8">
           <motion.div initial={{ opacity: 0, y: 16 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} className="mb-10">
             {eyebrow('Why it matters', true)}
@@ -2163,7 +1914,7 @@ export function BrochurePage() {
             ))}
           </div>
         </div>
-      </section>
+      </section>}
 
       {/* ══════════════════════════════════════════
           § 8  HOW IT WORKS — warm gradient
@@ -2211,7 +1962,7 @@ export function BrochurePage() {
       {/* ══════════════════════════════════════════
           § 9  ORDER FORM — warm tint
       ══════════════════════════════════════════ */}
-      <OrderForm price={price} scrollTo={scrollTo} isCustomStory={isCustomStory} setIsCustomStory={setIsCustomStory} />
+      {false && <OrderForm price={price} scrollTo={scrollTo} isCustomStory={isCustomStory} setIsCustomStory={setIsCustomStory} />}
 
       {/* ══════════════════════════════════════════
           § 10  FAQ — white
@@ -2365,11 +2116,6 @@ export function BrochurePage() {
         </div>
       </footer>
 
-      <AnimatePresence>
-        {selectedTheme && (
-          <BrochureThemeModal theme={selectedTheme} onClose={() => setSelectedTheme(null)} />
-        )}
-      </AnimatePresence>
     </div>
   );
 }

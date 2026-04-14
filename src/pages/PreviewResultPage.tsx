@@ -109,7 +109,7 @@ export function PreviewResultPage() {
   }, [jobId, API_BASE]);
 
   const handleOrder = () => {
-    window.open(`/?theme=${themeSlug}#order`, '_blank');
+    window.location.href = `/theme/${themeSlug}#inline-order`;
   };
 
   const done = status === 'done';

@@ -1,0 +1,595 @@
+import { useState, useEffect } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
+import { motion, AnimatePresence } from 'framer-motion';
+import { MessageCircle } from 'lucide-react';
+import { THEMES } from '../data/themes';
+import { NavBar } from '../components/NavBar';
+
+const C = {
+  saffron: '#FF6B35',
+  gold:    '#F7B731',
+  navy:    '#1A1A2E',
+  white:   '#FFFFFF',
+  gray:    '#555555',
+  lgray:   '#999999',
+};
+
+const FACE_SAMPLES = [
+  { key: 'boy_young', face: '/faces/face_boy_young.webp' },
+  { key: 'boy_older', face: '/faces/face_boy_older.webp' },
+  { key: 'girl',      face: '/faces/face_girl_medium.webp' },
+];
+
+export function ThemePage() {
+  const { slug } = useParams<{ slug: string }>();
+  const navigate = useNavigate();
+  const API_BASE = import.meta.env.VITE_API_BASE_URL || '';
+
+  const theme = THEMES.find(t => t.slug === slug);
+
+  const [activeIdx, setActiveIdx] = useState(0);
+  const [childName, setChildName] = useState('');
+  const [nameError, setNameError] = useState(false);
+  const [photo, setPhoto] = useState<{ preview: string; uploading: boolean; signedUrl: string | null } | null>(null);
+  const [consent, setConsent] = useState(false);
+  const [jobStatus, setJobStatus] = useState('');
+  const [showOrder, setShowOrder] = useState(false);
+  const [orderForm, setOrderForm] = useState({ parentName: '', email: '', phone: '', childName: '', childAge: '', childGender: '', address: '', notes: '' });
+  const [orderPhoto, setOrderPhoto] = useState<{ preview: string; uploading: boolean; uploadedPath: string | null; signedUrl: string | null } | null>(null);
+  const [orderConsent, setOrderConsent] = useState(false);
+  const [orderSubmitting, setOrderSubmitting] = useState(false);
+  const [orderSubmitted, setOrderSubmitted] = useState(false);
+  const [orderError, setOrderError] = useState('');
+  const [generating, setGenerating] = useState(false);
+
+  useEffect(() => {
+    window.scrollTo({ top: 0, behavior: 'instant' });
+  }, [slug]);
+
+  useEffect(() => {
+    const t = setInterval(() => setActiveIdx(i => (i + 1) % FACE_SAMPLES.length), 2000);
+    return () => clearInterval(t);
+  }, []);
+
+  if (!theme) {
+    navigate('/');
+    return null;
+  }
+
+  const AGE_COLOR: Record<string, string> = { '3–5': C.saffron, '5–8': C.gold, '8–12': C.navy };
+  const color = AGE_COLOR[theme.ageRange] || C.saffron;
+
+  // Pick 6 other themes (same age group first, then others)
+  const otherThemes = [
+    ...THEMES.filter(t => t.slug !== theme.slug && t.ageRange === theme.ageRange),
+    ...THEMES.filter(t => t.slug !== theme.slug && t.ageRange !== theme.ageRange),
+  ].slice(0, 6);
+
+  const handleOrder = () => {
+    setShowOrder(true);
+    setTimeout(() => document.getElementById('inline-order')?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 80);
+  };
+
+  const setOf = (k: string, v: string) => setOrderForm(f => ({ ...f, [k]: v }));
+
+  const handleOrderPhotoAdd = (file: File) => {
+    const preview = URL.createObjectURL(file);
+    setOrderPhoto({ preview, uploading: true, uploadedPath: null, signedUrl: null });
+    const reader = new FileReader();
+    reader.onload = () => {
+      const xhr = new XMLHttpRequest();
+      xhr.open('POST', `${API_BASE}/api/upload-photo`);
+      xhr.setRequestHeader('Content-Type', 'application/json');
+      xhr.onload = () => {
+        try {
+          const data = JSON.parse(xhr.responseText);
+          setOrderPhoto(p => p ? { ...p, uploading: false, uploadedPath: data.photo_url || null, signedUrl: data.photo_signed_url || null } : null);
+        } catch { setOrderPhoto(p => p ? { ...p, uploading: false } : null); }
+      };
+      xhr.onerror = () => setOrderPhoto(p => p ? { ...p, uploading: false } : null);
+      xhr.send(JSON.stringify({ photo: reader.result }));
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const handleOrderSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!orderConsent) return;
+    setOrderSubmitting(true);
+    setOrderError('');
+    try {
+      const res = await fetch(`${API_BASE}/api/order-inquiry`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          ...orderForm,
+          storyTheme: theme.slug,
+          photoSignedUrl: orderPhoto?.signedUrl || null,
+          photoPath: orderPhoto?.uploadedPath || null,
+          referralSource: localStorage.getItem('protago_ref') || null,
+        }),
+      });
+      if (!res.ok) { const d = await res.json().catch(() => ({})); throw new Error(d.error || 'Failed'); }
+      setOrderSubmitted(true);
+    } catch (err: unknown) {
+      setOrderError(err instanceof Error ? err.message : 'Something went wrong. Please try again.');
+    } finally {
+      setOrderSubmitting(false);
+    }
+  };
+
+  const handleThemeClick = (slug: string) => {
+    navigate(`/theme/${slug}`);
+    // scroll handled by the slug useEffect above
+  };
+
+  const handlePhotoAdd = (file: File) => {
+    const preview = URL.createObjectURL(file);
+    setPhoto({ preview, uploading: true, signedUrl: null });
+    const reader = new FileReader();
+    reader.onload = () => {
+      const xhr = new XMLHttpRequest();
+      xhr.open('POST', `${API_BASE}/api/upload-photo`);
+      xhr.setRequestHeader('Content-Type', 'application/json');
+      xhr.onload = () => {
+        try {
+          const data = JSON.parse(xhr.responseText);
+          setPhoto(p => p ? { ...p, uploading: false, signedUrl: data.photo_signed_url || null } : null);
+        } catch { setPhoto(p => p ? { ...p, uploading: false } : null); }
+      };
+      xhr.onerror = () => setPhoto(p => p ? { ...p, uploading: false } : null);
+      xhr.send(JSON.stringify({ photo: reader.result }));
+    };
+    reader.onerror = () => setPhoto(p => p ? { ...p, uploading: false } : null);
+    reader.readAsDataURL(file);
+  };
+
+  const handleGenerate = () => {
+    if (!childName.trim()) { setNameError(true); return; }
+    if (!photo?.signedUrl) return;
+    setNameError(false);
+    setGenerating(true);
+    setJobStatus('');
+    const newTab = window.open('/preview/loading', '_blank');
+    (async () => {
+      const res = await fetch(`${API_BASE}/api/preview/trigger`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ storySlug: theme.slug, photoUrl: photo.signedUrl, childName }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        newTab?.close();
+        setJobStatus(`Error: ${data.error}`);
+        setGenerating(false);
+        return;
+      }
+      const params = new URLSearchParams({ name: childName, theme: theme.slug });
+      if (newTab) newTab.location.href = `/preview/${data.jobId}?${params}`;
+      setGenerating(false);
+      setJobStatus('opened');
+    })();
+  };
+
+  const canGenerate = !!childName.trim() && !!photo?.signedUrl && consent && !generating;
+
+  return (
+    <div style={{ minHeight: '100vh', background: '#FAFAFA', fontFamily: "'Nunito', sans-serif" }}>
+      <link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@700;800&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet" />
+
+      <NavBar />
+
+      <div style={{ maxWidth: 920, margin: '0 auto', paddingTop: 130, paddingBottom: 0 }}>
+
+        {/* ── Two-column card ── */}
+        <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'stretch', background: C.white, borderRadius: 20, overflow: 'hidden', boxShadow: '0 4px 32px rgba(0,0,0,0.07)', margin: '0 16px' }}>
+
+          {/* LEFT: animation + info */}
+          <div style={{ flex: '1 1 340px', display: 'flex', flexDirection: 'column', borderRight: '1px solid #F5F5F5' }}>
+
+            {/* Scene animation */}
+            <div style={{ position: 'relative', flexShrink: 0 }}>
+              <div style={{ aspectRatio: '16/9', background: '#F0EEE8', position: 'relative', overflow: 'hidden' }}>
+                {theme.slug === 'growth-mindset' ? (
+                  <img src={`/themes/${theme.slug}.webp`} alt={theme.name} decoding="async"
+                    style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                ) : (
+                  FACE_SAMPLES.map((sample, i) => (
+                    <motion.img key={sample.key}
+                      src={`/themes_faceswap/${theme.slug}_${sample.key}.webp`}
+                      alt="" decoding="async"
+                      style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }}
+                      animate={{ opacity: i === activeIdx ? 1 : 0 }}
+                      transition={{ duration: 0.5 }}
+                      onError={e => { (e.target as HTMLImageElement).style.display = 'none'; }}
+                    />
+                  ))
+                )}
+                {theme.slug !== 'growth-mindset' && (
+                  <svg viewBox="0 0 160 90" preserveAspectRatio="none"
+                    style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', zIndex: 5, pointerEvents: 'none' }}>
+                    <motion.path d="M 148 4 Q 148 45 52 30" fill="none" stroke={C.saffron}
+                      strokeWidth="2" strokeDasharray="5 3" strokeLinecap="round"
+                      initial={{ pathLength: 0, opacity: 0 }} animate={{ pathLength: 1, opacity: 1 }}
+                      transition={{ pathLength: { duration: 1.0, delay: 0.2 }, opacity: { duration: 0.2 } }}
+                      key={activeIdx} />
+                    <motion.path d="M 60 25 L 52 30 L 58 36" fill="none" stroke={C.saffron}
+                      strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
+                      initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 1.0 }}
+                      key={`ah-${activeIdx}`} />
+                  </svg>
+                )}
+                <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, padding: '30px 16px 12px', background: 'linear-gradient(transparent, rgba(0,0,0,0.7))', zIndex: 4 }}>
+                  <p style={{ fontFamily: "'Baloo 2', sans-serif", fontWeight: 800, fontSize: 20, color: '#fff', margin: 0 }}>
+                    {theme.icon} {theme.name}
+                  </p>
+                </div>
+              </div>
+              {theme.slug !== 'growth-mindset' && (
+                <div style={{ position: 'absolute', top: 12, right: 16, width: 72, height: 72, zIndex: 10 }}>
+                  {FACE_SAMPLES.map((sample, i) => (
+                    <motion.img key={sample.face} src={sample.face} alt="" decoding="async"
+                      style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover',
+                        borderRadius: '50%', border: `3px solid ${C.saffron}`, boxShadow: '0 4px 16px rgba(255,107,53,0.35), 0 0 0 3px #fff' }}
+                      animate={{ opacity: i === activeIdx ? 1 : 0, scale: i === activeIdx ? 1 : 0.9 }}
+                      transition={{ duration: 0.4 }} />
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* Info */}
+            <div style={{ padding: '18px 20px 22px', display: 'flex', flexDirection: 'column', gap: 10 }}>
+              <span style={{ fontSize: 11, fontWeight: 700, color, background: color + '18', padding: '3px 10px', borderRadius: 20, border: `1px solid ${color}30`, display: 'inline-block', alignSelf: 'flex-start' }}>
+                Ages {theme.ageRange}
+              </span>
+              <p style={{ fontSize: 14, lineHeight: 1.65, color: C.gray, margin: 0 }}>{theme.description}</p>
+
+              {/* Feature bullets */}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 8, margin: '4px 0' }}>
+                {[
+                  `Perfect for children aged ${theme.ageRange}`,
+                  'Add your child\'s name & photo',
+                  'Preview for free in ~2 minutes',
+                  'Order a printed book anytime',
+                ].map((label, i) => (
+                  <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                    <div style={{ width: 22, height: 22, borderRadius: '50%', background: C.saffron, color: '#fff', fontSize: 11, fontWeight: 800, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                      {i + 1}
+                    </div>
+                    <span style={{ fontSize: 13, color: C.gray }}>{label}</span>
+                  </div>
+                ))}
+              </div>
+
+              <button onClick={handleOrder}
+                style={{ width: '100%', background: 'none', border: `1.5px solid ${C.saffron}`, borderRadius: 10, padding: '11px 16px', fontWeight: 800, fontSize: 13, color: C.saffron, cursor: 'pointer', fontFamily: "'Baloo 2', sans-serif", marginTop: 4 }}>
+                Skip preview — Order this story →
+              </button>
+            </div>
+          </div>
+
+          {/* RIGHT: preview form */}
+          <div style={{ flex: '1 1 300px', padding: '32px 28px 36px', display: 'flex', flexDirection: 'column', background: C.white }}>
+
+            <AnimatePresence mode="wait">
+              {jobStatus === 'opened' ? (
+                <motion.div key="opened" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}
+                  style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 16, padding: '40px 0', textAlign: 'center', flex: 1, justifyContent: 'center' }}>
+                  <div style={{ fontSize: 56 }}>✨</div>
+                  <p style={{ fontWeight: 800, color: C.navy, fontSize: 17, margin: 0, fontFamily: "'Baloo 2', sans-serif" }}>Preview is generating!</p>
+                  <p style={{ fontSize: 13, color: C.lgray, margin: 0 }}>Check the new tab — ready in ~2 min.</p>
+                  <button onClick={() => { setJobStatus(''); setPhoto(null); setChildName(''); setGenerating(false); setConsent(false); }}
+                    style={{ marginTop: 8, background: 'none', border: '1.5px solid #E5E7EB', borderRadius: 10, padding: '10px 20px', fontSize: 13, color: C.gray, cursor: 'pointer', fontWeight: 700 }}>
+                    Generate another →
+                  </button>
+                </motion.div>
+
+              ) : generating ? (
+                <motion.div key="generating" initial={{ opacity: 0 }} animate={{ opacity: 1 }}
+                  style={{ textAlign: 'center', padding: '50px 0', flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
+                  <motion.div animate={{ rotate: 360 }} transition={{ repeat: Infinity, duration: 1.5, ease: 'linear' }}
+                    style={{ fontSize: 40, marginBottom: 14 }}>⚙️</motion.div>
+                  <p style={{ fontSize: 14, color: C.lgray }}>Starting your preview…</p>
+                </motion.div>
+
+              ) : (
+                <motion.div key="form" initial={{ opacity: 0 }} animate={{ opacity: 1 }}
+                  style={{ display: 'flex', flexDirection: 'column', gap: 0 }}>
+
+                  {/* Header */}
+                  <p style={{ fontSize: 11, fontWeight: 700, color: C.saffron, textTransform: 'uppercase', letterSpacing: 1.5, margin: '0 0 4px' }}>Free Preview</p>
+                  <h2 style={{ fontFamily: "'Baloo 2', sans-serif", fontWeight: 800, fontSize: 21, color: C.navy, margin: '0 0 24px', lineHeight: 1.2 }}>
+                    See your child<br />in this story
+                  </h2>
+
+                  {jobStatus.startsWith('Error') && (
+                    <div style={{ padding: '10px 14px', background: '#FFF0F0', borderRadius: 8, marginBottom: 14, border: '1px solid #FFCDD2' }}>
+                      <p style={{ fontSize: 12, color: '#C0392B', margin: 0 }}>{jobStatus}</p>
+                    </div>
+                  )}
+
+                  {/* Step 1: Name */}
+                  <div style={{ marginBottom: 14 }}>
+                    <label style={{ fontSize: 12, fontWeight: 700, color: C.navy, display: 'block', marginBottom: 6 }}>
+                      Child's name <span style={{ color: C.saffron }}>*</span>
+                    </label>
+                    <input
+                      placeholder="e.g. Aryan"
+                      value={childName}
+                      onChange={e => { setChildName(e.target.value); if (e.target.value.trim()) setNameError(false); }}
+                      style={{
+                        border: `1.5px solid ${nameError ? '#E53E3E' : '#E5E7EB'}`,
+                        borderRadius: 10, padding: '12px 14px', fontSize: 15, outline: 'none',
+                        width: '100%', boxSizing: 'border-box', fontFamily: 'inherit',
+                        background: nameError ? '#FFF5F5' : '#fff',
+                        transition: 'border-color 0.2s',
+                      }} />
+                    {nameError && <p style={{ fontSize: 11, color: '#E53E3E', margin: '4px 0 0' }}>Please enter your child's name</p>}
+                  </div>
+
+                  {/* Step 2: Photo */}
+                  <div style={{ marginBottom: 18 }}>
+                    <label style={{ fontSize: 12, fontWeight: 700, color: C.navy, display: 'block', marginBottom: 6 }}>
+                      Child's photo <span style={{ color: C.saffron }}>*</span>
+                    </label>
+                    {!photo ? (
+                      <label style={{
+                        border: '2px dashed #E5E7EB', borderRadius: 12, padding: '22px 14px',
+                        display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6,
+                        cursor: 'pointer', background: '#FAFAFA', transition: 'border-color 0.2s',
+                      }}
+                        onMouseEnter={e => (e.currentTarget.style.borderColor = C.saffron)}
+                        onMouseLeave={e => (e.currentTarget.style.borderColor = '#E5E7EB')}>
+                        <span style={{ fontSize: 34 }}>📸</span>
+                        <span style={{ fontWeight: 700, color: C.navy, fontSize: 13 }}>Upload child's photo</span>
+                        <span style={{ fontSize: 11, color: C.lgray }}>Clear, front-facing works best</span>
+                        <input type="file" accept="image/*" style={{ display: 'none' }}
+                          onChange={e => { const f = e.target.files?.[0]; if (f) handlePhotoAdd(f); }} />
+                      </label>
+                    ) : (
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '10px 12px', background: '#F0FDF4', borderRadius: 10, border: '1.5px solid #BBF7D0' }}>
+                        <img src={photo.preview} style={{ width: 48, height: 48, borderRadius: 8, objectFit: 'cover', flexShrink: 0 }} alt="" />
+                        <div style={{ flex: 1, minWidth: 0 }}>
+                          <div style={{ fontWeight: 700, fontSize: 13, color: '#166534' }}>{photo.uploading ? '⏳ Uploading…' : '✓ Photo ready'}</div>
+                          {photo.uploading && <div style={{ fontSize: 11, color: '#166534', opacity: 0.7 }}>Please wait…</div>}
+                        </div>
+                        {!photo.uploading && (
+                          <button onClick={() => setPhoto(null)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: C.lgray, fontSize: 20, lineHeight: 1, flexShrink: 0 }}>×</button>
+                        )}
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Consent */}
+                  <label style={{ display: 'flex', alignItems: 'flex-start', gap: 10, cursor: 'pointer', marginBottom: 16 }}>
+                    <input type="checkbox" checked={consent} onChange={e => setConsent(e.target.checked)}
+                      style={{ marginTop: 2, flexShrink: 0, accentColor: C.saffron, width: 15, height: 15, cursor: 'pointer' }} />
+                    <span style={{ fontSize: 12, lineHeight: 1.6, color: C.gray }}>
+                      I confirm that I am at least 18 years old and have obtained consent from the child's parent or guardian to share this information for the purpose of creating a personalised storybook, in accordance with the{' '}
+                      <a href="/privacy" style={{ color: C.saffron, textDecoration: 'underline' }}>Privacy Policy</a>.
+                    </span>
+                  </label>
+
+                  {/* Generate button */}
+                  <button disabled={!canGenerate} onClick={handleGenerate}
+                    style={{
+                      background: canGenerate ? `linear-gradient(135deg, ${C.saffron} 0%, #FF8C42 100%)` : '#E5E7EB',
+                      color: canGenerate ? '#fff' : '#9CA3AF',
+                      border: 'none', borderRadius: 12, padding: '15px 18px',
+                      fontWeight: 800, fontSize: 16, cursor: canGenerate ? 'pointer' : 'default',
+                      fontFamily: "'Baloo 2', sans-serif", transition: 'all 0.2s',
+                      boxShadow: canGenerate ? '0 4px 16px rgba(255,107,53,0.4)' : 'none',
+                    }}>
+                    ✨ Generate Free Preview
+                  </button>
+                  <p style={{ fontSize: 11, color: C.lgray, textAlign: 'center', margin: '10px 0 0' }}>Free · ~2 min · No card required</p>
+
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
+        </div>
+
+        {/* ── Inline order form ── */}
+        {showOrder && (
+          <div id="inline-order" style={{ margin: '32px 16px 0', background: C.white, borderRadius: 24, boxShadow: '0 8px 40px rgba(0,0,0,0.10)', overflow: 'hidden', border: '1px solid #F0EEE8' }}>
+            {/* Header */}
+            <div style={{ background: `linear-gradient(135deg, ${C.saffron} 0%, #FF8C42 100%)`, padding: '28px 36px 24px' }}>
+              <p style={{ fontSize: 11, fontWeight: 700, color: 'rgba(255,255,255,0.75)', textTransform: 'uppercase', letterSpacing: 1.8, margin: '0 0 6px' }}>Order your book</p>
+              <h2 style={{ fontFamily: "'Baloo 2', sans-serif", fontWeight: 800, fontSize: 24, color: '#fff', margin: '0 0 4px' }}>
+                {theme.icon} {theme.name}
+              </h2>
+              <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.85)', margin: 0 }}>Theme pre-selected · Starting at ₹{Number(import.meta.env.VITE_STORYBOOK_PRICE) || 499}</p>
+            </div>
+
+            {orderSubmitted ? (
+              <div style={{ padding: '60px 36px', textAlign: 'center' }}>
+                <div style={{ fontSize: 56, marginBottom: 16 }}>🎉</div>
+                <h3 style={{ fontFamily: "'Baloo 2', sans-serif", fontWeight: 800, color: C.navy, fontSize: 22, margin: '0 0 8px' }}>Order received!</h3>
+                <p style={{ fontSize: 14, color: C.gray, margin: 0, lineHeight: 1.7 }}>We'll reach out to <strong>{orderForm.email}</strong> within 24 hours to confirm your order.</p>
+              </div>
+            ) : (
+              <form onSubmit={handleOrderSubmit} style={{ padding: '24px 28px', display: 'flex', flexDirection: 'column', gap: 14 }}>
+
+                {orderError && (
+                  <div style={{ padding: '12px 14px', background: '#FFF0F0', borderRadius: 8, border: '1px solid #FFCDD2' }}>
+                    <p style={{ fontSize: 13, color: '#C0392B', margin: 0 }}>{orderError}</p>
+                  </div>
+                )}
+
+                {/* Row 1: name + email + phone */}
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: 10 }}>
+                  {[
+                    { label: 'Your name *', key: 'parentName', placeholder: 'Priya Sharma', type: 'text' },
+                    { label: 'Email *', key: 'email', placeholder: 'you@email.com', type: 'email' },
+                    { label: 'WhatsApp *', key: 'phone', placeholder: '+91 98765 43210', type: 'tel' },
+                  ].map(({ label, key, placeholder, type }) => (
+                    <div key={key}>
+                      <label style={{ fontSize: 10, fontWeight: 700, color: '#9CA3AF', display: 'block', marginBottom: 4, textTransform: 'uppercase', letterSpacing: '0.07em' }}>{label}</label>
+                      <input required type={type} placeholder={placeholder} value={orderForm[key as keyof typeof orderForm]}
+                        onChange={e => setOf(key, e.target.value)}
+                        style={{ width: '100%', border: '1.5px solid #E5E7EB', borderRadius: 9, padding: '10px 12px', fontSize: 14, outline: 'none', boxSizing: 'border-box', fontFamily: 'inherit', background: '#fff' }}
+                        onFocus={e => (e.target.style.borderColor = C.saffron)}
+                        onBlur={e => (e.target.style.borderColor = '#E5E7EB')} />
+                    </div>
+                  ))}
+                </div>
+
+                {/* Row 2: child name + age + gender */}
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: 10 }}>
+                  <div>
+                    <label style={{ fontSize: 10, fontWeight: 700, color: '#9CA3AF', display: 'block', marginBottom: 4, textTransform: 'uppercase', letterSpacing: '0.07em' }}>Child's name *</label>
+                    <input required placeholder="Arjun" value={orderForm.childName} onChange={e => setOf('childName', e.target.value)}
+                      style={{ width: '100%', border: '1.5px solid #E5E7EB', borderRadius: 9, padding: '10px 12px', fontSize: 14, outline: 'none', boxSizing: 'border-box', fontFamily: 'inherit', background: '#fff' }}
+                      onFocus={e => (e.target.style.borderColor = C.saffron)}
+                      onBlur={e => (e.target.style.borderColor = '#E5E7EB')} />
+                  </div>
+                  <div>
+                    <label style={{ fontSize: 10, fontWeight: 700, color: '#9CA3AF', display: 'block', marginBottom: 4, textTransform: 'uppercase', letterSpacing: '0.07em' }}>Age *</label>
+                    <select required value={orderForm.childAge} onChange={e => setOf('childAge', e.target.value)}
+                      style={{ width: '100%', border: '1.5px solid #E5E7EB', borderRadius: 9, padding: '10px 12px', fontSize: 14, outline: 'none', boxSizing: 'border-box', fontFamily: 'inherit', background: '#fff' }}>
+                      <option value="">Select age</option>
+                      {Array.from({ length: 10 }, (_, i) => i + 3).map(a => <option key={a} value={a}>{a} years old</option>)}
+                    </select>
+                  </div>
+                  <div>
+                    <label style={{ fontSize: 10, fontWeight: 700, color: '#9CA3AF', display: 'block', marginBottom: 4, textTransform: 'uppercase', letterSpacing: '0.07em' }}>Gender *</label>
+                    <div style={{ display: 'flex', gap: 6 }}>
+                      {['Boy', 'Girl', 'Other'].map(g => (
+                        <button type="button" key={g} onClick={() => setOf('childGender', g)}
+                          style={{ flex: 1, padding: '9px 0', borderRadius: 9, fontSize: 13, fontWeight: 700, cursor: 'pointer', border: `1.5px solid ${orderForm.childGender === g ? C.saffron : '#E5E7EB'}`, background: orderForm.childGender === g ? '#FFF3EE' : '#fff', color: orderForm.childGender === g ? C.saffron : '#9CA3AF' }}>
+                          {g}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Row 3: photo + address side by side */}
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 2fr', gap: 10 }}>
+                  <div>
+                    <label style={{ fontSize: 10, fontWeight: 700, color: '#9CA3AF', display: 'block', marginBottom: 4, textTransform: 'uppercase', letterSpacing: '0.07em' }}>Child's photo *</label>
+                    {!orderPhoto ? (
+                      <label style={{ border: '2px dashed #D1D5DB', borderRadius: 10, padding: '14px 10px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4, cursor: 'pointer', background: '#FAFAFA', height: 'calc(100% - 18px)', justifyContent: 'center', boxSizing: 'border-box' }}
+                        onMouseEnter={e => (e.currentTarget.style.borderColor = C.saffron)}
+                        onMouseLeave={e => (e.currentTarget.style.borderColor = '#D1D5DB')}>
+                        <span style={{ fontSize: 26 }}>📸</span>
+                        <span style={{ fontWeight: 700, color: C.navy, fontSize: 12, textAlign: 'center' }}>Upload photo</span>
+                        <span style={{ fontSize: 10, color: C.lgray, textAlign: 'center' }}>Front-facing works best</span>
+                        <input type="file" accept="image/*" style={{ display: 'none' }} onChange={e => { const f = e.target.files?.[0]; if (f) handleOrderPhotoAdd(f); }} />
+                      </label>
+                    ) : (
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 12px', background: '#F0FDF4', borderRadius: 10, border: '1.5px solid #BBF7D0', height: 'calc(100% - 18px)', boxSizing: 'border-box' }}>
+                        <img src={orderPhoto.preview} style={{ width: 44, height: 44, borderRadius: 8, objectFit: 'cover', flexShrink: 0 }} alt="" />
+                        <div style={{ flex: 1, fontSize: 12, fontWeight: 700, color: '#166534' }}>{orderPhoto.uploading ? '⏳ Uploading…' : '✓ Ready'}</div>
+                        {!orderPhoto.uploading && <button type="button" onClick={() => setOrderPhoto(null)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#9CA3AF', fontSize: 20, lineHeight: 1, padding: 0 }}>×</button>}
+                      </div>
+                    )}
+                  </div>
+                  <div>
+                    <label style={{ fontSize: 10, fontWeight: 700, color: '#9CA3AF', display: 'block', marginBottom: 4, textTransform: 'uppercase', letterSpacing: '0.07em' }}>Delivery address *</label>
+                    <textarea required rows={4} placeholder="Full address with pincode" value={orderForm.address} onChange={e => setOf('address', e.target.value)}
+                      style={{ width: '100%', border: '1.5px solid #E5E7EB', borderRadius: 9, padding: '10px 12px', fontSize: 14, outline: 'none', boxSizing: 'border-box', fontFamily: 'inherit', resize: 'none', background: '#fff' }}
+                      onFocus={e => (e.target.style.borderColor = C.saffron)}
+                      onBlur={e => (e.target.style.borderColor = '#E5E7EB')} />
+                  </div>
+                </div>
+
+                {/* Consent + submit */}
+                <label style={{ display: 'flex', alignItems: 'flex-start', gap: 10, cursor: 'pointer' }}>
+                  <input type="checkbox" required checked={orderConsent} onChange={e => setOrderConsent(e.target.checked)}
+                    style={{ marginTop: 2, flexShrink: 0, accentColor: C.saffron, width: 15, height: 15, cursor: 'pointer' }} />
+                  <span style={{ fontSize: 11, lineHeight: 1.6, color: '#9CA3AF' }}>
+                    I confirm I am 18+ and have obtained parental consent to share this information per the{' '}
+                    <a href="/privacy" style={{ color: C.saffron, textDecoration: 'underline' }}>Privacy Policy</a>.
+                  </span>
+                </label>
+
+                <button type="submit" disabled={orderSubmitting || !orderConsent}
+                  style={{ background: (!orderConsent || orderSubmitting) ? '#E5E7EB' : `linear-gradient(135deg, ${C.saffron} 0%, #FF8C42 100%)`, color: (!orderConsent || orderSubmitting) ? '#9CA3AF' : '#fff', border: 'none', borderRadius: 12, padding: '14px 20px', fontWeight: 800, fontSize: 16, cursor: (!orderConsent || orderSubmitting) ? 'default' : 'pointer', fontFamily: "'Baloo 2', sans-serif", boxShadow: (!orderConsent || orderSubmitting) ? 'none' : '0 4px 16px rgba(255,107,53,0.4)' }}>
+                  {orderSubmitting ? 'Placing order…' : 'Place Order →'}
+                </button>
+                <p style={{ fontSize: 11, color: C.lgray, textAlign: 'center', margin: '-4px 0 0' }}>We'll confirm within 24 hours · Delivered in 5–7 days</p>
+
+              </form>
+            )}
+          </div>
+        )}
+
+        {/* ── Explore more themes ── */}
+        <div style={{ padding: '48px 16px 40px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20 }}>
+            <h3 style={{ fontFamily: "'Baloo 2', sans-serif", fontWeight: 800, fontSize: 18, color: C.navy, margin: 0 }}>
+              Explore more themes
+            </h3>
+            <button onClick={() => navigate('/?scroll=themes')}
+              style={{ background: 'none', border: `1.5px solid ${C.saffron}`, borderRadius: 20, padding: '6px 16px', fontSize: 12, fontWeight: 700, color: C.saffron, cursor: 'pointer', fontFamily: "'Baloo 2', sans-serif", whiteSpace: 'nowrap' }}>
+              View all →
+            </button>
+          </div>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 14 }}>
+            {otherThemes.map(t => (
+              <button key={t.slug} onClick={() => handleThemeClick(t.slug)}
+                style={{ background: C.white, border: '1.5px solid #F0EEE8', borderRadius: 12, overflow: 'hidden', cursor: 'pointer', textAlign: 'left', padding: 0, boxShadow: '0 2px 8px rgba(0,0,0,0.04)', transition: 'box-shadow 0.2s, transform 0.15s' }}
+                onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.boxShadow = '0 4px 16px rgba(0,0,0,0.1)'; (e.currentTarget as HTMLButtonElement).style.transform = 'translateY(-2px)'; }}
+                onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.boxShadow = '0 2px 8px rgba(0,0,0,0.04)'; (e.currentTarget as HTMLButtonElement).style.transform = 'translateY(0)'; }}>
+                <div style={{ aspectRatio: '16/9', background: '#F0EEE8', overflow: 'hidden' }}>
+                  <img src={`/themes_faceswap/${t.slug}_boy_young@thumb.webp`} alt={t.name}
+                    loading="lazy" decoding="async"
+                    style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
+                    onError={e => { (e.target as HTMLImageElement).src = `/themes/${t.slug}@thumb.webp`; }} />
+                </div>
+                <div style={{ padding: '10px 12px 11px' }}>
+                  <p style={{ fontSize: 13, fontWeight: 700, color: C.navy, margin: 0, lineHeight: 1.3 }}>{t.icon} {t.name}</p>
+                  <p style={{ fontSize: 11, color: C.lgray, margin: '3px 0 0' }}>Ages {t.ageRange}</p>
+                </div>
+              </button>
+            ))}
+          </div>
+          <div style={{ textAlign: 'center', marginTop: 24 }}>
+            <button onClick={() => navigate('/?scroll=themes')}
+              style={{ background: C.navy, color: '#fff', border: 'none', borderRadius: 24, padding: '12px 32px', fontSize: 14, fontWeight: 800, cursor: 'pointer', fontFamily: "'Baloo 2', sans-serif" }}>
+              Browse all {THEMES.length} themes →
+            </button>
+          </div>
+        </div>
+
+      </div>
+
+      {/* Footer */}
+      <footer style={{ background: C.navy, padding: '40px 20px 24px' }}>
+        <div style={{ maxWidth: 920, margin: '0 auto' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: 32, marginBottom: 32 }}>
+            <div>
+              <span style={{ fontFamily: "'Baloo 2', sans-serif", fontWeight: 800, fontSize: 22, color: C.saffron }}>protago</span>
+              <p style={{ fontSize: 13, marginTop: 10, lineHeight: 1.6, color: 'rgba(255,255,255,0.45)' }}>
+                Magical, personalised storybooks that make every Indian child the hero of their own adventure.
+              </p>
+              <a href="mailto:hello@protago.in" style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 13, color: C.gold, marginTop: 10, textDecoration: 'none' }}>
+                <MessageCircle size={14} /> hello@protago.in
+              </a>
+              <a href="https://wa.me/919452868857" target="_blank" rel="noopener noreferrer"
+                style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 13, color: C.gold, marginTop: 8, textDecoration: 'none' }}>
+                <MessageCircle size={14} /> WhatsApp: +91 94528 68857
+              </a>
+            </div>
+            <div>
+              <h4 style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: 4, color: 'rgba(255,255,255,0.25)', marginBottom: 16 }}>Legal</h4>
+              {[['Privacy Policy', '/privacy'], ['Terms & Conditions', '/terms'], ['Refund Policy', '/refund']].map(([label, href]) => (
+                <div key={href} style={{ marginBottom: 10 }}>
+                  <a href={href} style={{ fontSize: 13, color: 'rgba(255,255,255,0.45)', textDecoration: 'none' }}>{label}</a>
+                </div>
+              ))}
+            </div>
+          </div>
+          <div style={{ borderTop: '1px solid rgba(255,255,255,0.08)', paddingTop: 20, display: 'flex', justifyContent: 'space-between', flexWrap: 'wrap', gap: 8 }}>
+            <span style={{ fontSize: 12, color: 'rgba(255,255,255,0.25)' }}>&copy; {new Date().getFullYear()} Protago. All rights reserved.</span>
+            <span style={{ fontSize: 12, color: 'rgba(255,255,255,0.25)' }}>Made with love in India 🇮🇳</span>
+          </div>
+        </div>
+      </footer>
+
+    </div>
+  );
+}
