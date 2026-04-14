@@ -32,6 +32,8 @@ export function ThemePage() {
   const [activeIdx, setActiveIdx] = useState(0);
   const [childName, setChildName] = useState('');
   const [nameError, setNameError] = useState(false);
+  const [previewEmail, setPreviewEmail] = useState('');
+  const [emailError, setEmailError] = useState('');
   const [photo, setPhoto] = useState<{ preview: string; uploading: boolean; signedUrl: string | null } | null>(null);
   const [consent, setConsent] = useState(false);
   const [jobStatus, setJobStatus] = useState('');
@@ -225,7 +227,12 @@ export function ThemePage() {
   const handleGenerate = () => {
     if (!childName.trim()) { setNameError(true); return; }
     if (!photo?.signedUrl) return;
+    // Basic email format check before hitting backend
+    const emailTrimmed = previewEmail.trim();
+    if (!emailTrimmed) { setEmailError('Email is required'); return; }
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(emailTrimmed)) { setEmailError('Enter a valid email address'); return; }
     setNameError(false);
+    setEmailError('');
     setGenerating(true);
     setJobStatus('');
     const newTab = window.open('/preview/loading', '_blank');
@@ -233,7 +240,7 @@ export function ThemePage() {
       const res = await fetch(`${API_BASE}/api/preview/trigger`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ storySlug: theme.slug, photoUrl: photo.signedUrl, childName }),
+        body: JSON.stringify({ storySlug: theme.slug, photoUrl: photo.signedUrl, childName, email: emailTrimmed }),
       });
       const data = await res.json();
       if (!res.ok) {
@@ -426,6 +433,31 @@ export function ThemePage() {
                         transition: 'border-color 0.2s',
                       }} />
                     {nameError && <p style={{ fontSize: 11, color: '#E53E3E', margin: '4px 0 0' }}>Please enter your child's name</p>}
+                  </div>
+
+                  {/* Email */}
+                  <div style={{ marginBottom: 14 }}>
+                    <label style={{ fontSize: 12, fontWeight: 700, color: C.navy, display: 'block', marginBottom: 6 }}>
+                      Your email <span style={{ color: C.saffron }}>*</span>
+                    </label>
+                    <input
+                      type="email"
+                      placeholder="you@email.com"
+                      value={previewEmail}
+                      onChange={e => { setPreviewEmail(e.target.value); if (emailError) setEmailError(''); }}
+                      style={{
+                        border: `1.5px solid ${emailError ? '#E53E3E' : '#E5E7EB'}`,
+                        borderRadius: 10, padding: '12px 14px', fontSize: 15, outline: 'none',
+                        width: '100%', boxSizing: 'border-box', fontFamily: 'inherit',
+                        background: emailError ? '#FFF5F5' : '#fff',
+                        transition: 'border-color 0.2s',
+                      }}
+                      onFocus={e => (e.target.style.borderColor = emailError ? '#E53E3E' : C.saffron)}
+                      onBlur={e => (e.target.style.borderColor = emailError ? '#E53E3E' : '#E5E7EB')} />
+                    {emailError
+                      ? <p style={{ fontSize: 11, color: '#E53E3E', margin: '4px 0 0' }}>{emailError}</p>
+                      : <p style={{ fontSize: 11, color: C.lgray, margin: '4px 0 0' }}>We'll send your preview here so you can always access it</p>
+                    }
                   </div>
 
                   {/* Step 2: Photo */}

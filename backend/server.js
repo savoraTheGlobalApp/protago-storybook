@@ -6,7 +6,12 @@ import sharp from 'sharp';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import crypto from 'crypto';
+import dns from 'dns/promises';
 import Razorpay from 'razorpay';
+import { Resend } from 'resend';
+import { createRequire } from 'module';
+const _require = createRequire(import.meta.url);
+const disposableDomains = _require('disposable-email-domains');
 import { triggerPreview } from './preview.js';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -16,6 +21,26 @@ dotenv.config();
 
 const app = express();
 const PORT = process.env.PORT || 5001;
+
+// ── Resend email client ───────────────────────────────────────────────────────
+const resend = new Resend(process.env.RESEND_API_KEY);
+const EMAIL_FROM = process.env.RESEND_FROM || 'Protago <hello@protago.in>';
+
+// ── Email validation helpers ──────────────────────────────────────────────────
+const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
+
+async function validateEmail(email) {
+  if (!email || !EMAIL_REGEX.test(email)) return { valid: false, reason: 'Invalid email format' };
+  const domain = email.split('@')[1].toLowerCase();
+  if (disposableDomains.includes(domain)) return { valid: false, reason: 'Disposable email addresses are not allowed' };
+  try {
+    const mx = await dns.resolveMx(domain);
+    if (!mx || mx.length === 0) return { valid: false, reason: 'Email domain does not exist' };
+  } catch {
+    return { valid: false, reason: 'Email domain does not exist' };
+  }
+  return { valid: true };
+}
 
 // ── OTP token helpers (stateless HMAC — survives restarts & works across replicas) ──
 // Token = base64url(payload) + "." + HMAC-SHA256(base64url(payload), secret)
@@ -1112,12 +1137,18 @@ app.post('/api/order-alert', async (req, res) => {
 
 // POST /api/preview/trigger
 // Creates a preview_jobs row in Supabase DB, fires Modal async.
-// Body: { storySlug, photoUrl, childName? }
+// Body: { storySlug, photoUrl, childName?, email? }
 app.post('/api/preview/trigger', async (req, res) => {
   try {
-    const { storySlug, photoUrl, childName } = req.body;
+    const { storySlug, photoUrl, childName, email } = req.body;
     if (!storySlug || !photoUrl) {
       return res.status(400).json({ error: 'storySlug and photoUrl are required' });
+    }
+
+    // Validate email if provided
+    if (email) {
+      const { valid, reason } = await validateEmail(email);
+      if (!valid) return res.status(400).json({ error: reason });
     }
 
     const SUPABASE_URL = process.env.SUPABASE_URL_STORY || process.env.SUPABASE_URL;
@@ -1132,7 +1163,12 @@ app.post('/api/preview/trigger', async (req, res) => {
         'Content-Type': 'application/json',
         'Prefer': 'return=representation',
       },
-      body: JSON.stringify({ story_slug: storySlug, photo_path: photoUrl, child_name: childName || null }),
+      body: JSON.stringify({
+        story_slug: storySlug,
+        photo_path: photoUrl,
+        child_name: childName || null,
+        email: email || null,
+      }),
     });
 
     if (!createRes.ok) {
@@ -1143,7 +1179,7 @@ app.post('/api/preview/trigger', async (req, res) => {
 
     const [job] = await createRes.json();
 
-    console.log(`Preview job ${job.id}: photoUrl=${photoUrl}`);
+    console.log(`Preview job ${job.id}: photoUrl=${photoUrl} email=${email || 'none'}`);
     // Fire Modal async (don't await — client polls for result)
     triggerPreview({ jobId: job.id, storySlug, photoUrl, childName }).catch(err =>
       console.error(`Preview job ${job.id} trigger failed:`, err.message)
@@ -1153,6 +1189,123 @@ app.post('/api/preview/trigger', async (req, res) => {
   } catch (err) {
     console.error('preview/trigger error:', err);
     return res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// POST /api/preview/send-email
+// Called by PreviewResultPage when job hits 'done'. Fetches result URLs from
+// Supabase and sends a branded HTML email with both preview scenes.
+app.post('/api/preview/send-email', async (req, res) => {
+  try {
+    const { jobId } = req.body;
+    if (!jobId) return res.status(400).json({ error: 'jobId required' });
+
+    const SUPABASE_URL = process.env.SUPABASE_URL_STORY || process.env.SUPABASE_URL;
+    const SUPABASE_KEY = process.env.SUPABASE_SERVICE_KEY_STORY || process.env.SUPABASE_SERVICE_KEY;
+
+    // Fetch job from DB
+    const jobRes = await fetch(
+      `${SUPABASE_URL}/rest/v1/preview_jobs?id=eq.${jobId}&select=email,child_name,story_slug,result_scene_1,result_scene_2,email_sent`,
+      { headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}` } }
+    );
+    const [job] = await jobRes.json();
+    if (!job) return res.status(404).json({ error: 'Job not found' });
+    if (!job.email) return res.json({ skipped: true, reason: 'No email on this job' });
+    if (job.email_sent) return res.json({ skipped: true, reason: 'Email already sent' });
+    if (!job.result_scene_1) return res.status(400).json({ error: 'Preview not ready yet' });
+
+    const childName = job.child_name || 'Your child';
+    const themeName = job.story_slug.replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+    const siteUrl = (process.env.SITE_URL || 'https://protago.in').replace(/\/$/, '');
+    const themeUrl = `${siteUrl}/theme/${job.story_slug}`;
+    const previewUrl = `${siteUrl}/preview/${jobId}?name=${encodeURIComponent(childName)}&theme=${job.story_slug}`;
+
+    const html = `<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head>
+<body style="margin:0;padding:0;background:#f5f5f0;font-family:'Helvetica Neue',Arial,sans-serif;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background:#f5f5f0;padding:32px 0">
+    <tr><td align="center">
+      <table width="600" cellpadding="0" cellspacing="0" style="background:#ffffff;border-radius:16px;overflow:hidden;max-width:600px;width:100%">
+
+        <!-- Header -->
+        <tr><td style="background:#1A1A2E;padding:24px 32px;text-align:center">
+          <span style="font-size:24px;font-weight:800;color:#FF6B35;font-family:Georgia,serif">protago</span>
+          <p style="color:rgba(255,255,255,0.6);font-size:13px;margin:4px 0 0">Personalised storybooks for curious kids</p>
+        </td></tr>
+
+        <!-- Hero -->
+        <tr><td style="padding:32px 32px 16px;text-align:center">
+          <p style="font-size:12px;font-weight:700;color:#FF6B35;text-transform:uppercase;letter-spacing:2px;margin:0 0 8px">✨ Preview ready!</p>
+          <h1 style="font-size:26px;font-weight:800;color:#1A1A2E;margin:0 0 8px;line-height:1.2">${childName}'s storybook preview</h1>
+          <p style="font-size:15px;color:#666;margin:0">${themeName} · Your child's face in every scene</p>
+        </td></tr>
+
+        <!-- Scene 1 -->
+        <tr><td style="padding:16px 32px 8px">
+          <img src="${job.result_scene_1}" alt="Preview scene 1" width="536"
+            style="width:100%;border-radius:12px;display:block;border:0" />
+        </td></tr>
+
+        ${job.result_scene_2 ? `<!-- Scene 2 -->
+        <tr><td style="padding:8px 32px 16px">
+          <img src="${job.result_scene_2}" alt="Preview scene 2" width="536"
+            style="width:100%;border-radius:12px;display:block;border:0" />
+        </td></tr>` : ''}
+
+        <!-- CTA -->
+        <tr><td style="padding:24px 32px 32px;text-align:center">
+          <a href="${previewUrl}"
+            style="display:inline-block;background:#1A1A2E;color:#ffffff;text-decoration:none;font-weight:700;font-size:15px;padding:13px 32px;border-radius:50px;margin-bottom:16px">
+            View your full preview →
+          </a>
+          <p style="font-size:15px;color:#444;margin:0 0 20px;line-height:1.6">
+            Loved what you see? Turn this into a real printed book —<br>delivered to your door in 5–7 days.
+          </p>
+          <a href="${themeUrl}#inline-order"
+            style="display:inline-block;background:#FF6B35;color:#ffffff;text-decoration:none;font-weight:800;font-size:16px;padding:16px 40px;border-radius:50px;font-family:Georgia,serif">
+            Order this Book →
+          </a>
+          <p style="font-size:12px;color:#999;margin:16px 0 0">Premium 200GSM glossy paper · Starting at ₹499</p>
+        </td></tr>
+
+        <!-- Footer -->
+        <tr><td style="background:#f9f9f7;padding:20px 32px;text-align:center;border-top:1px solid #eee">
+          <p style="font-size:11px;color:#aaa;margin:0">
+            You received this because you generated a preview at protago.in.<br>
+            <a href="https://protago.in/privacy" style="color:#FF6B35">Privacy Policy</a>
+          </p>
+        </td></tr>
+
+      </table>
+    </td></tr>
+  </table>
+</body>
+</html>`;
+
+    await resend.emails.send({
+      from: EMAIL_FROM,
+      to: job.email,
+      subject: `✨ ${childName}'s storybook preview is ready!`,
+      html,
+    });
+
+    // Mark email_sent so we don't resend
+    await fetch(`${SUPABASE_URL}/rest/v1/preview_jobs?id=eq.${jobId}`, {
+      method: 'PATCH',
+      headers: {
+        'apikey': SUPABASE_KEY,
+        'Authorization': `Bearer ${SUPABASE_KEY}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ email_sent: true }),
+    });
+
+    console.log(`Preview email sent to ${job.email} for job ${jobId}`);
+    return res.json({ sent: true });
+  } catch (err) {
+    console.error('preview/send-email error:', err);
+    return res.status(500).json({ error: 'Failed to send email' });
   }
 });
 

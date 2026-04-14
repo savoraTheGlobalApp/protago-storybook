@@ -99,6 +99,11 @@ export function PreviewResultPage() {
           clearInterval(intervalRef.current!);
           setResultUrls([d.resultScene1 || null, d.resultScene2 || null]);
           setStatus('done');
+          // Fire-and-forget — send preview email if job has one
+          fetch(`${API_BASE}/api/preview/send-email`, {
+            method: 'POST', headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ jobId }),
+          }).catch(() => {/* non-critical */});
         } else if (d.status === 'failed') {
           clearInterval(intervalRef.current!);
           setErrorMsg(d.error_message || 'Something went wrong.');
