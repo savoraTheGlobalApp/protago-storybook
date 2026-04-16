@@ -673,6 +673,13 @@ function OrderForm({ price, isCustomStory, setIsCustomStory }: { price: number; 
             });
             if (!verifyRes.ok) throw new Error('Payment verification failed');
             localStorage.removeItem(FORM_STORAGE_KEY);
+            // Fire-and-forget confirmation email
+            fetch(`${API_BASE}/api/order/send-confirmation-email`, {
+              method: 'POST', headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ razorpayOrderId: response.razorpay_order_id }),
+            }).catch(() => {/* non-critical */});
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            if (typeof (window as any).fbq === 'function') (window as any).fbq('track', 'Purchase');
             trackEvent('purchase', {
               theme: form.storyTheme,
               art_style: form.artStyle,
@@ -735,10 +742,10 @@ function OrderForm({ price, isCustomStory, setIsCustomStory }: { price: number; 
             className="rounded-3xl p-10 text-center" style={{ background: C.white, border: `2px solid ${C.gold}` }}>
             <p className="text-4xl mb-4">🎉</p>
             <h3 style={{ fontFamily: "'Baloo 2', sans-serif", fontWeight: 800, color: C.navy, fontSize: '1.5rem' }}>
-              Order received!
+              Your order is confirmed!
             </h3>
             <p className="text-sm mt-2 leading-relaxed" style={{ color: C.gray }}>
-              Thank you! We'll reach out to <strong>{form.email}</strong> within 24 hours to confirm your order and next steps.
+              We've received your order and sent a confirmation to <strong>{form.email}</strong>. {form.childName}'s personalised storybook will be delivered in 5–7 business days.
             </p>
           </motion.div>
         ) : (
