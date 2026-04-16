@@ -40,27 +40,25 @@ function ShimmerCard() {
 
 function SceneCard({ url, index }: { url: string | null; index: number }) {
   const [loaded, setLoaded] = useState(false);
-
   return (
-    <div style={{ position: 'relative', width: '100%', aspectRatio: '16/9', borderRadius: 16, overflow: 'hidden', boxShadow: '0 8px 32px rgba(0,0,0,0.12)' }}>
-      {/* Shimmer underneath */}
-      {!loaded && <ShimmerCard />}
-
-      {/* Actual image fades in */}
-      {url && (
-        <motion.img
-          src={url}
-          alt={`Preview scene ${index + 1}`}
-          initial={{ opacity: 0 }}
-          animate={{ opacity: loaded ? 1 : 0 }}
-          transition={{ duration: 0.6, ease: 'easeOut' }}
-          onLoad={() => setLoaded(true)}
-          style={{
-            position: 'absolute', inset: 0, width: '100%', height: '100%',
-            objectFit: 'cover', borderRadius: 16,
-          }}
-        />
-      )}
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+      <div style={{ position: 'relative', width: '100%', aspectRatio: '16/9', borderRadius: 16, overflow: 'hidden', background: '#F0EEE8' }}>
+        {!loaded && <div style={{ position: 'absolute', inset: 0 }}><ShimmerCard /></div>}
+        {url && (
+          <motion.img
+            src={url}
+            alt={`Preview scene ${index + 1}`}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: loaded ? 1 : 0 }}
+            transition={{ duration: 0.6 }}
+            onLoad={() => setLoaded(true)}
+            style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
+          />
+        )}
+      </div>
+      <div style={{ fontSize: 11, fontWeight: 700, color: 'rgba(255,255,255,0.35)', letterSpacing: '0.1em', textTransform: 'uppercase', textAlign: 'center' }}>
+        Scene {index + 1}
+      </div>
     </div>
   );
 }
@@ -95,9 +93,12 @@ export function PreviewResultPage() {
       try {
         const r = await fetch(`${API_BASE}/api/preview/status/${jobId}`);
         const d = await r.json();
+        // Show scenes as soon as they're available, even if still processing
+        if (d.resultScene1 || d.resultScene2) {
+          setResultUrls([d.resultScene1 || null, d.resultScene2 || null]);
+        }
         if (d.status === 'done') {
           clearInterval(intervalRef.current!);
-          setResultUrls([d.resultScene1 || null, d.resultScene2 || null]);
           setStatus('done');
           // Fire-and-forget — send preview email if job has one
           fetch(`${API_BASE}/api/preview/send-email`, {
@@ -167,7 +168,7 @@ export function PreviewResultPage() {
         )}
 
         {/* Scene cards */}
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: 20, width: '100%', marginBottom: 32 }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: 16, width: '100%', marginBottom: 32 }}>
           <SceneCard url={resultUrls[0]} index={0} />
           <SceneCard url={resultUrls[1]} index={1} />
         </div>

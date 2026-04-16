@@ -142,7 +142,7 @@ function FaceToSceneAnimation() {
         <div className="relative rounded-2xl overflow-hidden shadow-2xl w-full"
           style={{ aspectRatio: '16 / 9', background: '#fff' }}>
 
-          {/* Slide images — only mount once section enters viewport */}
+          {/* Slide images */}
           {hasLoaded && FACE_SCENE_SAMPLES.map((sample, i) => (
             <motion.img
               key={sample.scene}
@@ -157,31 +157,28 @@ function FaceToSceneAnimation() {
             />
           ))}
 
-          {/* Arrow SVG — over scene, below face circle. viewBox 160×90 mirrors 16:9. */}
-          {/* Arrow goes from top-right (where face circle meets scene) to ~character face area */}
+          {/* Arrow SVG overlay */}
           <svg
             viewBox="0 0 160 90"
-            preserveAspectRatio="none"
             className="absolute inset-0 w-full h-full hidden sm:block"
             style={{ zIndex: 5, pointerEvents: 'none' }}>
             <motion.path
-              d="M 148 4 Q 148 45 52 30"
+              d="M 148 4 Q 148 45 95 45"
               fill="none"
               stroke={C.saffron}
-              strokeWidth="1.8"
-              strokeDasharray="4 3"
+              strokeWidth="2"
+              strokeDasharray="5 4"
               strokeLinecap="round"
               initial={{ pathLength: 0, opacity: 0 }}
               animate={{ pathLength: 1, opacity: 1 }}
               transition={{ pathLength: { duration: 1.2, ease: 'easeInOut', delay: 0.3 }, opacity: { duration: 0.3 } }}
               key={activeIdx}
             />
-            {/* Arrowhead */}
             <motion.path
-              d="M 60 25 L 52 30 L 58 36"
+              d="M 100 40 L 95 45 L 100 50"
               fill="none"
               stroke={C.saffron}
-              strokeWidth="1.8"
+              strokeWidth="2"
               strokeLinecap="round"
               strokeLinejoin="round"
               initial={{ opacity: 0 }}
@@ -1362,7 +1359,7 @@ export function BrochurePage() {
             className="text-center mb-6 sm:mb-8"
             style={{ fontFamily: "'Baloo 2', sans-serif", fontWeight: 800, color: C.white,
               fontSize: 'clamp(1.3rem, 3vw, 2rem)', lineHeight: 1.1 }}>
-            Your child's face in every scene
+            Your child's face in every page
           </motion.h2>
           {/* Two-panel: animation + video — same height, aligned top-to-bottom */}
           <div className="flex flex-col-reverse sm:flex-row gap-4 sm:gap-6 items-stretch">
@@ -1371,7 +1368,18 @@ export function BrochurePage() {
             <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }}
               transition={{ duration: 0.5, delay: 0.1 }}
               className="w-full sm:w-1/2 min-w-0 flex flex-col">
-              <FaceToSceneAnimation />
+              {/* YouTube Shorts embed — iframe scaled up to clip YouTube UI, overlay blocks hover controls */}
+              <div style={{ position: 'relative', width: '100%', aspectRatio: '9/16', borderRadius: 16, overflow: 'hidden', background: '#000', maxHeight: 480 }}>
+                <iframe
+                  src="https://www.youtube.com/embed/o1yTBcrjLaM?autoplay=1&mute=1&loop=1&playlist=o1yTBcrjLaM&controls=0&rel=0&modestbranding=1&showinfo=0&iv_load_policy=3&disablekb=1"
+                  title="Protago preview"
+                  allow="autoplay; encrypted-media"
+                  allowFullScreen
+                  style={{ position: 'absolute', top: 0, left: '-30%', width: '160%', height: '140%', border: 'none' }}
+                />
+                {/* Transparent overlay — blocks mouse events so YouTube hover UI never appears */}
+                <div style={{ position: 'absolute', inset: 0, zIndex: 2 }} />
+              </div>
               {/* Free preview CTA */}
               <motion.button
                 initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}
