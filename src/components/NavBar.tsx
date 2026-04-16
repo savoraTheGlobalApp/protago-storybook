@@ -38,15 +38,6 @@ export function NavBar() {
     }
   };
 
-  const goOrder = () => {
-    setMobileOpen(false);
-    if (onHome) {
-      setTimeout(() => scrollTo('order'), 300);
-    } else {
-      navigate('/?scroll=order');
-    }
-  };
-
   return (
     <header className="fixed top-0 left-0 right-0 z-50 border-b"
       style={{ background: 'rgba(255,255,255,0.96)', backdropFilter: 'blur(12px)', borderColor: '#F0F0F0' }}>
@@ -64,7 +55,7 @@ export function NavBar() {
               {label}
             </button>
           ))}
-          <button onClick={goOrder}
+          <button onClick={() => goTo('themes')}
             className="px-5 py-2 rounded-full text-sm font-bold text-white transition-opacity hover:opacity-90"
             style={{ background: C.gradient, border: 'none', cursor: 'pointer' }}>
             Order Now
@@ -107,9 +98,9 @@ export function NavBar() {
               ))}
               <motion.button
                 initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: (NAV_LINKS.length) * 0.04 }}
-                onClick={goOrder}
-                className="mt-3 mb-1 py-3 rounded-2xl text-sm font-bold text-white text-center"
+                transition={{ delay: NAV_LINKS.length * 0.04 }}
+                onClick={() => goTo('themes')}
+                className="mt-3 mb-1 py-3 rounded-2xl font-bold text-white text-center"
                 style={{ background: C.gradient, border: 'none', cursor: 'pointer', fontSize: 18 }}>
                 Order Now →
               </motion.button>

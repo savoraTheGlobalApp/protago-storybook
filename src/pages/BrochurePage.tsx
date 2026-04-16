@@ -348,6 +348,14 @@ function BrochureThemeCard({ slug, icon, name, onClick }: { slug: string; icon: 
           ))}
         </div>
       </div>
+      {/* Personalize button */}
+      <div style={{ padding: '10px 12px 12px' }}>
+        <button
+          onClick={onClick}
+          style={{ width: '100%', padding: '9px 0', borderRadius: 50, background: C.saffron, color: '#fff', border: 'none', fontWeight: 800, fontSize: 13, cursor: 'pointer', fontFamily: "'Baloo 2', sans-serif" }}>
+          Personalize →
+        </button>
+      </div>
     </motion.div>
   );
 }
@@ -1371,7 +1379,7 @@ export function BrochurePage() {
                   title="Protago preview"
                   allow="autoplay; encrypted-media"
                   allowFullScreen
-                  style={{ position: 'absolute', top: 0, left: '-30%', width: '160%', height: '140%', border: 'none' }}
+                  style={{ position: 'absolute', top: 0, left: '-5%', width: '110%', height: '115%', border: 'none' }}
                 />
                 {/* Transparent overlay — blocks mouse events so YouTube hover UI never appears */}
                 <div style={{ position: 'absolute', inset: 0, zIndex: 2 }} />
@@ -1413,6 +1421,12 @@ export function BrochurePage() {
             <p className="text-sm mt-3 leading-relaxed" style={{ color: C.gray }}>
               From bedtime routines for toddlers to financial literacy for tweens — every theme is built around real learning moments. Click any to explore.
             </p>
+            <button
+              onClick={() => scrollTo('order')}
+              className="mt-5 px-8 py-3 rounded-full font-extrabold text-white text-sm"
+              style={{ background: 'linear-gradient(135deg, #FF6B35 0%, #F7B731 100%)', border: 'none', cursor: 'pointer', fontFamily: "'Baloo 2', sans-serif", boxShadow: '0 4px 16px rgba(255,107,53,0.35)' }}>
+              Order Now →
+            </button>
           </motion.div>
 
           {(() => {
