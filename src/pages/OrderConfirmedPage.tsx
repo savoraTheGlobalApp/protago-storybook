@@ -16,14 +16,14 @@ const C = {
 export function OrderConfirmedPage() {
   const location = useLocation();
   const navigate = useNavigate();
-  const { childName, email } = (location.state as { childName?: string; email?: string }) || {};
+  const { childName, email, amount } = (location.state as { childName?: string; email?: string; amount?: number }) || {};
 
   // Fire Meta Pixel Purchase event as soon as this page loads
   useEffect(() => {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     if (typeof (window as any).fbq === 'function') {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      (window as any).fbq('track', 'Purchase');
+      (window as any).fbq('track', 'Purchase', { value: amount ?? 499, currency: 'INR' });
     }
   }, []);
 

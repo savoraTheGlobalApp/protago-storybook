@@ -180,7 +180,7 @@ export function ThemePage() {
               method: 'POST', headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify({ razorpayOrderId: response.razorpay_order_id }),
             }).catch(() => {});
-            navigate('/order-confirmed', { state: { childName: orderForm.childName, email: orderForm.email } });
+            navigate('/order-confirmed', { state: { childName: orderForm.childName, email: orderForm.email, amount: amount / 100 } });
           } catch {
             setOrderError('Payment verification failed. Please contact support.');
           } finally {

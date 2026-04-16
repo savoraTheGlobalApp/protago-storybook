@@ -661,7 +661,7 @@ function OrderForm({ price, isCustomStory, setIsCustomStory }: { price: number; 
       if (!razorpayKeyId || razorpayKeyId.includes('your_')) {
         localStorage.removeItem(FORM_STORAGE_KEY);
         setSubmitting(false);
-        navigate('/order-confirmed', { state: { childName: form.childName, email: form.email } });
+        navigate('/order-confirmed', { state: { childName: form.childName, email: form.email, amount: amount / 100 } });
         return;
       }
 
@@ -695,7 +695,7 @@ function OrderForm({ price, isCustomStory, setIsCustomStory }: { price: number; 
               value: couponApplied ? couponApplied.finalPrice : effectivePrice,
               currency: 'INR',
             });
-            navigate('/order-confirmed', { state: { childName: form.childName, email: form.email } });
+            navigate('/order-confirmed', { state: { childName: form.childName, email: form.email, amount: amount / 100 } });
           } catch {
             setSubmitError('Payment verification failed. Please contact support.');
           } finally {
