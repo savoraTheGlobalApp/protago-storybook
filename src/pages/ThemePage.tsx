@@ -175,7 +175,12 @@ export function ThemePage() {
               body: JSON.stringify(response),
             });
             if (!verifyRes.ok) throw new Error('Payment verification failed');
-            setOrderSubmitted(true);
+            // Fire-and-forget confirmation email
+            fetch(`${API_BASE}/api/order/send-confirmation-email`, {
+              method: 'POST', headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ razorpayOrderId: response.razorpay_order_id }),
+            }).catch(() => {});
+            navigate('/order-confirmed', { state: { childName: orderForm.childName, email: orderForm.email } });
           } catch {
             setOrderError('Payment verification failed. Please contact support.');
           } finally {

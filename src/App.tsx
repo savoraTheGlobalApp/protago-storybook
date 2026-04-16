@@ -8,6 +8,7 @@ import { TermsPage } from './pages/TermsPage';
 import { PrivacyPage } from './pages/PrivacyPage';
 import { RefundPage } from './pages/RefundPage';
 import { ContactPage } from './pages/ContactPage';
+import { OrderConfirmedPage } from './pages/OrderConfirmedPage';
 export default function App() {
   return (
     <Router>
@@ -23,6 +24,7 @@ export default function App() {
         <Route path="/privacy" element={<PrivacyPage />} />
         <Route path="/refund" element={<RefundPage />} />
         <Route path="/contact" element={<ContactPage />} />
+        <Route path="/order-confirmed" element={<OrderConfirmedPage />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </Router>

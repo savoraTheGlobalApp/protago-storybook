@@ -475,6 +475,7 @@ function ReviewsSection() {
 
 function OrderForm({ price, isCustomStory, setIsCustomStory }: { price: number; scrollTo: (id: string) => void; isCustomStory: boolean; setIsCustomStory: (v: boolean) => void }) {
   const [searchParams] = useSearchParams();
+  const navigate = useNavigate();
   const preselectedTheme = searchParams.get('theme') || '';
 
   const FORM_STORAGE_KEY = 'protago_form_draft';
@@ -496,7 +497,6 @@ function OrderForm({ price, isCustomStory, setIsCustomStory }: { price: number; 
   });
   type PhotoEntry = { file: File; preview: string; uploading: boolean; progress: number; uploadedPath: string | null; signedUrl: string | null };
   const [photos, setPhotos] = useState<PhotoEntry[]>([]);
-  const [submitted, setSubmitted] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState('');
   const [showConfirm, setShowConfirm] = useState(false);
@@ -652,8 +652,8 @@ function OrderForm({ price, isCustomStory, setIsCustomStory }: { price: number; 
       // Dev/mock mode — no real Razorpay keys
       if (!razorpayKeyId || razorpayKeyId.includes('your_')) {
         localStorage.removeItem(FORM_STORAGE_KEY);
-        setSubmitted(true);
         setSubmitting(false);
+        navigate('/order-confirmed', { state: { childName: form.childName, email: form.email } });
         return;
       }
 
@@ -687,7 +687,7 @@ function OrderForm({ price, isCustomStory, setIsCustomStory }: { price: number; 
               value: couponApplied ? couponApplied.finalPrice : effectivePrice,
               currency: 'INR',
             });
-            setSubmitted(true);
+            navigate('/order-confirmed', { state: { childName: form.childName, email: form.email } });
           } catch {
             setSubmitError('Payment verification failed. Please contact support.');
           } finally {
@@ -737,18 +737,7 @@ function OrderForm({ price, isCustomStory, setIsCustomStory }: { price: number; 
           </p>
         </motion.div>
 
-        {submitted ? (
-          <motion.div initial={{ opacity: 0, scale: 0.96 }} animate={{ opacity: 1, scale: 1 }}
-            className="rounded-3xl p-10 text-center" style={{ background: C.white, border: `2px solid ${C.gold}` }}>
-            <p className="text-4xl mb-4">🎉</p>
-            <h3 style={{ fontFamily: "'Baloo 2', sans-serif", fontWeight: 800, color: C.navy, fontSize: '1.5rem' }}>
-              Your order is confirmed!
-            </h3>
-            <p className="text-sm mt-2 leading-relaxed" style={{ color: C.gray }}>
-              We've received your order and sent a confirmation to <strong>{form.email}</strong>. {form.childName}'s personalised storybook will be delivered in 5–7 business days.
-            </p>
-          </motion.div>
-        ) : (
+        {(
           <motion.form initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}
             onSubmit={handleSubmit}
             className="rounded-3xl p-6 sm:p-8 flex flex-col gap-6"
