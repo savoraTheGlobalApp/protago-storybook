@@ -946,6 +946,130 @@ app.post('/api/verify-payment', async (req, res) => {
     }
 });
 
+// POST /api/order/send-confirmation-email
+// Fire-and-forget after payment verification. Fetches order from Supabase and
+// sends a branded HTML confirmation email to the parent.
+app.post('/api/order/send-confirmation-email', async (req, res) => {
+  try {
+    const { razorpayOrderId } = req.body;
+    if (!razorpayOrderId) return res.status(400).json({ error: 'razorpayOrderId required' });
+
+    const SUPABASE_URL = process.env.SUPABASE_URL_STORY;
+    const SUPABASE_KEY = process.env.SUPABASE_SERVICE_KEY_STORY;
+    const headers = { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}` };
+
+    // Fetch order
+    const orderRes = await fetch(
+      `${SUPABASE_URL}/rest/v1/storybook_orders?razorpay_order_id=eq.${encodeURIComponent(razorpayOrderId)}&select=child_name,parent_email,book_slug,amount,shipping_name,address_line1,address_line2,city,state,pincode`,
+      { headers }
+    );
+    const [order] = await orderRes.json();
+    if (!order) return res.status(404).json({ error: 'Order not found' });
+    if (!order.parent_email) return res.json({ skipped: true, reason: 'No email on order' });
+
+    const childName = order.child_name || 'Your child';
+    const themeName = (order.book_slug || '').replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+    const siteUrl = (process.env.SITE_URL || 'https://protago.in').replace(/\/$/, '');
+    const addressParts = [order.address_line1, order.address_line2, order.city, order.state, order.pincode].filter(Boolean);
+    const addressStr = addressParts.join(', ');
+
+    const html = `<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head>
+<body style="margin:0;padding:0;background:#f5f5f0;font-family:'Helvetica Neue',Arial,sans-serif;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background:#f5f5f0;padding:32px 0">
+    <tr><td align="center">
+      <table width="600" cellpadding="0" cellspacing="0" style="background:#ffffff;border-radius:16px;overflow:hidden;max-width:600px;width:100%">
+
+        <!-- Header -->
+        <tr><td style="background:#1A1A2E;padding:24px 32px;text-align:center">
+          <span style="font-size:24px;font-weight:800;color:#FF6B35;font-family:Georgia,serif">protago</span>
+          <p style="color:rgba(255,255,255,0.6);font-size:13px;margin:4px 0 0">Personalised storybooks for curious kids</p>
+        </td></tr>
+
+        <!-- Hero -->
+        <tr><td style="padding:32px 32px 24px;text-align:center">
+          <p style="font-size:40px;margin:0 0 12px">🎉</p>
+          <p style="font-size:12px;font-weight:700;color:#FF6B35;text-transform:uppercase;letter-spacing:2px;margin:0 0 8px">Order confirmed!</p>
+          <h1 style="font-size:26px;font-weight:800;color:#1A1A2E;margin:0 0 8px;line-height:1.2">${childName}'s book is on its way!</h1>
+          <p style="font-size:15px;color:#666;margin:0">We've received your order and our team is already at work crafting ${childName}'s personalised storybook.</p>
+        </td></tr>
+
+        <!-- Order details -->
+        <tr><td style="padding:0 32px 24px">
+          <table width="100%" cellpadding="0" cellspacing="0" style="background:#f9f8f5;border-radius:12px;padding:20px">
+            <tr><td style="padding:8px 16px">
+              <p style="margin:0;font-size:12px;font-weight:700;color:#999;text-transform:uppercase;letter-spacing:1px">Story theme</p>
+              <p style="margin:4px 0 0;font-size:15px;color:#1A1A2E;font-weight:600">${themeName || 'Personalised story'}</p>
+            </td></tr>
+            <tr><td style="padding:8px 16px;border-top:1px solid #eee">
+              <p style="margin:0;font-size:12px;font-weight:700;color:#999;text-transform:uppercase;letter-spacing:1px">Amount paid</p>
+              <p style="margin:4px 0 0;font-size:15px;color:#1A1A2E;font-weight:600">₹${order.amount}</p>
+            </td></tr>
+            <tr><td style="padding:8px 16px;border-top:1px solid #eee">
+              <p style="margin:0;font-size:12px;font-weight:700;color:#999;text-transform:uppercase;letter-spacing:1px">Delivery address</p>
+              <p style="margin:4px 0 0;font-size:15px;color:#1A1A2E;font-weight:600">${order.shipping_name}</p>
+              <p style="margin:2px 0 0;font-size:14px;color:#666">${addressStr}</p>
+            </td></tr>
+          </table>
+        </td></tr>
+
+        <!-- What's next -->
+        <tr><td style="padding:0 32px 24px">
+          <h2 style="font-size:16px;font-weight:700;color:#1A1A2E;margin:0 0 12px">What happens next?</h2>
+          <table width="100%" cellpadding="0" cellspacing="0">
+            <tr>
+              <td width="32" valign="top" style="padding:0 12px 12px 0"><span style="display:inline-block;width:28px;height:28px;border-radius:50%;background:#FF6B35;color:#fff;font-weight:800;font-size:13px;text-align:center;line-height:28px">1</span></td>
+              <td valign="top" style="padding:0 0 12px"><p style="margin:0;font-size:14px;color:#444;line-height:1.5">Our AI places <strong>${childName}</strong>'s face into every scene of the story.</p></td>
+            </tr>
+            <tr>
+              <td width="32" valign="top" style="padding:0 12px 12px 0"><span style="display:inline-block;width:28px;height:28px;border-radius:50%;background:#FF6B35;color:#fff;font-weight:800;font-size:13px;text-align:center;line-height:28px">2</span></td>
+              <td valign="top" style="padding:0 0 12px"><p style="margin:0;font-size:14px;color:#444;line-height:1.5">The book is printed on <strong>premium 200GSM glossy paper</strong> and carefully packaged.</p></td>
+            </tr>
+            <tr>
+              <td width="32" valign="top" style="padding:0 12px 12px 0"><span style="display:inline-block;width:28px;height:28px;border-radius:50%;background:#FF6B35;color:#fff;font-weight:800;font-size:13px;text-align:center;line-height:28px">3</span></td>
+              <td valign="top" style="padding:0 0 12px"><p style="margin:0;font-size:14px;color:#444;line-height:1.5">Delivered to your door in <strong>5–7 business days</strong>.</p></td>
+            </tr>
+          </table>
+        </td></tr>
+
+        <!-- CTA -->
+        <tr><td style="padding:0 32px 32px;text-align:center">
+          <p style="font-size:14px;color:#666;margin:0 0 16px">Questions? Reach us at <a href="mailto:hello@protago.in" style="color:#FF6B35">hello@protago.in</a></p>
+          <a href="${siteUrl}" style="display:inline-block;background:#1A1A2E;color:#ffffff;text-decoration:none;font-weight:700;font-size:14px;padding:12px 28px;border-radius:50px">
+            Visit protago.in
+          </a>
+        </td></tr>
+
+        <!-- Footer -->
+        <tr><td style="background:#f9f9f7;padding:20px 32px;text-align:center;border-top:1px solid #eee">
+          <p style="font-size:11px;color:#aaa;margin:0">
+            You received this because you placed an order at protago.in.<br>
+            <a href="https://protago.in/privacy" style="color:#FF6B35">Privacy Policy</a>
+          </p>
+        </td></tr>
+
+      </table>
+    </td></tr>
+  </table>
+</body>
+</html>`;
+
+    await resend.emails.send({
+      from: EMAIL_FROM,
+      to: order.parent_email,
+      subject: `🎉 Order confirmed — ${childName}'s storybook is being made!`,
+      html,
+    });
+
+    console.log(`Order confirmation email sent to ${order.parent_email} for order ${razorpayOrderId}`);
+    return res.json({ sent: true });
+  } catch (err) {
+    console.error('order/send-confirmation-email error:', err);
+    return res.status(500).json({ error: 'Failed to send confirmation email' });
+  }
+});
+
 // ── Order inquiry from the /home landing page form ────────────────────────────
 app.post('/api/order-inquiry', async (req, res) => {
     try {
