@@ -464,7 +464,7 @@ export function ThemePage() {
                       onBlur={e => (e.target.style.borderColor = emailError ? '#E53E3E' : '#E5E7EB')} />
                     {emailError
                       ? <p style={{ fontSize: 11, color: '#E53E3E', margin: '4px 0 0' }}>{emailError}</p>
-                      : <p style={{ fontSize: 11, color: C.lgray, margin: '4px 0 0' }}>We'll send your preview here so you can always access it</p>
+                      : <p style={{ fontSize: 13, fontWeight: 700, color: '#E53E3E', margin: '6px 0 0' }}>⭐ We'll send your preview here so you can always access it</p>
                     }
                   </div>
 
