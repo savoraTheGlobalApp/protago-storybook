@@ -1419,14 +1419,8 @@ export function BrochurePage() {
             {eyebrow('What will their story be about?')}
             {heading(<>18 themes across<br />every age group</>)}
             <p className="text-sm mt-3 leading-relaxed" style={{ color: C.gray }}>
-              From bedtime routines for toddlers to financial literacy for tweens — every theme is built around real learning moments. Click any to explore.
+              From bedtime routines for toddlers to financial literacy for teens — every theme is built around real learning moments. Click any to explore.
             </p>
-            <button
-              onClick={() => scrollTo('order')}
-              className="mt-5 px-8 py-3 rounded-full font-extrabold text-white text-sm"
-              style={{ background: 'linear-gradient(135deg, #FF6B35 0%, #F7B731 100%)', border: 'none', cursor: 'pointer', fontFamily: "'Baloo 2', sans-serif", boxShadow: '0 4px 16px rgba(255,107,53,0.35)' }}>
-              Order Now →
-            </button>
           </motion.div>
 
           {(() => {

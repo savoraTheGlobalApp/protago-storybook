@@ -1257,6 +1257,45 @@ app.post('/api/order-alert', async (req, res) => {
     }
 });
 
+// ── Preview job status alert ──────────────────────────────────────────────────
+// Receives Supabase Database Webhook on UPDATE of preview_jobs.
+// When status becomes 'done', posts a Discord notification to PREVIEW_DISCORD_URL.
+app.post('/api/preview-job-alert', async (req, res) => {
+  try {
+    const discordUrl = process.env.PREVIEW_DISCORD_URL;
+    if (!discordUrl) return res.status(200).json({ ok: true, skipped: true, reason: 'no PREVIEW_DISCORD_URL set' });
+
+    const record = req.body?.record || req.body;
+    const { id: jobId, status, child_name, story_slug, email } = record;
+
+    if (status !== 'done') return res.status(200).json({ ok: true, skipped: true, reason: `status is ${status}` });
+    if (!jobId) return res.status(200).json({ ok: true, skipped: true, reason: 'no job id' });
+
+    const siteUrl = (process.env.SITE_URL || 'https://protago.in').replace(/\/$/, '');
+    const previewUrl = `${siteUrl}/preview/${jobId}?name=${encodeURIComponent(child_name || '')}&theme=${story_slug || ''}`;
+    const themeName = (story_slug || '').replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+
+    const msg = [
+      '🖼️ **Preview Ready!**',
+      `👶 Child: ${child_name || '—'} · Theme: ${themeName || '—'}`,
+      `✉️ Email: ${email || '—'}`,
+      `🔗 ${previewUrl}`,
+    ].join('\n');
+
+    await fetch(discordUrl, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ content: msg }),
+    });
+
+    console.log(`preview-job-alert: Discord notified for job ${jobId}`);
+    return res.status(200).json({ ok: true });
+  } catch (err) {
+    console.error('preview-job-alert error:', err);
+    return res.status(200).json({ ok: true }); // always 200 so Supabase doesn't retry endlessly
+  }
+});
+
 // ── Face swap preview ─────────────────────────────────────────────────────────
 
 // POST /api/preview/trigger
