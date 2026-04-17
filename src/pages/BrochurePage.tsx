@@ -1285,6 +1285,51 @@ function OrderForm({ price, isCustomStory, setIsCustomStory }: { price: number; 
   );
 }
 
+// ── Hero testimonial video carousel (left column) ───────────────────────────
+
+const HERO_REELS = [
+  { id: 'o1yTBcrjLaM', label: 'Shreyansh' },
+  { id: 'ZDYwns8fCQ8', label: 'Bhanvi Likhita' },
+];
+
+function HeroVideoCarousel() {
+  const [active, setActive] = useState(0);
+
+  // Auto-advance every 12 s
+  useEffect(() => {
+    const t = setInterval(() => setActive(i => (i + 1) % HERO_REELS.length), 12000);
+    return () => clearInterval(t);
+  }, []);
+
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+      {/* Sliding window */}
+      <div style={{ position: 'relative', width: '100%', aspectRatio: '9/16', borderRadius: 16, overflow: 'hidden', background: '#000', maxHeight: 480 }}>
+        {HERO_REELS.map(({ id }, i) => (
+          <div key={id} style={{ position: 'absolute', inset: 0, transition: 'opacity 0.5s ease', opacity: i === active ? 1 : 0, pointerEvents: i === active ? 'auto' : 'none' }}>
+            <iframe
+              src={`https://www.youtube.com/embed/${id}?autoplay=1&mute=1&loop=1&playlist=${id}&controls=0&rel=0&modestbranding=1&showinfo=0&iv_load_policy=3&disablekb=1`}
+              title={HERO_REELS[i].label}
+              allow="autoplay; encrypted-media"
+              allowFullScreen
+              style={{ position: 'absolute', top: 0, left: '-5%', width: '110%', height: '115%', border: 'none' }}
+            />
+          </div>
+        ))}
+        {/* Overlay blocks YouTube hover UI */}
+        <div style={{ position: 'absolute', inset: 0, zIndex: 2 }} />
+        {/* Dot indicators */}
+        <div style={{ position: 'absolute', bottom: 12, left: '50%', transform: 'translateX(-50%)', display: 'flex', gap: 6, zIndex: 3 }}>
+          {HERO_REELS.map((_, i) => (
+            <button key={i} onClick={() => setActive(i)}
+              style={{ width: i === active ? 20 : 7, height: 7, borderRadius: 4, background: i === active ? C.saffron : 'rgba(255,255,255,0.5)', border: 'none', cursor: 'pointer', padding: 0, transition: 'width 0.3s ease, background 0.3s ease' }} />
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // ── Hero video with mute toggle ─────────────────────────────────────────────
 
 function HeroVideo() {
@@ -1405,22 +1450,11 @@ export function BrochurePage() {
           {/* Two-panel: animation + video — same height, aligned top-to-bottom */}
           <div className="flex flex-col-reverse sm:flex-row gap-4 sm:gap-6 items-stretch">
 
-            {/* Left on desktop, bottom on mobile — face-swap animation (50%) */}
+            {/* Left on desktop, bottom on mobile — testimonial video carousel */}
             <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }}
               transition={{ duration: 0.5, delay: 0.1 }}
               className="w-full sm:w-1/2 min-w-0 flex flex-col">
-              {/* YouTube Shorts embed — iframe scaled up to clip YouTube UI, overlay blocks hover controls */}
-              <div style={{ position: 'relative', width: '100%', aspectRatio: '9/16', borderRadius: 16, overflow: 'hidden', background: '#000', maxHeight: 480 }}>
-                <iframe
-                  src="https://www.youtube.com/embed/o1yTBcrjLaM?autoplay=1&mute=1&loop=1&playlist=o1yTBcrjLaM&controls=0&rel=0&modestbranding=1&showinfo=0&iv_load_policy=3&disablekb=1"
-                  title="Protago preview"
-                  allow="autoplay; encrypted-media"
-                  allowFullScreen
-                  style={{ position: 'absolute', top: 0, left: '-5%', width: '110%', height: '115%', border: 'none' }}
-                />
-                {/* Transparent overlay — blocks mouse events so YouTube hover UI never appears */}
-                <div style={{ position: 'absolute', inset: 0, zIndex: 2 }} />
-              </div>
+              <HeroVideoCarousel />
               {/* Free preview CTA */}
               <motion.button
                 initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}
