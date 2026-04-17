@@ -499,7 +499,11 @@ function OrderForm({ price, isCustomStory, setIsCustomStory }: { price: number; 
     storyTheme: preselectedTheme || savedDraft.storyTheme || '',
     artStyle: savedDraft.artStyle || '',
     storyFormat: savedDraft.storyFormat || '',
-    address: savedDraft.address || '',
+    addressLine1: savedDraft.addressLine1 || '',
+    addressLine2: savedDraft.addressLine2 || '',
+    city: savedDraft.city || '',
+    state: savedDraft.state || '',
+    pincode: savedDraft.pincode || '',
     notes: savedDraft.notes || '',
     customStoryBrief: savedDraft.customStoryBrief || '',
   });
@@ -1120,11 +1124,44 @@ function OrderForm({ price, isCustomStory, setIsCustomStory }: { price: number; 
             {/* ── Delivery */}
             <div>
               <p className="text-sm font-extrabold mb-3" style={{ fontFamily: "'Baloo 2', sans-serif", color: C.navy }}>
-                Delivery address *
+                Delivery address
               </p>
-              <textarea rows={3} required style={{ ...inputStyle, resize: 'none' }}
-                placeholder="Flat / House no, Street, City, State, PIN"
-                value={form.address} onChange={e => set('address', e.target.value)} />
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                <div>
+                  <label style={labelStyle}>Address line 1 *</label>
+                  <input required style={inputStyle} placeholder="Flat / House no., Building, Street"
+                    value={form.addressLine1} onChange={e => set('addressLine1', e.target.value)} />
+                </div>
+                <div>
+                  <label style={labelStyle}>Address line 2 (optional)</label>
+                  <input style={inputStyle} placeholder="Area, Landmark"
+                    value={form.addressLine2} onChange={e => set('addressLine2', e.target.value)} />
+                </div>
+                <div className="grid grid-cols-2 gap-2">
+                  <div>
+                    <label style={labelStyle}>City *</label>
+                    <input required style={inputStyle} placeholder="e.g. Mumbai"
+                      value={form.city} onChange={e => set('city', e.target.value)} />
+                  </div>
+                  <div>
+                    <label style={labelStyle}>State *</label>
+                    <input required style={inputStyle} placeholder="e.g. Maharashtra"
+                      value={form.state} onChange={e => set('state', e.target.value)} />
+                  </div>
+                </div>
+                <div className="grid grid-cols-2 gap-2">
+                  <div>
+                    <label style={labelStyle}>Pincode *</label>
+                    <input required style={inputStyle} placeholder="e.g. 400001" maxLength={6}
+                      inputMode="numeric" pattern="[0-9]{6}"
+                      value={form.pincode} onChange={e => set('pincode', e.target.value.replace(/\D/g, '').slice(0, 6))} />
+                  </div>
+                  <div>
+                    <label style={labelStyle}>Country</label>
+                    <input style={{ ...inputStyle, color: C.lgray, background: '#F9FAFB' }} value="India" readOnly />
+                  </div>
+                </div>
+              </div>
               <p className="text-xs mt-1.5" style={{ color: C.lgray }}>📦 Hardcopy delivered in 5–7 business days</p>
             </div>
 

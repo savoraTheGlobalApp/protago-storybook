@@ -38,7 +38,7 @@ export function ThemePage() {
   const [consent, setConsent] = useState(false);
   const [jobStatus, setJobStatus] = useState('');
   const [showOrder, setShowOrder] = useState(false);
-  const [orderForm, setOrderForm] = useState({ parentName: '', email: '', phone: '', childName: '', childAge: '', childGender: '', address: '', notes: '' });
+  const [orderForm, setOrderForm] = useState({ parentName: '', email: '', phone: '', childName: '', childAge: '', childGender: '', addressLine1: '', addressLine2: '', city: '', state: '', pincode: '', notes: '' });
   const [orderPhoto, setOrderPhoto] = useState<{ preview: string; uploading: boolean; uploadedPath: string | null; signedUrl: string | null } | null>(null);
   const [orderConsent, setOrderConsent] = useState(false);
   const [orderSubmitting, setOrderSubmitting] = useState(false);
@@ -664,12 +664,50 @@ export function ThemePage() {
                       </div>
                     )}
                   </div>
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-                    <label style={{ fontSize: 10, fontWeight: 700, color: '#9CA3AF', display: 'block', textTransform: 'uppercase', letterSpacing: '0.07em' }}>Delivery address *</label>
-                    <textarea required placeholder="Full address with pincode" value={orderForm.address} onChange={e => setOf('address', e.target.value)}
-                      style={{ width: '100%', border: '1.5px solid #E5E7EB', borderRadius: 9, padding: '10px 12px', fontSize: 14, outline: 'none', boxSizing: 'border-box', fontFamily: 'inherit', resize: 'none', background: '#fff', flex: 1, minHeight: 180 }}
-                      onFocus={e => (e.target.style.borderColor = C.saffron)}
-                      onBlur={e => (e.target.style.borderColor = '#E5E7EB')} />
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                    <label style={{ fontSize: 10, fontWeight: 700, color: '#9CA3AF', display: 'block', textTransform: 'uppercase', letterSpacing: '0.07em' }}>Delivery address</label>
+                    {[
+                      { key: 'addressLine1', label: 'Address line 1 *', placeholder: 'Flat / House no., Building, Street', required: true },
+                      { key: 'addressLine2', label: 'Address line 2 (optional)', placeholder: 'Area, Landmark', required: false },
+                    ].map(({ key, label, placeholder, required }) => (
+                      <div key={key}>
+                        <label style={{ fontSize: 9, fontWeight: 700, color: '#9CA3AF', display: 'block', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: 3 }}>{label}</label>
+                        <input required={required} placeholder={placeholder}
+                          value={orderForm[key as keyof typeof orderForm]} onChange={e => setOf(key, e.target.value)}
+                          style={{ width: '100%', border: '1.5px solid #E5E7EB', borderRadius: 8, padding: '8px 10px', fontSize: 13, outline: 'none', boxSizing: 'border-box', fontFamily: 'inherit', background: '#fff' }}
+                          onFocus={e => (e.target.style.borderColor = C.saffron)}
+                          onBlur={e => (e.target.style.borderColor = '#E5E7EB')} />
+                      </div>
+                    ))}
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 6 }}>
+                      {[
+                        { key: 'city', label: 'City *', placeholder: 'e.g. Mumbai' },
+                        { key: 'state', label: 'State *', placeholder: 'e.g. Maharashtra' },
+                      ].map(({ key, label, placeholder }) => (
+                        <div key={key}>
+                          <label style={{ fontSize: 9, fontWeight: 700, color: '#9CA3AF', display: 'block', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: 3 }}>{label}</label>
+                          <input required placeholder={placeholder}
+                            value={orderForm[key as keyof typeof orderForm]} onChange={e => setOf(key, e.target.value)}
+                            style={{ width: '100%', border: '1.5px solid #E5E7EB', borderRadius: 8, padding: '8px 10px', fontSize: 13, outline: 'none', boxSizing: 'border-box', fontFamily: 'inherit', background: '#fff' }}
+                            onFocus={e => (e.target.style.borderColor = C.saffron)}
+                            onBlur={e => (e.target.style.borderColor = '#E5E7EB')} />
+                        </div>
+                      ))}
+                    </div>
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 6 }}>
+                      <div>
+                        <label style={{ fontSize: 9, fontWeight: 700, color: '#9CA3AF', display: 'block', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: 3 }}>Pincode *</label>
+                        <input required placeholder="e.g. 400001" inputMode="numeric" maxLength={6} pattern="[0-9]{6}"
+                          value={orderForm.pincode} onChange={e => setOf('pincode', e.target.value.replace(/\D/g, '').slice(0, 6))}
+                          style={{ width: '100%', border: '1.5px solid #E5E7EB', borderRadius: 8, padding: '8px 10px', fontSize: 13, outline: 'none', boxSizing: 'border-box', fontFamily: 'inherit', background: '#fff' }}
+                          onFocus={e => (e.target.style.borderColor = C.saffron)}
+                          onBlur={e => (e.target.style.borderColor = '#E5E7EB')} />
+                      </div>
+                      <div>
+                        <label style={{ fontSize: 9, fontWeight: 700, color: '#9CA3AF', display: 'block', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: 3 }}>Country</label>
+                        <input value="India" readOnly style={{ width: '100%', border: '1.5px solid #E5E7EB', borderRadius: 8, padding: '8px 10px', fontSize: 13, outline: 'none', boxSizing: 'border-box', fontFamily: 'inherit', background: '#F9FAFB', color: '#9CA3AF' }} />
+                      </div>
+                    </div>
                   </div>
                 </div>
 
