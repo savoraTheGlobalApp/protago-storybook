@@ -63,6 +63,84 @@ function SceneCard({ url, index }: { url: string | null; index: number }) {
   );
 }
 
+function FeedbackWidget({ jobId, API_BASE }: { jobId: string; API_BASE: string }) {
+  const [rating, setRating] = useState(0);
+  const [hovered, setHovered] = useState(0);
+  const [comment, setComment] = useState('');
+  const [submitted, setSubmitted] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+
+  const handleSubmit = async () => {
+    if (!rating) return;
+    setSubmitting(true);
+    try {
+      await fetch(`${API_BASE}/api/preview/feedback`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ jobId, rating, comment }),
+      });
+    } catch { /* non-critical */ }
+    setSubmitted(true);
+    setSubmitting(false);
+  };
+
+  if (submitted) {
+    return (
+      <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}
+        style={{ textAlign: 'center', padding: '20px 0' }}>
+        <p style={{ fontSize: 22, marginBottom: 6 }}>🙏</p>
+        <p style={{ color: 'rgba(255,255,255,0.7)', fontSize: 14, fontWeight: 600, margin: 0 }}>
+          Thanks for your feedback!
+        </p>
+      </motion.div>
+    );
+  }
+
+  return (
+    <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}
+      style={{ width: '100%', maxWidth: 400, textAlign: 'center' }}>
+      <p style={{ fontSize: 13, fontWeight: 700, color: 'rgba(255,255,255,0.45)', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 12 }}>
+        How did we do?
+      </p>
+
+      {/* Stars */}
+      <div style={{ display: 'flex', justifyContent: 'center', gap: 8, marginBottom: 16 }}>
+        {[1, 2, 3, 4, 5].map(star => (
+          <button key={star}
+            onClick={() => setRating(star)}
+            onMouseEnter={() => setHovered(star)}
+            onMouseLeave={() => setHovered(0)}
+            style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 2, fontSize: 32, lineHeight: 1,
+              color: star <= (hovered || rating) ? '#F7B731' : 'rgba(255,255,255,0.2)',
+              transform: star <= (hovered || rating) ? 'scale(1.15)' : 'scale(1)',
+              transition: 'color 0.15s, transform 0.15s' }}>
+            ★
+          </button>
+        ))}
+      </div>
+
+      {/* Optional comment */}
+      {rating > 0 && (
+        <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} transition={{ duration: 0.2 }}>
+          <textarea
+            value={comment}
+            onChange={e => setComment(e.target.value)}
+            placeholder="Anything else to share? (optional)"
+            rows={2}
+            style={{ width: '100%', background: 'rgba(255,255,255,0.07)', border: '1.5px solid rgba(255,255,255,0.12)', borderRadius: 10,
+              padding: '10px 12px', color: '#fff', fontSize: 13, fontFamily: 'inherit', resize: 'none', outline: 'none', boxSizing: 'border-box', marginBottom: 10 }}
+          />
+          <button onClick={handleSubmit} disabled={submitting}
+            style={{ background: 'rgba(255,255,255,0.1)', border: '1.5px solid rgba(255,255,255,0.2)', borderRadius: 50,
+              color: '#fff', fontWeight: 700, fontSize: 13, padding: '9px 28px', cursor: 'pointer', opacity: submitting ? 0.6 : 1, fontFamily: 'inherit' }}>
+            {submitting ? 'Submitting…' : 'Submit feedback'}
+          </button>
+        </motion.div>
+      )}
+    </motion.div>
+  );
+}
+
 export function PreviewResultPage() {
   const { jobId } = useParams<{ jobId: string }>();
   const [searchParams] = useSearchParams();
@@ -184,7 +262,7 @@ export function PreviewResultPage() {
         <AnimatePresence>
           {done && (
             <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, delay: 0.3 }}
-              style={{ textAlign: 'center', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12 }}>
+              style={{ textAlign: 'center', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12, width: '100%' }}>
               <p style={{ color: 'rgba(255,255,255,0.7)', fontSize: 14, fontWeight: 600, margin: 0 }}>
                 Loved it? Make it real — printed and shipped to your door.
               </p>
@@ -195,6 +273,12 @@ export function PreviewResultPage() {
               <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.35)', margin: 0 }}>
                 Delivered in 5–7 days · Premium 200GSM glossy paper
               </p>
+
+              {/* Divider */}
+              <div style={{ width: '100%', maxWidth: 400, height: 1, background: 'rgba(255,255,255,0.08)', margin: '8px 0' }} />
+
+              {/* Feedback */}
+              {jobId && <FeedbackWidget jobId={jobId} API_BASE={API_BASE} />}
             </motion.div>
           )}
         </AnimatePresence>

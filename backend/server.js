@@ -1378,6 +1378,51 @@ app.post('/api/preview/trigger', async (req, res) => {
   }
 });
 
+// POST /api/preview/feedback
+// Stores star rating + optional comment for a preview job.
+// Posts to PREVIEW_DISCORD_URL so we see feedback in real time.
+app.post('/api/preview/feedback', async (req, res) => {
+  try {
+    const { jobId, rating, comment } = req.body;
+    if (!jobId || !rating) return res.status(400).json({ error: 'jobId and rating required' });
+
+    const SUPABASE_URL = process.env.SUPABASE_URL_STORY || process.env.SUPABASE_URL;
+    const SUPABASE_KEY = process.env.SUPABASE_SERVICE_KEY_STORY || process.env.SUPABASE_SERVICE_KEY;
+
+    // Persist in Supabase (best-effort — table may not exist yet)
+    if (SUPABASE_URL && SUPABASE_KEY) {
+      await fetch(`${SUPABASE_URL}/rest/v1/preview_feedback`, {
+        method: 'POST',
+        headers: {
+          'apikey': SUPABASE_KEY,
+          'Authorization': `Bearer ${SUPABASE_KEY}`,
+          'Content-Type': 'application/json',
+          'Prefer': 'return=minimal',
+        },
+        body: JSON.stringify({ job_id: jobId, rating, comment: comment || null }),
+      }).catch(() => {});
+    }
+
+    // Notify Discord
+    const discordUrl = process.env.PREVIEW_DISCORD_URL;
+    if (discordUrl) {
+      const stars = '⭐'.repeat(rating) + '☆'.repeat(5 - rating);
+      const msg = [`${stars} **Preview Feedback**`, `🆔 Job: ${jobId}`, comment ? `💬 "${comment}"` : null]
+        .filter(Boolean).join('\n');
+      await fetch(discordUrl, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ content: msg }),
+      }).catch(() => {});
+    }
+
+    return res.json({ ok: true });
+  } catch (err) {
+    console.error('preview/feedback error:', err);
+    return res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
 // POST /api/preview/send-email
 // Called by PreviewResultPage when job hits 'done'. Fetches result URLs from
 // Supabase and sends a branded HTML email with both preview scenes.

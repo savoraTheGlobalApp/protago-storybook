@@ -230,7 +230,9 @@ export function ThemePage() {
   };
 
   const handleGenerate = () => {
-    if (!childName.trim()) { setNameError(true); return; }
+    const firstName = childName.trim().split(/\s+/)[0];
+    if (!firstName) { setNameError(true); return; }
+    if (firstName !== childName) setChildName(firstName);
     if (!photo?.signedUrl) return;
     // Basic email format check before hitting backend
     const emailTrimmed = previewEmail.trim();
@@ -245,7 +247,7 @@ export function ThemePage() {
       const res = await fetch(`${API_BASE}/api/preview/trigger`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ storySlug: theme.slug, photoUrl: photo.signedUrl, childName, email: emailTrimmed }),
+        body: JSON.stringify({ storySlug: theme.slug, photoUrl: photo.signedUrl, childName: firstName, email: emailTrimmed }),
       });
       const data = await res.json();
       if (!res.ok) {
@@ -300,12 +302,12 @@ export function ThemePage() {
                 </div>
               ) : (
                 /* ── Default face-swap animation ── */
-                <div style={{ aspectRatio: '16/9', background: '#F0EEE8', position: 'relative', overflow: 'hidden' }}>
+                <div style={{ aspectRatio: '4/3', background: '#F0EEE8', position: 'relative', overflow: 'hidden' }}>
                   {FACE_SAMPLES.map((sample, i) => (
                     <motion.img key={sample.key}
-                      src={`/themes_faceswap/${theme.slug}_${sample.key}.webp`}
+                      src={`/themes_mockup/${theme.slug}_${sample.key}_mockup.webp`}
                       alt="" decoding="async"
-                      style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }}
+                      style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'contain' }}
                       animate={{ opacity: i === activeIdx ? 1 : 0 }}
                       transition={{ duration: 0.5 }}
                       onError={e => { (e.target as HTMLImageElement).style.display = 'none'; }}
@@ -430,6 +432,7 @@ export function ThemePage() {
                       placeholder="e.g. Aryan"
                       value={childName}
                       onChange={e => { setChildName(e.target.value); if (e.target.value.trim()) setNameError(false); }}
+                      onBlur={e => { const first = e.target.value.trim().split(/\s+/)[0]; setChildName(first); }}
                       style={{
                         border: `1.5px solid ${nameError ? '#E53E3E' : '#E5E7EB'}`,
                         borderRadius: 10, padding: '12px 14px', fontSize: 15, outline: 'none',
@@ -781,10 +784,10 @@ export function ThemePage() {
                 style={{ background: C.white, border: '1.5px solid #F0EEE8', borderRadius: 12, overflow: 'hidden', cursor: 'pointer', textAlign: 'left', padding: 0, boxShadow: '0 2px 8px rgba(0,0,0,0.04)', transition: 'box-shadow 0.2s, transform 0.15s' }}
                 onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.boxShadow = '0 4px 16px rgba(0,0,0,0.1)'; (e.currentTarget as HTMLButtonElement).style.transform = 'translateY(-2px)'; }}
                 onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.boxShadow = '0 2px 8px rgba(0,0,0,0.04)'; (e.currentTarget as HTMLButtonElement).style.transform = 'translateY(0)'; }}>
-                <div style={{ aspectRatio: '16/9', background: '#F0EEE8', overflow: 'hidden' }}>
-                  <img src={`/themes_faceswap/${t.slug}_boy_young@thumb.webp`} alt={t.name}
+                <div style={{ aspectRatio: '4/3', background: '#F0EEE8', overflow: 'hidden' }}>
+                  <img src={`/themes_mockup/${t.slug}_boy_young_mockup.webp`} alt={t.name}
                     loading="lazy" decoding="async"
-                    style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
+                    style={{ width: '100%', height: '100%', objectFit: 'contain', display: 'block' }}
                     onError={e => { (e.target as HTMLImageElement).src = `/themes/${t.slug}@thumb.webp`; }} />
                 </div>
                 <div style={{ padding: '10px 12px 11px' }}>

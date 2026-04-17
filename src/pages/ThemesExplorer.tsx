@@ -290,13 +290,13 @@ function ThemeCard({ theme, onClick }: { theme: Theme; groupColor: string; onCli
       ) : (
       <div style={{ paddingTop: FACE_SIZE_CARD / 2, position: 'relative' }}>
         {/* Scene */}
-        <div style={{ aspectRatio: '16/9', background: '#F0EEE8', position: 'relative', overflow: 'hidden' }}>
+        <div style={{ aspectRatio: '4/3', background: '#F0EEE8', position: 'relative', overflow: 'hidden' }}>
           {FACE_SAMPLES.map((sample, i) => (
             <motion.img
               key={sample.key}
-              src={`/themes_faceswap/${theme.slug}_${sample.key}.png`}
+              src={`/themes_mockup/${theme.slug}_${sample.key}_mockup.webp`}
               alt=""
-              style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
+              style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'contain', display: 'block' }}
               animate={{ opacity: i === activeIdx ? 1 : 0 }}
               transition={{ duration: 0.5, ease: 'easeInOut' }}
               onError={e => { (e.target as HTMLImageElement).style.display = 'none'; }}

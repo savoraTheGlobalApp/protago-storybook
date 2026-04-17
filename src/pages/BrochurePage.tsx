@@ -108,9 +108,9 @@ const FACE_SAMPLES = [
 ];
 
 const FACE_SCENE_SAMPLES = [
-  { name: 'Boy',  face: '/faces/face_boy_young.webp',  scene: '/themes_faceswap/bedtime-routines_boy_young.webp' },
-  { name: 'Boy',  face: '/faces/face_boy_older.webp',  scene: '/themes_faceswap/bedtime-routines_boy_older.webp' },
-  { name: 'Girl', face: '/faces/face_girl_medium.webp', scene: '/themes_faceswap/bedtime-routines_girl.webp' },
+  { name: 'Boy',  face: '/faces/face_boy_young.webp',  scene: '/themes_mockup/bedtime-routines_boy_young_mockup.webp' },
+  { name: 'Boy',  face: '/faces/face_boy_older.webp',  scene: '/themes_mockup/bedtime-routines_boy_older_mockup.webp' },
+  { name: 'Girl', face: '/faces/face_girl_medium.webp', scene: '/themes_mockup/bedtime-routines_girl_mockup.webp' },
 ];
 
 const FACE_SIZE_CSS = 'clamp(70px, 18vw, 140px)';
@@ -268,24 +268,24 @@ function BrochureThemeCard({ slug, icon, name, onClick }: { slug: string; icon: 
       onClick={onClick}>
       <div style={{ paddingTop: FACE_SIZE_BROCHURE / 2, position: 'relative' }}>
         {/* Scene */}
-        <div style={{ aspectRatio: '16/9', background: '#F0EEE8', position: 'relative', overflow: 'hidden' }}>
+        <div style={{ aspectRatio: '4/3', background: '#F0EEE8', position: 'relative', overflow: 'hidden' }}>
           {!hasLoaded ? (
             <img
-              src={`/themes_faceswap/${slug}_${FACE_SAMPLES[0].key}@thumb.webp`}
+              src={`/themes_mockup/${slug}_${FACE_SAMPLES[0].key}_mockup.webp`}
               alt=""
               loading="lazy"
               decoding="async"
-              style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
+              style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'contain', display: 'block' }}
               onError={e => { (e.target as HTMLImageElement).style.display = 'none'; }}
             />
           ) : FACE_SAMPLES.map((sample, i) => (
             <motion.img
               key={sample.key}
-              src={`/themes_faceswap/${slug}_${sample.key}@thumb.webp`}
+              src={`/themes_mockup/${slug}_${sample.key}_mockup.webp`}
               alt=""
               loading="lazy"
               decoding="async"
-              style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
+              style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'contain', display: 'block' }}
               animate={{ opacity: i === activeIdx ? 1 : 0 }}
               transition={{ duration: 0.5, ease: 'easeInOut' }}
               onError={e => { (e.target as HTMLImageElement).style.display = 'none'; }}
@@ -295,7 +295,7 @@ function BrochureThemeCard({ slug, icon, name, onClick }: { slug: string; icon: 
           <svg viewBox="0 0 160 90" preserveAspectRatio="none"
             style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', zIndex: 5, pointerEvents: 'none' }}>
             <motion.path
-              d="M 148 4 Q 148 45 52 30"
+              d="M 148 4 Q 148 40 80 28"
               fill="none" stroke={C.saffron} strokeWidth="2.2" strokeDasharray="5 3" strokeLinecap="round"
               initial={{ pathLength: 0, opacity: 0 }}
               animate={{ pathLength: 1, opacity: 1 }}
@@ -303,7 +303,7 @@ function BrochureThemeCard({ slug, icon, name, onClick }: { slug: string; icon: 
               key={activeIdx}
             />
             <motion.path
-              d="M 60 25 L 52 30 L 58 36"
+              d="M 88 23 L 80 28 L 87 33"
               fill="none" stroke={C.saffron} strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"
               initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 1.0 }}
               key={`arrowhead-${activeIdx}`}
@@ -481,7 +481,7 @@ function ReviewsSection() {
   );
 }
 
-function OrderForm({ price, isCustomStory, setIsCustomStory }: { price: number; scrollTo: (id: string) => void; isCustomStory: boolean; setIsCustomStory: (v: boolean) => void }) {
+function OrderForm({ price }: { price: number; scrollTo: (id: string) => void }) {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const preselectedTheme = searchParams.get('theme') || '';
@@ -505,7 +505,6 @@ function OrderForm({ price, isCustomStory, setIsCustomStory }: { price: number; 
     state: savedDraft.state || '',
     pincode: savedDraft.pincode || '',
     notes: savedDraft.notes || '',
-    customStoryBrief: savedDraft.customStoryBrief || '',
   });
   type PhotoEntry = { file: File; preview: string; uploading: boolean; progress: number; uploadedPath: string | null; signedUrl: string | null };
   const [photos, setPhotos] = useState<PhotoEntry[]>([]);
@@ -518,20 +517,10 @@ function OrderForm({ price, isCustomStory, setIsCustomStory }: { price: number; 
   const [couponError, setCouponError] = useState('');
   const [couponLoading, setCouponLoading] = useState(false);
 
-  const customStoryPrice = Number(import.meta.env.VITE_CUSTOM_STORY_PRICE) || 1999;
-
-  useEffect(() => {
-    if (isCustomStory) {
-      set('storyTheme', 'custom');
-      set('artStyle', 'Pixar 3D');
-    } else {
-      set('storyTheme', '');
-    }
-  }, [isCustomStory]);
   const selectedStyle = STYLES.find(s => s.label === form.artStyle);
   const stylePrice = selectedStyle?.price ?? null;
-  const styleOriginalPrice = !isCustomStory ? selectedStyle?.originalPrice ?? null : null;
-  const effectivePrice = isCustomStory ? customStoryPrice : (stylePrice ?? price);
+  const styleOriginalPrice = selectedStyle?.originalPrice ?? null;
+  const effectivePrice = stylePrice ?? price;
 
   const API_BASE = import.meta.env.VITE_API_BASE_URL || '';
   const set = (k: string, v: string) => setForm(f => {
@@ -650,8 +639,6 @@ function OrderForm({ price, isCustomStory, setIsCustomStory }: { price: number; 
           additionalPhotoPaths,
           additionalPhotoSignedUrls,
           couponCode: couponApplied?.code || null,
-          isCustomStory,
-          customStoryBrief: isCustomStory ? form.customStoryBrief : null,
           referralSource: localStorage.getItem('protago_ref') || null,
         }),
       });
@@ -900,51 +887,7 @@ function OrderForm({ price, isCustomStory, setIsCustomStory }: { price: number; 
                 <div>
                   <label style={labelStyle}>Theme *</label>
 
-                  {/* Custom Story toggle */}
-                  <button type="button"
-                    onClick={() => setIsCustomStory(!isCustomStory)}
-                    className="w-full rounded-2xl p-4 mb-4 text-left transition-all"
-                    style={{
-                      border: `2px solid ${isCustomStory ? C.saffron : '#E5E7EB'}`,
-                      background: isCustomStory ? '#FFF8F0' : C.white,
-                    }}>
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <p className="text-sm font-extrabold" style={{ color: C.navy, fontFamily: "'Baloo 2', sans-serif" }}>
-                          ✨ Custom Story
-                        </p>
-                        <p className="text-xs mt-0.5" style={{ color: C.gray }}>
-                          You write the plot — we bring it to life · Pixar 3D only · ₹{customStoryPrice}
-                        </p>
-                      </div>
-                      <div className="rounded-full flex-none flex items-center justify-center"
-                        style={{ width: 22, height: 22, background: isCustomStory ? C.saffron : '#F0F0F0' }}>
-                        {isCustomStory && <span style={{ color: '#fff', fontSize: 12, fontWeight: 800 }}>✓</span>}
-                      </div>
-                    </div>
-                    {isCustomStory && (
-                      <textarea
-                        onClick={e => e.stopPropagation()}
-                        value={form.customStoryBrief}
-                        onChange={e => set('customStoryBrief', e.target.value)}
-                        placeholder="Describe your story idea — characters, setting, what lesson or adventure you'd like..."
-                        rows={4}
-                        className="w-full mt-3 rounded-xl p-3 text-sm resize-none"
-                        style={{ border: '1.5px solid #E5E7EB', outline: 'none', fontFamily: 'inherit', color: C.navy }}
-                      />
-                    )}
-                  </button>
-
-                  {isCustomStory && (
-                    <button type="button"
-                      onClick={() => setIsCustomStory(false)}
-                      className="w-full py-2.5 rounded-xl text-sm font-bold mb-3 transition-opacity hover:opacity-80"
-                      style={{ background: '#F5F5F5', color: C.navy, border: 'none', cursor: 'pointer' }}>
-                      ← Browse existing themes instead
-                    </button>
-                  )}
-
-                  {!isCustomStory && (['3–5', '5–8', '8–12'] as const).map(range => {
+                  {(['3–5', '5–8', '8–12'] as const).map(range => {
                     const rangeThemes = THEMES.filter(t => !t.category && t.ageRange === range);
                     const isRelevant = form.childAge ? ageToRange(Number(form.childAge)) === range : true;
                     return (
@@ -986,7 +929,7 @@ function OrderForm({ price, isCustomStory, setIsCustomStory }: { price: number; 
                   })}
 
                   {/* Mythology themes group */}
-                  {!isCustomStory && (() => {
+                  {(() => {
                     const mythThemes = THEMES.filter(t => t.category === 'mythology');
                     if (!mythThemes.length) return null;
                     return (
@@ -1000,10 +943,10 @@ function OrderForm({ price, isCustomStory, setIsCustomStory }: { price: number; 
                                 onClick={() => set('storyTheme', t.slug)}
                                 className="rounded-xl overflow-hidden text-left transition-all"
                                 style={{ border: `2.5px solid ${selected ? C.saffron : '#E5E7EB'}`, outline: 'none' }}>
-                                <div style={{ aspectRatio: '16/9', background: '#F0EEE8', position: 'relative' }}>
-                                  <img src={`/themes_faceswap/${t.slug}_boy_young@thumb.webp`} alt={t.name}
+                                <div style={{ aspectRatio: '4/3', background: '#F0EEE8', position: 'relative' }}>
+                                  <img src={`/themes_mockup/${t.slug}_boy_young_mockup.webp`} alt={t.name}
                                     loading="lazy" decoding="async"
-                                    style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
+                                    style={{ width: '100%', height: '100%', objectFit: 'contain', display: 'block' }} />
                                   {selected && (
                                     <div style={{ position: 'absolute', top: 4, right: 4, background: C.saffron, borderRadius: '50%', width: 18, height: 18, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                                       <span style={{ color: '#fff', fontSize: 10, fontWeight: 800 }}>✓</span>
@@ -1023,12 +966,9 @@ function OrderForm({ price, isCustomStory, setIsCustomStory }: { price: number; 
                 </div>
                 <div>
                   <label style={labelStyle}>Art style *</label>
-                  {isCustomStory && (
-                    <p className="text-xs mb-2" style={{ color: C.lgray }}>Custom stories are only available in Pixar 3D style.</p>
-                  )}
                   <div className="grid grid-cols-2 gap-3">
                     {STYLES.map(s => {
-                      const lockedOut = isCustomStory && s.label !== 'Pixar 3D';
+                      const lockedOut = false;
                       const discountPct = s.originalPrice && s.price
                         ? Math.round(((s.originalPrice - s.price) / s.originalPrice) * 100)
                         : 0;
@@ -1285,75 +1225,50 @@ function OrderForm({ price, isCustomStory, setIsCustomStory }: { price: number; 
   );
 }
 
-// ── Hero testimonial video carousel (left column) ───────────────────────────
+// ── Real child reaction carousel ────────────────────────────────────────────
 
-const HERO_REELS = [
-  { id: 'o1yTBcrjLaM', label: 'Shreyansh' },
-  { id: 'ZDYwns8fCQ8', label: 'Bhanvi Likhita' },
+const REACTION_VIDEOS = [
+  { id: 'OsUGHz9LILY', name: 'Shreyansh' },
+  { id: 'ZDYwns8fCQ8', name: 'Bhanvi Likhita' },
 ];
 
-function HeroVideoCarousel() {
+function HeroVideo() {
   const [active, setActive] = useState(0);
+  const [muted, setMuted] = useState(true);
+  const iframeRefs = useRef<(HTMLIFrameElement | null)[]>([]);
 
   // Auto-advance every 12 s
   useEffect(() => {
-    const t = setInterval(() => setActive(i => (i + 1) % HERO_REELS.length), 12000);
+    const t = setInterval(() => setActive(i => (i + 1) % REACTION_VIDEOS.length), 12000);
     return () => clearInterval(t);
   }, []);
 
-  return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-      {/* Sliding window */}
-      <div style={{ position: 'relative', width: '100%', aspectRatio: '9/16', borderRadius: 16, overflow: 'hidden', background: '#000', maxHeight: 480 }}>
-        {HERO_REELS.map(({ id }, i) => (
-          <div key={id} style={{ position: 'absolute', inset: 0, transition: 'opacity 0.5s ease', opacity: i === active ? 1 : 0, pointerEvents: i === active ? 'auto' : 'none' }}>
-            <iframe
-              src={`https://www.youtube.com/embed/${id}?autoplay=1&mute=1&loop=1&playlist=${id}&controls=0&rel=0&modestbranding=1&showinfo=0&iv_load_policy=3&disablekb=1`}
-              title={HERO_REELS[i].label}
-              allow="autoplay; encrypted-media"
-              allowFullScreen
-              style={{ position: 'absolute', top: 0, left: '-5%', width: '110%', height: '115%', border: 'none' }}
-            />
-          </div>
-        ))}
-        {/* Overlay blocks YouTube hover UI */}
-        <div style={{ position: 'absolute', inset: 0, zIndex: 2 }} />
-        {/* Dot indicators */}
-        <div style={{ position: 'absolute', bottom: 12, left: '50%', transform: 'translateX(-50%)', display: 'flex', gap: 6, zIndex: 3 }}>
-          {HERO_REELS.map((_, i) => (
-            <button key={i} onClick={() => setActive(i)}
-              style={{ width: i === active ? 20 : 7, height: 7, borderRadius: 4, background: i === active ? C.saffron : 'rgba(255,255,255,0.5)', border: 'none', cursor: 'pointer', padding: 0, transition: 'width 0.3s ease, background 0.3s ease' }} />
-          ))}
-        </div>
-      </div>
-    </div>
-  );
-}
-
-// ── Hero video with mute toggle ─────────────────────────────────────────────
-
-function HeroVideo() {
-  const iframeRef = useRef<HTMLIFrameElement>(null);
-  const [muted, setMuted] = useState(true);
-
   const toggleMute = () => {
     const cmd = muted ? 'unMute' : 'mute';
-    iframeRef.current?.contentWindow?.postMessage(
+    iframeRefs.current[active]?.contentWindow?.postMessage(
       JSON.stringify({ event: 'command', func: cmd, args: [] }), '*'
     );
     setMuted(m => !m);
   };
 
+  // Re-mute whenever the active slide changes (new iframe starts muted)
+  useEffect(() => { setMuted(true); }, [active]);
+
   return (
     <div className="relative rounded-2xl overflow-hidden shadow-2xl mx-auto aspect-[9/16] max-h-[55vh] sm:aspect-auto sm:max-h-none sm:h-full">
-      <iframe
-        ref={iframeRef}
-        src="https://www.youtube.com/embed/OsUGHz9LILY?autoplay=1&mute=1&playsinline=1&loop=1&playlist=OsUGHz9LILY&controls=0&modestbranding=1&rel=0&enablejsapi=1"
-        title="Parent testimonial"
-        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-        allowFullScreen
-        className="w-full h-full border-0"
-      />
+      {REACTION_VIDEOS.map(({ id, name }, i) => (
+        <div key={id} style={{ position: 'absolute', inset: 0, transition: 'opacity 0.5s ease', opacity: i === active ? 1 : 0, pointerEvents: i === active ? 'auto' : 'none' }}>
+          <iframe
+            ref={el => { iframeRefs.current[i] = el; }}
+            src={`https://www.youtube.com/embed/${id}?autoplay=1&mute=1&playsinline=1&loop=1&playlist=${id}&controls=0&modestbranding=1&rel=0&enablejsapi=1`}
+            title={name}
+            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+            allowFullScreen
+            className="w-full h-full border-0"
+          />
+        </div>
+      ))}
+
       {/* Mute toggle */}
       <button
         onClick={toggleMute}
@@ -1361,13 +1276,11 @@ function HeroVideo() {
         style={{ width: 36, height: 36, background: 'rgba(0,0,0,0.55)', backdropFilter: 'blur(4px)', border: 'none', cursor: 'pointer', zIndex: 10 }}
         aria-label={muted ? 'Unmute video' : 'Mute video'}>
         {muted ? (
-          /* muted icon */
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
             <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/>
             <line x1="23" y1="9" x2="17" y2="15"/><line x1="17" y1="9" x2="23" y2="15"/>
           </svg>
         ) : (
-          /* unmuted icon */
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
             <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/>
             <path d="M19.07 4.93a10 10 0 0 1 0 14.14"/>
@@ -1375,10 +1288,21 @@ function HeroVideo() {
           </svg>
         )}
       </button>
-      <div className="absolute bottom-0 left-0 right-0 px-3 py-2.5"
-        style={{ background: 'linear-gradient(transparent, rgba(0,0,0,0.75))' }}>
+
+      {/* Caption */}
+      <div className="absolute bottom-0 left-0 right-0 px-3 py-2.5" style={{ background: 'linear-gradient(transparent, rgba(0,0,0,0.75))', zIndex: 2 }}>
         <p className="text-[11px] font-bold text-white">Real child reaction</p>
-        <p className="text-[9px] mt-0.5" style={{ color: 'rgba(255,255,255,0.7)' }}>Watch Shreyansh's story unfold</p>
+        <p className="text-[9px] mt-0.5" style={{ color: 'rgba(255,255,255,0.7)' }}>
+          Watch {REACTION_VIDEOS[active].name}'s story unfold
+        </p>
+      </div>
+
+      {/* Dot indicators */}
+      <div style={{ position: 'absolute', bottom: 44, left: '50%', transform: 'translateX(-50%)', display: 'flex', gap: 6, zIndex: 3 }}>
+        {REACTION_VIDEOS.map((_, i) => (
+          <button key={i} onClick={() => setActive(i)}
+            style={{ width: i === active ? 20 : 7, height: 7, borderRadius: 4, background: i === active ? C.saffron : 'rgba(255,255,255,0.5)', border: 'none', cursor: 'pointer', padding: 0, transition: 'width 0.3s ease, background 0.3s ease' }} />
+        ))}
       </div>
     </div>
   );
@@ -1390,7 +1314,6 @@ export function BrochurePage() {
   const [openFaq, setOpenFaq]         = useState<number | null>(null);
   const [themesTab, setThemesTab]     = useState<'3–5' | '5–8' | '8–12'>('3–5');
   const [heroSlide, setHeroSlide]     = useState(0);
-  const [isCustomStory, setIsCustomStory] = useState(false);
   const price = Number(import.meta.env.VITE_STORYBOOK_PRICE) || 499;
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
@@ -1450,11 +1373,21 @@ export function BrochurePage() {
           {/* Two-panel: animation + video — same height, aligned top-to-bottom */}
           <div className="flex flex-col-reverse sm:flex-row gap-4 sm:gap-6 items-stretch">
 
-            {/* Left on desktop, bottom on mobile — testimonial video carousel */}
+            {/* Left on desktop, bottom on mobile — Shreyansh reel + CTA */}
             <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }}
               transition={{ duration: 0.5, delay: 0.1 }}
               className="w-full sm:w-1/2 min-w-0 flex flex-col">
-              <HeroVideoCarousel />
+              {/* YouTube Shorts embed — iframe scaled up to clip YouTube UI, overlay blocks hover controls */}
+              <div style={{ position: 'relative', width: '100%', aspectRatio: '9/16', borderRadius: 16, overflow: 'hidden', background: '#000', maxHeight: 480 }}>
+                <iframe
+                  src="https://www.youtube.com/embed/o1yTBcrjLaM?autoplay=1&mute=1&loop=1&playlist=o1yTBcrjLaM&controls=0&rel=0&modestbranding=1&showinfo=0&iv_load_policy=3&disablekb=1"
+                  title="Protago preview"
+                  allow="autoplay; encrypted-media"
+                  allowFullScreen
+                  style={{ position: 'absolute', top: 0, left: '-5%', width: '110%', height: '115%', border: 'none' }}
+                />
+                <div style={{ position: 'absolute', inset: 0, zIndex: 2 }} />
+              </div>
               {/* Free preview CTA */}
               <motion.button
                 initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}
@@ -1469,8 +1402,7 @@ export function BrochurePage() {
               </p>
             </motion.div>
 
-            {/* Right on desktop, top on mobile — video testimonial (50%) */}
-            {/* On mobile: portrait 9:16. On desktop: stretch to match animation height */}
+            {/* Right on desktop, top on mobile — real child reaction carousel */}
             <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }}
               transition={{ duration: 0.5, delay: 0.2 }}
               className="w-full sm:w-1/2 mx-auto sm:mx-0">
@@ -1488,7 +1420,7 @@ export function BrochurePage() {
         <div className="max-w-6xl mx-auto px-5 sm:px-8">
           <motion.div initial={{ opacity: 0, y: 16 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} className="mb-8">
             {eyebrow('What will their story be about?')}
-            {heading(<>18 themes across<br />every age group</>)}
+            {heading(<>17 themes across<br />every age group</>)}
             <p className="text-sm mt-3 leading-relaxed" style={{ color: C.gray }}>
               From bedtime routines for toddlers to financial literacy for teens — every theme is built around real learning moments. Click any to explore.
             </p>
@@ -1559,41 +1491,6 @@ export function BrochurePage() {
                 <div className="mt-8 text-center">
                   <p className="text-xs" style={{ color: C.lgray }}>Click any theme to see how we personalise it for your child</p>
 
-                {/* Custom Story callout */}
-                <motion.div initial={{ opacity: 0, y: 12 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}
-                  className="mt-8 rounded-2xl p-6 flex flex-col sm:flex-row items-start sm:items-center gap-5"
-                  style={{ background: 'linear-gradient(135deg, #1A1A2E 0%, #2A1A3E 100%)', border: '1.5px solid rgba(247,183,49,0.3)' }}>
-                  <div className="text-4xl flex-none">✨</div>
-                  <div className="flex-1">
-                    <p className="font-extrabold text-lg mb-1" style={{ fontFamily: "'Baloo 2', sans-serif", color: '#fff' }}>
-                      Have your own story in mind?
-                    </p>
-                    <p className="text-sm leading-relaxed mb-3" style={{ color: 'rgba(255,255,255,0.65)' }}>
-                      Don't see a theme that fits? Write your own plot — characters, setting, the lesson you want to teach — and we'll bring it to life in Pixar 3D style. Every scene personalised with your child's face.
-                    </p>
-                    <div className="flex flex-wrap gap-3 items-center">
-                      <span className="text-xs font-bold px-3 py-1.5 rounded-full" style={{ background: 'rgba(247,183,49,0.15)', color: C.gold, border: '1px solid rgba(247,183,49,0.3)' }}>
-                        Pixar 3D only
-                      </span>
-                      <span className="text-xs font-bold px-3 py-1.5 rounded-full" style={{ background: 'rgba(247,183,49,0.15)', color: C.gold, border: '1px solid rgba(247,183,49,0.3)' }}>
-                        ₹1,999
-                      </span>
-                      <span className="text-xs font-bold px-3 py-1.5 rounded-full" style={{ background: 'rgba(247,183,49,0.15)', color: C.gold, border: '1px solid rgba(247,183,49,0.3)' }}>
-                        12 scenes · fully personalised
-                      </span>
-                    </div>
-                  </div>
-                  <button
-                    onClick={() => {
-                      setIsCustomStory(true);
-                      const el = document.getElementById('order');
-                      if (el) el.scrollIntoView({ behavior: 'smooth' });
-                    }}
-                    className="flex-none px-5 py-3 rounded-2xl text-sm font-extrabold transition-opacity hover:opacity-90 whitespace-nowrap"
-                    style={{ background: C.saffron, color: '#fff', border: 'none', cursor: 'pointer', fontFamily: "'Baloo 2', sans-serif" }}>
-                    Start custom story →
-                  </button>
-                </motion.div>
                 </div>
               </>
             );
@@ -2036,7 +1933,7 @@ export function BrochurePage() {
       {/* ══════════════════════════════════════════
           § 9  ORDER FORM — warm tint
       ══════════════════════════════════════════ */}
-      {false && <OrderForm price={price} scrollTo={scrollTo} isCustomStory={isCustomStory} setIsCustomStory={setIsCustomStory} />}
+      {false && <OrderForm price={price} scrollTo={scrollTo} />}
 
       {/* ══════════════════════════════════════════
           § 10  FAQ — white
