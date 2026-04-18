@@ -296,7 +296,7 @@ function ThemeCard({ theme, onClick }: { theme: Theme; groupColor: string; onCli
               key={sample.key}
               src={`/themes_mockup/${theme.slug}_${sample.key}_mockup.webp`}
               alt=""
-              style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'contain', display: 'block' }}
+              style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'contain', display: 'block', transform: 'scale(1.3)' }}
               animate={{ opacity: i === activeIdx ? 1 : 0 }}
               transition={{ duration: 0.5, ease: 'easeInOut' }}
               onError={e => { (e.target as HTMLImageElement).style.display = 'none'; }}

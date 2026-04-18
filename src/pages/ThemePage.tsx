@@ -307,7 +307,7 @@ export function ThemePage() {
                     <motion.img key={sample.key}
                       src={`/themes_mockup/${theme.slug}_${sample.key}_mockup.webp`}
                       alt="" decoding="async"
-                      style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'contain' }}
+                      style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'contain', transform: 'scale(1.3)' }}
                       animate={{ opacity: i === activeIdx ? 1 : 0 }}
                       transition={{ duration: 0.5 }}
                       onError={e => { (e.target as HTMLImageElement).style.display = 'none'; }}
@@ -788,7 +788,7 @@ export function ThemePage() {
                 <div style={{ aspectRatio: '4/3', background: '#F0EEE8', overflow: 'hidden' }}>
                   <img src={`/themes_mockup/${t.slug}_boy_young_mockup.webp`} alt={t.name}
                     loading="lazy" decoding="async"
-                    style={{ width: '100%', height: '100%', objectFit: 'contain', display: 'block' }}
+                    style={{ width: '100%', height: '100%', objectFit: 'contain', display: 'block', transform: 'scale(1.3)' }}
                     onError={e => { (e.target as HTMLImageElement).src = `/themes/${t.slug}@thumb.webp`; }} />
                 </div>
                 <div style={{ padding: '10px 12px 11px' }}>

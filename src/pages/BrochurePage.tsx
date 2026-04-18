@@ -275,7 +275,7 @@ function BrochureThemeCard({ slug, icon, name, onClick }: { slug: string; icon: 
               alt=""
               loading="lazy"
               decoding="async"
-              style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'contain', display: 'block' }}
+              style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'contain', display: 'block', transform: 'scale(1.3)' }}
               onError={e => { (e.target as HTMLImageElement).style.display = 'none'; }}
             />
           ) : FACE_SAMPLES.map((sample, i) => (
@@ -285,7 +285,7 @@ function BrochureThemeCard({ slug, icon, name, onClick }: { slug: string; icon: 
               alt=""
               loading="lazy"
               decoding="async"
-              style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'contain', display: 'block' }}
+              style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'contain', display: 'block', transform: 'scale(1.3)' }}
               animate={{ opacity: i === activeIdx ? 1 : 0 }}
               transition={{ duration: 0.5, ease: 'easeInOut' }}
               onError={e => { (e.target as HTMLImageElement).style.display = 'none'; }}
@@ -946,7 +946,7 @@ function OrderForm({ price }: { price: number; scrollTo: (id: string) => void })
                                 <div style={{ aspectRatio: '4/3', background: '#F0EEE8', position: 'relative' }}>
                                   <img src={`/themes_mockup/${t.slug}_boy_young_mockup.webp`} alt={t.name}
                                     loading="lazy" decoding="async"
-                                    style={{ width: '100%', height: '100%', objectFit: 'contain', display: 'block' }} />
+                                    style={{ width: '100%', height: '100%', objectFit: 'contain', display: 'block', transform: 'scale(1.3)' }} />
                                   {selected && (
                                     <div style={{ position: 'absolute', top: 4, right: 4, background: C.saffron, borderRadius: '50%', width: 18, height: 18, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                                       <span style={{ color: '#fff', fontSize: 10, fontWeight: 800 }}>✓</span>
