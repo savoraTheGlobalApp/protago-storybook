@@ -1293,7 +1293,7 @@ function HeroVideo() {
       <div className="absolute bottom-0 left-0 right-0 px-3 py-2.5" style={{ background: 'linear-gradient(transparent, rgba(0,0,0,0.75))', zIndex: 2 }}>
         <p className="text-[11px] font-bold text-white">Real child reaction</p>
         <p className="text-[9px] mt-0.5" style={{ color: 'rgba(255,255,255,0.7)' }}>
-          Watch {REACTION_VIDEOS[active].name}'s story unfold
+          Watch their story unfold
         </p>
       </div>
 

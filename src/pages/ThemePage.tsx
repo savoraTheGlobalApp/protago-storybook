@@ -506,6 +506,7 @@ export function ThemePage() {
                         <span style={{ fontSize: 34 }}>📸</span>
                         <span style={{ fontWeight: 700, color: C.navy, fontSize: 13 }}>Upload child's photo</span>
                         <span style={{ fontSize: 11, color: C.lgray }}>Clear, front-facing works best</span>
+                        <span style={{ fontSize: 11, fontWeight: 700, color: C.saffron, textAlign: 'center' }}>📷 Higher quality photo = better results</span>
                         <input type="file" accept="image/*" style={{ display: 'none' }}
                           onChange={e => { const f = e.target.files?.[0]; if (f) handlePhotoAdd(f); }} />
                       </label>
