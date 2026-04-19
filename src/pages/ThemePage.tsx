@@ -211,22 +211,48 @@ export function ThemePage() {
   const handlePhotoAdd = (file: File) => {
     const preview = URL.createObjectURL(file);
     setPhoto({ preview, uploading: true, signedUrl: null });
-    const reader = new FileReader();
-    reader.onload = () => {
+
+    const img = new Image();
+    img.onload = () => {
+      // Resize to max 1500px on longest side, re-encode as JPEG q90
+      const MAX = 1500;
+      let { width, height } = img;
+      if (width > MAX || height > MAX) {
+        if (width >= height) { height = Math.round(height * MAX / width); width = MAX; }
+        else { width = Math.round(width * MAX / height); height = MAX; }
+      }
+      const canvas = document.createElement('canvas');
+      canvas.width = width;
+      canvas.height = height;
+      canvas.getContext('2d')!.drawImage(img, 0, 0, width, height);
+      const base64 = canvas.toDataURL('image/jpeg', 0.90);
+
       const xhr = new XMLHttpRequest();
       xhr.open('POST', `${API_BASE}/api/upload-photo`);
       xhr.setRequestHeader('Content-Type', 'application/json');
       xhr.onload = () => {
         try {
           const data = JSON.parse(xhr.responseText);
-          setPhoto(p => p ? { ...p, uploading: false, signedUrl: data.photo_signed_url || null } : null);
+          if (data.photo_signed_url) {
+            setPhoto(p => p ? { ...p, uploading: false, signedUrl: data.photo_signed_url } : null);
+          } else {
+            setPhoto(p => p ? { ...p, uploading: false } : null);
+            setJobStatus('Error: Upload failed. Please try a different photo.');
+          }
         } catch { setPhoto(p => p ? { ...p, uploading: false } : null); }
       };
-      xhr.onerror = () => setPhoto(p => p ? { ...p, uploading: false } : null);
-      xhr.send(JSON.stringify({ photo: reader.result }));
+      xhr.onerror = () => {
+        setPhoto(p => p ? { ...p, uploading: false } : null);
+        setJobStatus('Error: Could not upload photo. Please check your connection and try again.');
+      };
+      xhr.send(JSON.stringify({ photo: base64 }));
+      URL.revokeObjectURL(preview);
     };
-    reader.onerror = () => setPhoto(p => p ? { ...p, uploading: false } : null);
-    reader.readAsDataURL(file);
+    img.onerror = () => {
+      setPhoto(null);
+      setJobStatus('Error: Could not read this image. Please try a different file.');
+    };
+    img.src = preview;
   };
 
   const handleGenerate = () => {
@@ -792,7 +818,7 @@ export function ThemePage() {
                     onError={e => { (e.target as HTMLImageElement).src = `/themes/${t.slug}@thumb.webp`; }} />
                 </div>
                 <div style={{ padding: '10px 12px 11px' }}>
-                  <p style={{ fontSize: 13, fontWeight: 700, color: C.navy, margin: 0, lineHeight: 1.3 }}>{t.icon} {t.name}</p>
+                  <p style={{ fontSize: 17, fontWeight: 700, color: C.navy, margin: 0, lineHeight: 1.3 }}>{t.icon} {t.name}</p>
                   <p style={{ fontSize: 11, color: C.lgray, margin: '3px 0 0' }}>Ages {t.ageRange}</p>
                 </div>
               </button>
