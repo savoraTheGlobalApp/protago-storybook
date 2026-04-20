@@ -15,8 +15,7 @@ const HERO_SCENES = [1, 2];
 // Format: `${storySlug}/${ageGroup}_${gender}`
 // Add entries here after uploading the corresponding folder to GCS.
 const VARIATIONS_AVAILABLE = new Set([
-  // 'bedtime-routines/young_boy',
-  // 'bedtime-routines/young_girl',
+  'bedtime-routines/older_boy',
   // Add as each theme × variant is uploaded...
 ]);
 
