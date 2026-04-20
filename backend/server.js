@@ -1323,13 +1323,20 @@ app.post('/api/preview-job-alert', async (req, res) => {
 
 // POST /api/preview/trigger
 // Creates a preview_jobs row in Supabase DB, fires Modal async.
-// Body: { storySlug, photoUrl, childName?, email? }
+// Body: { storySlug, photoUrl, childName?, email?, gender?, ageGroup? }
+const VALID_GENDERS = new Set(['boy', 'girl']);
+const VALID_AGE_GROUPS = new Set(['young', 'middle', 'older']);
+
 app.post('/api/preview/trigger', async (req, res) => {
   try {
-    const { storySlug, photoUrl, childName, email } = req.body;
+    const { storySlug, photoUrl, childName, email, gender, ageGroup } = req.body;
     if (!storySlug || !photoUrl) {
       return res.status(400).json({ error: 'storySlug and photoUrl are required' });
     }
+
+    // Sanitize gender/ageGroup — allowlist only, prevents path injection
+    const safeGender = VALID_GENDERS.has(gender) ? gender : undefined;
+    const safeAgeGroup = VALID_AGE_GROUPS.has(ageGroup) ? ageGroup : undefined;
 
     // Validate email if provided
     if (email) {
@@ -1365,9 +1372,9 @@ app.post('/api/preview/trigger', async (req, res) => {
 
     const [job] = await createRes.json();
 
-    console.log(`Preview job ${job.id}: photoUrl=${photoUrl} email=${email || 'none'}`);
+    console.log(`Preview job ${job.id}: photoUrl=${photoUrl} gender=${safeGender || 'none'} ageGroup=${safeAgeGroup || 'none'} email=${email || 'none'}`);
     // Fire Modal async (don't await — client polls for result)
-    triggerPreview({ jobId: job.id, storySlug, photoUrl, childName }).catch(err =>
+    triggerPreview({ jobId: job.id, storySlug, photoUrl, childName, gender: safeGender, ageGroup: safeAgeGroup }).catch(err =>
       console.error(`Preview job ${job.id} trigger failed:`, err.message)
     );
 

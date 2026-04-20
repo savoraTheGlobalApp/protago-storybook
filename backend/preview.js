@@ -11,22 +11,35 @@ const BACKEND = process.env.PREVIEW_BACKEND || 'modal';
 // Always preview scene 01 (cover) and scene 02 (first story scene)
 const HERO_SCENES = [1, 2];
 
+// Whitelist of storySlug+variant combos uploaded to GCS.
+// Format: `${storySlug}/${ageGroup}_${gender}`
+// Add entries here after uploading the corresponding folder to GCS.
+const VARIATIONS_AVAILABLE = new Set([
+  // 'bedtime-routines/young_boy',
+  // 'bedtime-routines/young_girl',
+  // Add as each theme × variant is uploaded...
+]);
+
 // GCS story-scenes bucket is public read — no auth needed to download scenes.
 // Bucket: protago-story-scenes (asia-south1)
-// Path:   {storySlug}/scene_01_spread.png
-function getSceneUrls(storySlug) {
+// Generic path:  {storySlug}/scene_01_spread.png
+// Variant path:  {storySlug}/{ageGroup}_{gender}/scene_01_spread.png
+function getSceneUrls(storySlug, { gender, ageGroup } = {}) {
   const base = `https://storage.googleapis.com/${process.env.GCS_SCENES_BUCKET || 'protago-story-scenes'}`;
+  const variantKey = gender && ageGroup ? `${storySlug}/${ageGroup}_${gender}` : null;
+  const useVariant = variantKey && VARIATIONS_AVAILABLE.has(variantKey);
+  const prefix = useVariant ? `${storySlug}/${ageGroup}_${gender}` : storySlug;
   return HERO_SCENES.map(n =>
-    `${base}/${storySlug}/scene_${String(n).padStart(2, '0')}_spread.png`
+    `${base}/${prefix}/scene_${String(n).padStart(2, '0')}_spread.png`
   );
 }
 
 // ── Modal backend ─────────────────────────────────────────────────────────────
-async function triggerModalPreview({ jobId, storySlug, photoUrl, childName = '', steps = 5 }) {
+async function triggerModalPreview({ jobId, storySlug, photoUrl, childName = '', gender, ageGroup, steps = 5 }) {
   const MODAL_URL = process.env.MODAL_PREVIEW_URL;
   if (!MODAL_URL) throw new Error('MODAL_PREVIEW_URL not set');
 
-  const sceneUrls = getSceneUrls(storySlug);
+  const sceneUrls = getSceneUrls(storySlug, { gender, ageGroup });
 
   const response = await fetch(MODAL_URL, {
     method: 'POST',
@@ -53,7 +66,7 @@ async function triggerModalPreview({ jobId, storySlug, photoUrl, childName = '',
 }
 
 // ── GCP backend (stub — implement when GCP quota available) ───────────────────
-async function triggerGCPPreview({ jobId, storySlug, photoUrl, steps = 4 }) {
+async function triggerGCPPreview({ jobId, storySlug, photoUrl, gender, ageGroup, steps = 4 }) {
   // TODO: submit Vertex AI custom job
   // 1. Upload photo + scenes to GCS
   // 2. Submit job via google-cloud-aiplatform SDK
@@ -67,4 +80,4 @@ async function triggerPreview(args) {
   return triggerModalPreview(args);
 }
 
-export { triggerPreview, getSceneUrls, HERO_SCENES };
+export { triggerPreview, getSceneUrls, HERO_SCENES, VARIATIONS_AVAILABLE };

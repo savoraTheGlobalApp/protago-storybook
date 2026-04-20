@@ -49,6 +49,11 @@ export function ThemePage() {
   const [couponError, setCouponError] = useState('');
   const [couponLoading, setCouponLoading] = useState(false);
   const [generating, setGenerating] = useState(false);
+  const [gender, setGender] = useState<'boy' | 'girl' | null>(null);
+  const [selectedAgeGroup, setSelectedAgeGroup] = useState<'young' | 'middle' | 'older' | null>(null);
+
+  // Reset on theme change
+  useEffect(() => { setGender(null); setSelectedAgeGroup(null); }, [slug]);
 
   useEffect(() => {
     if (locationState?.fromPreview) {
@@ -76,7 +81,8 @@ export function ThemePage() {
   }
 
   const AGE_COLOR: Record<string, string> = { '3–5': C.saffron, '5–8': C.gold, '8–12': C.navy };
-  const color = AGE_COLOR[theme.ageRange] || C.saffron;
+  const color = AGE_COLOR[Array.isArray(theme.ageRange) ? theme.ageRange[0] : theme.ageRange] || C.saffron;
+
 
   // Pick 6 other themes (same age group first, then others)
   const otherThemes = [
@@ -273,7 +279,7 @@ export function ThemePage() {
       const res = await fetch(`${API_BASE}/api/preview/trigger`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ storySlug: theme.slug, photoUrl: photo.signedUrl, childName: firstName, email: emailTrimmed }),
+        body: JSON.stringify({ storySlug: theme.slug, photoUrl: photo.signedUrl, childName: firstName, email: emailTrimmed, gender: gender ?? undefined, ageGroup: selectedAgeGroup ?? undefined }),
       });
       const data = await res.json();
       if (!res.ok) {
@@ -289,7 +295,7 @@ export function ThemePage() {
     })();
   };
 
-  const canGenerate = !!childName.trim() && !!photo?.signedUrl && consent && !generating;
+  const canGenerate = !!childName.trim() && !!photo?.signedUrl && consent && !generating && !!gender && !!selectedAgeGroup;
 
   return (
     <div style={{ minHeight: '100vh', background: '#FAFAFA', fontFamily: "'Nunito', sans-serif" }}>
@@ -475,6 +481,54 @@ export function ThemePage() {
                         transition: 'border-color 0.2s',
                       }} />
                     {nameError && <p style={{ fontSize: 11, color: '#E53E3E', margin: '4px 0 0' }}>Please enter your child's name</p>}
+                  </div>
+
+                  {/* Gender toggle */}
+                  <div style={{ marginBottom: 14 }}>
+                    <label style={{ fontSize: 12, fontWeight: 700, color: C.navy, display: 'block', marginBottom: 8 }}>
+                      Child's gender <span style={{ color: C.saffron }}>*</span>
+                    </label>
+                    <div style={{ display: 'flex', gap: 8 }}>
+                      {(['boy', 'girl'] as const).map(g => (
+                        <button key={g} type="button" onClick={() => setGender(g)}
+                          style={{
+                            flex: 1, padding: '11px 0', borderRadius: 10, cursor: 'pointer', fontFamily: 'inherit',
+                            border: `1.5px solid ${gender === g ? C.saffron : '#E5E7EB'}`,
+                            background: gender === g ? C.saffron + '18' : '#fff',
+                            color: gender === g ? C.saffron : C.gray,
+                            fontWeight: 800, fontSize: 15,
+                            transition: 'all 0.15s',
+                          }}>
+                          {g === 'boy' ? '👦 Boy' : '👧 Girl'}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Age group */}
+                  <div style={{ marginBottom: 14 }}>
+                    <label style={{ fontSize: 12, fontWeight: 700, color: C.navy, display: 'block', marginBottom: 8 }}>
+                      Child's age group <span style={{ color: C.saffron }}>*</span>
+                    </label>
+                    <div style={{ display: 'flex', gap: 8 }}>
+                      {([
+                        { key: 'young', label: '3–5 yrs' },
+                        { key: 'middle', label: '5–8 yrs' },
+                        { key: 'older', label: '8–12 yrs' },
+                      ] as const).map(({ key, label }) => (
+                        <button key={key} type="button" onClick={() => setSelectedAgeGroup(key)}
+                          style={{
+                            flex: 1, padding: '11px 0', borderRadius: 10, cursor: 'pointer', fontFamily: 'inherit',
+                            border: `1.5px solid ${selectedAgeGroup === key ? C.saffron : '#E5E7EB'}`,
+                            background: selectedAgeGroup === key ? C.saffron + '18' : '#fff',
+                            color: selectedAgeGroup === key ? C.saffron : C.gray,
+                            fontWeight: 800, fontSize: 13,
+                            transition: 'all 0.15s',
+                          }}>
+                          {label}
+                        </button>
+                      ))}
+                    </div>
                   </div>
 
                   {/* Email */}
