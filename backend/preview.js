@@ -15,8 +15,26 @@ const HERO_SCENES = [1, 2];
 // Format: `${storySlug}/${ageGroup}_${gender}`
 // Add entries here after uploading the corresponding folder to GCS.
 const VARIATIONS_AVAILABLE = new Set([
+  // older_boy — all themes
   'bedtime-routines/older_boy',
-  // Add as each theme × variant is uploaded...
+  'body-safety/older_boy',
+  'colours-shapes/older_boy',
+  'environmental-science/older_boy',
+  'financial-literacy/older_boy',
+  'first-day-school/older_boy',
+  'growth-mindset/older_boy',
+  'hanuman/older_boy',
+  'history-india/older_boy',
+  'indian-festivals/older_boy',
+  'internet-safety/older_boy',
+  'krishna/older_boy',
+  'managing-emotions/older_boy',
+  'new-sibling/older_boy',
+  'numbers-maths/older_boy',
+  'phonics-reading/older_boy',
+  'ramayana/older_boy',
+  'sharing-sorry/older_boy',
+  'sudama/older_boy',
 ]);
 
 // GCS story-scenes bucket is public read — no auth needed to download scenes.
