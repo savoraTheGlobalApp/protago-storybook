@@ -1,8 +1,10 @@
+export type AgeRange = '3–5' | '5–8' | '8–12';
+
 export type ThemeEntry = {
   slug: string;
   name: string;
   icon: string;
-  ageRange: '3–5' | '5–8' | '8–12';
+  ageRange: AgeRange | AgeRange[];
   category?: 'mythology';
   description: string;
 };
@@ -70,6 +72,10 @@ export const THEMES: ThemeEntry[] = [
   {
     slug: 'environmental-science', name: 'Environmental Science', icon: '🌿', ageRange: '8–12',
     description: 'Adventure where the child solves a real ecological problem in their own city or region.',
+  },
+  {
+    slug: 'professions', name: 'Dream Careers', icon: '🚀', ageRange: ['5–8', '8–12'],
+    description: 'Child steps into the shoes of their dream career — astronaut, artist, doctor and more — discovering what it truly takes to get there.',
   },
   // Mythology
   {

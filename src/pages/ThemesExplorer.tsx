@@ -135,6 +135,15 @@ const AGE_GROUPS: AgeGroup[] = [
         samplePrompt: '[Aisha] follows the sound of [S] through a silly, slimy, shimmery world.',
         score: 3,
       },
+      {
+        slug: 'professions',
+        name: 'Dream Careers',
+        icon: '🚀',
+        description: 'Child steps into the shoes of their dream career — astronaut, artist, doctor and more — discovering what it truly takes to get there.',
+        personalizationLevers: ['Dream career (astronaut/artist/doctor)', 'Child name & photo'],
+        samplePrompt: '[Arya] has always dreamed of going to space. Today, she finally gets to find out what it really takes.',
+        score: 5,
+      },
     ],
   },
   {
@@ -186,6 +195,15 @@ const AGE_GROUPS: AgeGroup[] = [
         personalizationLevers: ['City/region', 'Environmental issue (pollution/water/trees)', 'Child name & photo'],
         samplePrompt: '[Krish] notices the lake near [his school in Bengaluru] is turning green. He sets out to find out why.',
         score: 4,
+      },
+      {
+        slug: 'professions',
+        name: 'Dream Careers',
+        icon: '🚀',
+        description: 'Child steps into the shoes of their dream career — astronaut, artist, doctor and more — discovering what it truly takes to get there.',
+        personalizationLevers: ['Dream career (astronaut/artist/doctor)', 'Child name & photo'],
+        samplePrompt: '[Arya] has always dreamed of going to space. Today, she finally gets to find out what it really takes.',
+        score: 5,
       },
     ],
   },
@@ -284,7 +302,7 @@ function ThemeCard({ theme, onClick }: { theme: Theme; groupColor: string; onCli
         <div style={{ aspectRatio: '16/9', background: '#F0EEE8', position: 'relative', overflow: 'hidden' }}>
           <img src={`/themes/${theme.slug}.png`} alt={theme.name} style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
           <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, padding: '20px 14px 10px', background: 'linear-gradient(transparent, rgba(0,0,0,0.55))' }}>
-            <p className="font-extrabold text-base" style={{ fontFamily: "'Baloo 2', sans-serif", color: '#fff' }}>{theme.icon} {theme.name}</p>
+            <p className="font-extrabold" style={{ fontFamily: "'Baloo 2', sans-serif", color: '#fff', fontSize: 20 }}>{theme.icon} {theme.name}</p>
           </div>
         </div>
       ) : (
@@ -324,7 +342,7 @@ function ThemeCard({ theme, onClick }: { theme: Theme; groupColor: string; onCli
 
           {/* Title overlay */}
           <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, padding: '20px 14px 10px', background: 'linear-gradient(transparent, rgba(0,0,0,0.55))', zIndex: 4 }}>
-            <p className="font-extrabold text-base" style={{ fontFamily: "'Baloo 2', sans-serif", color: '#fff' }}>{theme.icon} {theme.name}</p>
+            <p className="font-extrabold" style={{ fontFamily: "'Baloo 2', sans-serif", color: '#fff', fontSize: 20 }}>{theme.icon} {theme.name}</p>
           </div>
         </div>
 

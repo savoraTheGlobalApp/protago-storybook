@@ -38,7 +38,7 @@ export function ThemePage() {
   const [consent, setConsent] = useState(false);
   const [jobStatus, setJobStatus] = useState('');
   const [showOrder, setShowOrder] = useState(false);
-  const [orderForm, setOrderForm] = useState({ parentName: '', email: '', phone: '', childName: '', childAge: '', childGender: '', addressLine1: '', addressLine2: '', city: '', state: '', pincode: '', notes: '' });
+  const [orderForm, setOrderForm] = useState({ parentName: '', email: '', phone: '', childName: '', childAge: '', childGender: '', addressLine1: '', addressLine2: '', city: '', state: '', pincode: '', notes: '', dedicationMessage: '' });
   const [orderPhoto, setOrderPhoto] = useState<{ preview: string; uploading: boolean; uploadedPath: string | null; signedUrl: string | null } | null>(null);
   const [orderConsent, setOrderConsent] = useState(false);
   const [orderSubmitting, setOrderSubmitting] = useState(false);
@@ -342,12 +342,12 @@ export function ThemePage() {
                   {true && (
                     <svg viewBox="0 0 160 90" preserveAspectRatio="none"
                       style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', zIndex: 5, pointerEvents: 'none' }}>
-                      <motion.path d="M 148 4 Q 148 45 52 30" fill="none" stroke={C.saffron}
+                      <motion.path d="M 148 4 Q 148 40 80 28" fill="none" stroke={C.saffron}
                         strokeWidth="2" strokeDasharray="5 3" strokeLinecap="round"
                         initial={{ pathLength: 0, opacity: 0 }} animate={{ pathLength: 1, opacity: 1 }}
                         transition={{ pathLength: { duration: 1.0, delay: 0.2 }, opacity: { duration: 0.2 } }}
                         key={activeIdx} />
-                      <motion.path d="M 60 25 L 52 30 L 58 36" fill="none" stroke={C.saffron}
+                      <motion.path d="M 88 23 L 80 28 L 87 33" fill="none" stroke={C.saffron}
                         strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
                         initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 1.0 }}
                         key={`ah-${activeIdx}`} />
@@ -371,6 +371,14 @@ export function ThemePage() {
                   ))}
                 </div>
               )}
+            </div>
+
+            {/* Price + promo strip */}
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, padding: '10px 16px', background: '#FFF7ED', borderTop: '1px solid #FFE4CC', borderBottom: '1px solid #FFE4CC' }}>
+              <span style={{ fontSize: 11, fontWeight: 800, color: '#fff', background: '#22C55E', borderRadius: 50, padding: '2px 8px' }}>15% OFF</span>
+              <span style={{ fontSize: 13, color: '#9CA3AF', textDecoration: 'line-through', fontWeight: 600 }}>₹1,499</span>
+              <span style={{ fontSize: 18, fontWeight: 800, color: C.navy, fontFamily: "'Baloo 2', sans-serif" }}>₹1,274</span>
+              <span style={{ fontSize: 11, color: C.saffron, fontWeight: 700 }}>· Use code <strong>PROTAGO50</strong></span>
             </div>
 
             {/* Info */}
@@ -533,6 +541,7 @@ export function ThemePage() {
                         <span style={{ fontWeight: 700, color: C.navy, fontSize: 13 }}>Upload child's photo</span>
                         <span style={{ fontSize: 11, color: C.lgray }}>Clear, front-facing works best</span>
                         <span style={{ fontSize: 11, fontWeight: 700, color: C.saffron, textAlign: 'center' }}>📷 Higher quality photo = better results</span>
+                        <span style={{ fontSize: 10, color: C.lgray, textAlign: 'center' }}>Any size accepted · Auto-compressed · JPG, PNG, HEIC</span>
                         <input type="file" accept="image/*" style={{ display: 'none' }}
                           onChange={e => { const f = e.target.files?.[0]; if (f) handlePhotoAdd(f); }} />
                       </label>
@@ -589,7 +598,11 @@ export function ThemePage() {
               <h2 style={{ fontFamily: "'Baloo 2', sans-serif", fontWeight: 800, fontSize: 24, color: '#fff', margin: '0 0 4px' }}>
                 {theme.icon} {theme.name}
               </h2>
-              <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.85)', margin: 0 }}>Theme pre-selected · Starting at ₹{Number(import.meta.env.VITE_STORYBOOK_PRICE) || 499}</p>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 4 }}>
+                <span style={{ fontSize: 11, fontWeight: 700, color: '#22C55E', background: 'rgba(255,255,255,0.15)', borderRadius: 50, padding: '2px 8px', letterSpacing: 0.3 }}>15% OFF</span>
+                <span style={{ fontSize: 13, color: 'rgba(255,255,255,0.55)', textDecoration: 'line-through', fontWeight: 600 }}>₹1,499</span>
+                <span style={{ fontSize: 18, fontWeight: 800, color: '#fff', fontFamily: "'Baloo 2', sans-serif" }}>₹1,274</span>
+              </div>
             </div>
 
             {orderSubmitted ? (
@@ -741,6 +754,26 @@ export function ThemePage() {
                   </div>
                 </div>
 
+                {/* Dedication message */}
+                <div>
+                  <label style={{ fontSize: 10, fontWeight: 700, color: '#9CA3AF', display: 'block', marginBottom: 4, textTransform: 'uppercase', letterSpacing: '0.07em' }}>
+                    Personal message for the first page <span style={{ color: '#C4B5A0', fontWeight: 500, textTransform: 'none', letterSpacing: 0 }}>(optional)</span>
+                  </label>
+                  <textarea
+                    placeholder={`e.g. "To my little star — may you always reach for the sky. With all my love, ${orderForm.parentName || 'Mama'}"`}
+                    value={orderForm.dedicationMessage}
+                    onChange={e => setOf('dedicationMessage', e.target.value)}
+                    rows={2}
+                    maxLength={200}
+                    style={{ width: '100%', border: '1.5px solid #E5E7EB', borderRadius: 9, padding: '10px 12px', fontSize: 13, outline: 'none', boxSizing: 'border-box', fontFamily: 'inherit', background: '#fff', resize: 'none' }}
+                    onFocus={e => (e.target.style.borderColor = '#FF6B35')}
+                    onBlur={e => (e.target.style.borderColor = '#E5E7EB')}
+                  />
+                  <p style={{ fontSize: 10, color: '#9CA3AF', margin: '4px 0 0' }}>
+                    🎬 Printed on the first page — Starring <strong>{orderForm.childName || 'your child'}</strong> · Produced with love by <strong>{orderForm.parentName || 'you'}</strong>
+                  </p>
+                </div>
+
                 {/* Coupon code */}
                 <div>
                   <label style={{ fontSize: 10, fontWeight: 700, color: '#9CA3AF', display: 'block', marginBottom: 4, textTransform: 'uppercase', letterSpacing: '0.07em' }}>Promo code (optional)</label>
@@ -808,15 +841,43 @@ export function ThemePage() {
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 14 }}>
             {otherThemes.map(t => (
               <button key={t.slug} onClick={() => handleThemeClick(t.slug)}
-                style={{ background: C.white, border: '1.5px solid #F0EEE8', borderRadius: 12, overflow: 'hidden', cursor: 'pointer', textAlign: 'left', padding: 0, boxShadow: '0 2px 8px rgba(0,0,0,0.04)', transition: 'box-shadow 0.2s, transform 0.15s' }}
+                style={{ background: C.white, border: '1.5px solid #F0EEE8', borderRadius: 12, overflow: 'visible', cursor: 'pointer', textAlign: 'left', padding: 0, boxShadow: '0 2px 8px rgba(0,0,0,0.04)', transition: 'box-shadow 0.2s, transform 0.15s', position: 'relative' }}
                 onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.boxShadow = '0 4px 16px rgba(0,0,0,0.1)'; (e.currentTarget as HTMLButtonElement).style.transform = 'translateY(-2px)'; }}
                 onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.boxShadow = '0 2px 8px rgba(0,0,0,0.04)'; (e.currentTarget as HTMLButtonElement).style.transform = 'translateY(0)'; }}>
-                <div style={{ aspectRatio: '4/3', background: '#F0EEE8', overflow: 'hidden' }}>
-                  <img src={`/themes_mockup/${t.slug}_boy_young_mockup.webp`} alt={t.name}
-                    loading="lazy" decoding="async"
-                    style={{ width: '100%', height: '100%', objectFit: 'contain', display: 'block', transform: 'scale(1.3)' }}
-                    onError={e => { (e.target as HTMLImageElement).src = `/themes/${t.slug}@thumb.webp`; }} />
+
+                {/* Face circle */}
+                <div style={{ position: 'absolute', top: -16, right: 8, width: 36, height: 36, zIndex: 10, borderRadius: '50%', overflow: 'hidden', border: `2.5px solid ${C.saffron}`, boxShadow: '0 2px 8px rgba(255,107,53,0.3), 0 0 0 1.5px #fff' }}>
+                  {FACE_SAMPLES.map((s, i) => (
+                    <motion.img key={s.key} src={s.face} alt=""
+                      style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }}
+                      animate={{ opacity: i === activeIdx ? 1 : 0 }} transition={{ duration: 0.5 }} />
+                  ))}
                 </div>
+
+                <div style={{ borderRadius: '12px 12px 0 0', aspectRatio: '4/3', background: '#F0EEE8', overflow: 'hidden', position: 'relative' }}>
+                  {FACE_SAMPLES.map((s, i) => (
+                    <motion.img key={s.key}
+                      src={`/themes_mockup/${t.slug}_${s.key}_mockup.webp`} alt=""
+                      loading="lazy" decoding="async"
+                      style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'contain', display: 'block', transform: 'scale(1.3)' }}
+                      animate={{ opacity: i === activeIdx ? 1 : 0 }}
+                      transition={{ duration: 0.5 }}
+                      onError={e => { (e.target as HTMLImageElement).style.display = 'none'; }} />
+                  ))}
+                  {/* Arrow from face to scene */}
+                  <svg viewBox="0 0 160 90" preserveAspectRatio="none"
+                    style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', zIndex: 5, pointerEvents: 'none' }}>
+                    <motion.path d="M 148 4 Q 148 40 80 28" fill="none" stroke={C.saffron}
+                      strokeWidth="1.8" strokeLinecap="round" strokeDasharray="5 3"
+                      initial={{ pathLength: 0, opacity: 0 }} animate={{ pathLength: 1, opacity: 1 }}
+                      transition={{ duration: 0.8, delay: 0.3 }} key={`arrow-${activeIdx}`} />
+                    <motion.path d="M 88 23 L 80 28 L 87 33" fill="none" stroke={C.saffron}
+                      strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"
+                      initial={{ opacity: 0 }} animate={{ opacity: 1 }}
+                      transition={{ delay: 1.0 }} key={`arrowhead-${activeIdx}`} />
+                  </svg>
+                </div>
+
                 <div style={{ padding: '10px 12px 11px' }}>
                   <p style={{ fontSize: 17, fontWeight: 700, color: C.navy, margin: 0, lineHeight: 1.3 }}>{t.icon} {t.name}</p>
                   <p style={{ fontSize: 11, color: C.lgray, margin: '3px 0 0' }}>Ages {t.ageRange}</p>

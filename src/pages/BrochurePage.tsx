@@ -311,7 +311,7 @@ function BrochureThemeCard({ slug, icon, name, onClick }: { slug: string; icon: 
           </svg>
           {/* Title overlay */}
           <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, padding: '20px 14px 10px', background: 'linear-gradient(transparent, rgba(0,0,0,0.55))', zIndex: 4 }}>
-            <p className="font-extrabold text-sm" style={{ fontFamily: "'Baloo 2', sans-serif", color: '#fff' }}>{icon} {name}</p>
+            <p className="font-extrabold" style={{ fontFamily: "'Baloo 2', sans-serif", color: '#fff', fontSize: 19 }}>{icon} {name}</p>
           </div>
         </div>
         {/* Face circle */}
@@ -348,8 +348,13 @@ function BrochureThemeCard({ slug, icon, name, onClick }: { slug: string; icon: 
           ))}
         </div>
       </div>
-      {/* Personalize button */}
+      {/* Price + Personalize button */}
       <div style={{ padding: '10px 12px 12px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, marginBottom: 7 }}>
+          <span style={{ fontSize: 11, fontWeight: 700, color: '#fff', background: '#22C55E', borderRadius: 50, padding: '2px 8px', letterSpacing: 0.3 }}>15% OFF</span>
+          <span style={{ fontSize: 13, color: '#9CA3AF', textDecoration: 'line-through', fontWeight: 600 }}>₹1,499</span>
+          <span style={{ fontSize: 16, fontWeight: 800, color: C.navy, fontFamily: "'Baloo 2', sans-serif" }}>₹1,274</span>
+        </div>
         <button
           onClick={onClick}
           style={{ width: '100%', padding: '9px 0', borderRadius: 50, background: C.saffron, color: '#fff', border: 'none', fontWeight: 800, fontSize: 13, cursor: 'pointer', fontFamily: "'Baloo 2', sans-serif" }}>
@@ -888,7 +893,7 @@ function OrderForm({ price }: { price: number; scrollTo: (id: string) => void })
                   <label style={labelStyle}>Theme *</label>
 
                   {(['3–5', '5–8', '8–12'] as const).map(range => {
-                    const rangeThemes = THEMES.filter(t => !t.category && t.ageRange === range);
+                    const rangeThemes = THEMES.filter(t => !t.category && (Array.isArray(t.ageRange) ? t.ageRange.includes(range) : t.ageRange === range));
                     const isRelevant = form.childAge ? ageToRange(Number(form.childAge)) === range : true;
                     return (
                       <div key={range} className="mb-3">
@@ -1420,7 +1425,7 @@ export function BrochurePage() {
         <div className="max-w-6xl mx-auto px-5 sm:px-8">
           <motion.div initial={{ opacity: 0, y: 16 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} className="mb-8">
             {eyebrow('What will their story be about?')}
-            {heading(<>17 themes across<br />every age group</>)}
+            {heading(<>18 themes across<br />every age group</>)}
             <p className="text-sm mt-3 leading-relaxed" style={{ color: C.gray }}>
               From bedtime routines for toddlers to financial literacy for teens — every theme is built around real learning moments. Click any to explore.
             </p>
@@ -1432,7 +1437,7 @@ export function BrochurePage() {
               { range: '5–8'  as const, label: 'Early School',  color: '#F7B731' },
               { range: '8–12' as const, label: 'Upper Primary', color: '#1A1A2E' },
             ];
-            const tabThemes = THEMES.filter(t => !t.category && t.ageRange === themesTab);
+            const tabThemes = THEMES.filter(t => !t.category && (Array.isArray(t.ageRange) ? t.ageRange.includes(themesTab) : t.ageRange === themesTab));
             const mythologyThemes = THEMES.filter(t => t.category === 'mythology');
             return (
               <>
@@ -1642,64 +1647,6 @@ export function BrochurePage() {
       {/* ══════════════════════════════════════════
           § 3  ART STYLES — navy
       ══════════════════════════════════════════ */}
-      <section id="art-styles" style={{ background: C.navy }} className="py-16 sm:py-20">
-        <div className="max-w-6xl mx-auto px-5 sm:px-8">
-          <motion.div initial={{ opacity: 0, y: 16 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} className="mb-10">
-            {eyebrow('Step 1 · Choose your art style', true)}
-            {heading('Two styles. One hero. Your child.', true)}
-          </motion.div>
-
-          {/* Boy row */}
-          <p className="text-xs font-bold uppercase tracking-widest mb-3 text-center" style={{ color: 'rgba(255,255,255,0.35)' }}>Arjun, Age 7</p>
-          <div className="grid grid-cols-3 gap-4 mb-10 mx-auto" style={{ maxWidth: 640 }}>
-            <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }} className="rounded-2xl overflow-hidden shadow-lg">
-              <div className="overflow-hidden" style={{ background: C.navyCard }}>
-                <img src="/styles/boy_base.webp" alt="Real photo" loading="lazy" decoding="async" className="w-full h-auto block object-top" />
-              </div>
-              <div className="py-2 text-center text-xs font-bold flex items-center justify-center gap-1.5"
-                style={{ background: C.saffron, color: C.white }}>
-                <span>📸</span> Real Photo
-              </div>
-            </motion.div>
-            {boyStyles.map((s, i) => (
-              <motion.div key={s.label} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }} transition={{ delay: i * 0.1 }}
-                className="rounded-2xl overflow-hidden shadow-lg">
-                <div className="overflow-hidden" style={{ background: C.navyCard }}>
-                  <img src={s.img} alt={s.label} loading="lazy" decoding="async" className="w-full h-auto block object-top" />
-                </div>
-                <div className="py-2 text-center text-xs font-bold" style={{ background: C.navyCard, color: C.gold }}>{s.label}</div>
-              </motion.div>
-            ))}
-          </div>
-
-          {/* Girl row */}
-          <p className="text-xs font-bold uppercase tracking-widest mb-3 text-center" style={{ color: 'rgba(255,255,255,0.35)' }}>Priya, Age 7</p>
-          <div className="grid grid-cols-3 gap-4 mx-auto" style={{ maxWidth: 640 }}>
-            <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }} className="rounded-2xl overflow-hidden shadow-lg">
-              <div className="overflow-hidden" style={{ background: C.navyCard }}>
-                <img src="/styles/girl_base.webp" alt="Real photo" loading="lazy" decoding="async" className="w-full h-auto block object-top" />
-              </div>
-              <div className="py-2 text-center text-xs font-bold flex items-center justify-center gap-1.5"
-                style={{ background: C.saffron, color: C.white }}>
-                <span>📸</span> Real Photo
-              </div>
-            </motion.div>
-            {girlStyles.map((s, i) => (
-              <motion.div key={s.label} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }} transition={{ delay: i * 0.1 }}
-                className="rounded-2xl overflow-hidden shadow-lg">
-                <div className="overflow-hidden" style={{ background: C.navyCard }}>
-                  <img src={s.img} alt={s.label} loading="lazy" decoding="async" className="w-full h-auto block object-top" />
-                </div>
-                <div className="py-2 text-center text-xs font-bold" style={{ background: C.navyCard, color: C.gold }}>{s.label}</div>
-              </motion.div>
-            ))}
-          </div>
-        </div>
-      </section>
 
       {/* ══════════════════════════════════════════
           § 4  STORY FORMATS — hidden

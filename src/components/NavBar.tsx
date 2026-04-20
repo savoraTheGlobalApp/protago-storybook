@@ -43,8 +43,9 @@ export function NavBar() {
       style={{ background: 'rgba(255,255,255,0.96)', backdropFilter: 'blur(12px)', borderColor: '#F0F0F0' }}>
       <div className="max-w-6xl mx-auto px-5 sm:px-8 py-3 flex items-center justify-between">
         <button onClick={() => navigate('/')}
-          style={{ fontFamily: "'Baloo 2', sans-serif", fontWeight: 800, fontSize: 22, color: C.saffron, background: 'none', border: 'none', cursor: 'pointer' }}>
+          style={{ fontFamily: "'Baloo 2', sans-serif", fontWeight: 800, fontSize: 28, color: C.saffron, background: 'none', border: 'none', cursor: 'pointer', textAlign: 'left', lineHeight: 1.1 }}>
           protago
+          <span style={{ display: 'block', fontSize: 15, fontFamily: "'Nunito', sans-serif", fontWeight: 700, color: C.lgray, letterSpacing: '0.03em' }}>🎓 IIT Kanpur Alumni initiative</span>
         </button>
 
         <nav className="hidden md:flex items-center gap-7">
