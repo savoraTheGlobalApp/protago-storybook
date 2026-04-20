@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { useParams, useSearchParams, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -141,6 +141,252 @@ function FeedbackWidget({ jobId, API_BASE }: { jobId: string; API_BASE: string }
   );
 }
 
+// ── Progress bar + story teaser ─────────────────────────────────────────────
+const TOTAL_SECS = 120;
+
+const STORY_LINES = [
+  (n: string) => `${n} stood at the edge of the enchanted forest, heart pounding with excitement…`,
+  (n: string) => `The pages began to glow as the story recognized ${n} and only ${n}…`,
+  (n: string) => `"This is my adventure," whispered ${n}, eyes wide with wonder…`,
+  (n: string) => `Every illustration was painting itself — just for ${n}…`,
+  (n: string) => `The hero of this story? ${n}. The magic? Already happening…`,
+  (n: string) => `Somewhere in the story, ${n} smiled. Because this moment was theirs alone…`,
+];
+
+function StoryTeaser({ childName }: { childName: string }) {
+  const [progress, setProgress] = useState(0);
+  const [lineIdx, setLineIdx] = useState(0);
+  const [displayed, setDisplayed] = useState('');
+  const charIdxRef = useRef(0);
+  const startRef = useRef(Date.now());
+
+  // Smooth progress bar over TOTAL_SECS
+  useEffect(() => {
+    const tick = () => {
+      const elapsed = (Date.now() - startRef.current) / 1000;
+      // Clamp raw to [0,1] so negative base never hits Math.pow
+      const raw = Math.min(1, elapsed / TOTAL_SECS);
+      const eased = Math.min(0.95, 1 - Math.pow(1 - raw, 2.2));
+      setProgress(eased);
+    };
+    const id = setInterval(tick, 200);
+    return () => clearInterval(id);
+  }, []);
+
+  // Cycle story lines every 8s
+  useEffect(() => {
+    const id = setInterval(() => {
+      setLineIdx(i => (i + 1) % STORY_LINES.length);
+      charIdxRef.current = 0;
+      setDisplayed('');
+    }, 8000);
+    return () => clearInterval(id);
+  }, []);
+
+  // Typewriter per character
+  useEffect(() => {
+    const full = STORY_LINES[lineIdx](childName);
+    charIdxRef.current = 0;
+    setDisplayed('');
+    const id = setInterval(() => {
+      charIdxRef.current++;
+      setDisplayed(full.slice(0, charIdxRef.current));
+      if (charIdxRef.current >= full.length) clearInterval(id);
+    }, 28);
+    return () => clearInterval(id);
+  }, [lineIdx, childName]);
+
+  const pct = Math.round(progress * 100);
+
+  return (
+    <div style={{ width: '100%', marginBottom: 28 }}>
+      {/* Progress bar */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 10 }}>
+        <div style={{ flex: 1, height: 6, background: 'rgba(255,255,255,0.08)', borderRadius: 99, overflow: 'hidden' }}>
+          <motion.div
+            animate={{ width: `${pct}%` }}
+            transition={{ duration: 0.8, ease: 'easeOut' }}
+            style={{ height: '100%', borderRadius: 99, background: `linear-gradient(90deg, ${C.saffron}, ${C.gold})` }}
+          />
+        </div>
+        <span style={{ fontSize: 12, fontWeight: 800, color: C.gold, minWidth: 36, textAlign: 'right' }}>{pct}%</span>
+      </div>
+
+      {/* Typewriter story line */}
+      <div style={{ minHeight: 52, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '0 8px' }}>
+        <p style={{
+          fontFamily: "'Baloo 2', sans-serif", fontWeight: 700,
+          fontSize: 'clamp(0.95rem, 2vw, 1.15rem)',
+          color: 'rgba(255,255,255,0.75)', textAlign: 'center',
+          lineHeight: 1.5, margin: 0, letterSpacing: 0.2,
+        }}>
+          {displayed}
+          <motion.span
+            animate={{ opacity: [1, 0] }} transition={{ duration: 0.5, repeat: Infinity, repeatType: 'reverse' }}
+            style={{ display: 'inline-block', width: 2, height: '1em', background: C.saffron, verticalAlign: 'text-bottom', marginLeft: 2, borderRadius: 1 }}
+          />
+        </p>
+      </div>
+    </div>
+  );
+}
+
+// ── Mini storybook runner game ──────────────────────────────────────────────
+const CHAR_X = 55;
+const CHAR_SIZE = 34;
+const OBS_SIZE = 30;
+const GRAVITY = 0.45;
+const JUMP_VEL = -12;
+const BASE_SPEED = 2.8;
+const OBS_EMOJIS = ['📚', '✏️', '🌟', '🎨', '🦋'];
+
+function StoryGame({ childName }: { childName: string }) {
+  const containerRef = useRef<HTMLDivElement>(null);
+  const charRef = useRef<HTMLDivElement>(null);
+  const [phase, setPhase] = useState<'idle' | 'playing'>('idle');
+  const [score, setScore] = useState(0);
+
+  const gs = useRef({
+    charBottom: 0, velY: 0, onGround: true,
+    frame: 0, nextObsIn: 70,
+    obstacles: [] as { el: HTMLDivElement; x: number }[],
+    rafId: 0, gameW: 400,
+  });
+
+  const clearObstacles = useCallback(() => {
+    gs.current.obstacles.forEach(o => o.el.remove());
+    gs.current.obstacles = [];
+  }, []);
+
+  const startGame = useCallback(() => {
+    const s = gs.current;
+    clearObstacles();
+    Object.assign(s, { charBottom: 0, velY: JUMP_VEL, onGround: false, frame: 0, nextObsIn: 70 });
+    if (charRef.current) charRef.current.style.bottom = '0px';
+    setScore(0);
+    setPhase('playing');
+  }, [clearObstacles]);
+
+  const doJump = useCallback(() => {
+    const s = gs.current;
+    if (s.onGround || s.charBottom < 4) { s.velY = JUMP_VEL; s.onGround = false; }
+  }, []);
+
+  const handleTap = useCallback(() => {
+    if (phase === 'idle') startGame();
+    else doJump();
+  }, [phase, startGame, doJump]);
+
+  // Keyboard support
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.code === 'Space' || e.code === 'ArrowUp') { e.preventDefault(); handleTap(); }
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [handleTap]);
+
+  // Game loop
+  useEffect(() => {
+    if (phase !== 'playing') return;
+    const s = gs.current;
+    const gameEl = containerRef.current;
+    const charEl = charRef.current;
+    if (!gameEl || !charEl) return;
+    s.gameW = gameEl.offsetWidth;
+
+    const tick = () => {
+
+      // Physics
+      s.velY += GRAVITY;
+      s.charBottom = Math.max(0, s.charBottom - s.velY);
+      s.onGround = s.charBottom <= 0;
+      if (s.onGround) s.velY = 0;
+      charEl.style.bottom = `${s.charBottom}px`;
+
+      // Spawn obstacles
+      s.nextObsIn--;
+      if (s.nextObsIn <= 0) {
+        const el = document.createElement('div');
+        el.style.cssText = `position:absolute;bottom:0;font-size:${OBS_SIZE}px;line-height:1;pointer-events:none;user-select:none;`;
+        el.textContent = OBS_EMOJIS[Math.floor(Math.random() * OBS_EMOJIS.length)];
+        gameEl.appendChild(el);
+        s.obstacles.push({ el, x: s.gameW + 30 });
+        const speed = Math.min(5, BASE_SPEED + s.frame / 900);
+        s.nextObsIn = Math.max(60, 100 - s.frame / 150) + Math.random() * 60;
+        el.dataset.speed = String(speed);
+      }
+
+      // Move + collide
+      const speed = Math.min(5, BASE_SPEED + s.frame / 900);
+      for (let i = s.obstacles.length - 1; i >= 0; i--) {
+        const obs = s.obstacles[i];
+        obs.x -= Number(obs.el.dataset.speed || speed);
+        obs.el.style.left = `${obs.x}px`;
+        if (obs.x < -50) { obs.el.remove(); s.obstacles.splice(i, 1); continue; }
+      }
+
+      s.frame++;
+      if (s.frame % 30 === 0) setScore(Math.floor(s.frame / 30));
+      s.rafId = requestAnimationFrame(tick);
+    };
+
+    s.rafId = requestAnimationFrame(tick);
+    return () => { cancelAnimationFrame(s.rafId); };
+  }, [phase]);
+
+  return (
+    <div style={{ width: '100%' }}>
+      {/* Header row */}
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8, padding: '0 2px' }}>
+        <span style={{ fontSize: 12, fontWeight: 700, color: 'rgba(255,255,255,0.45)' }}>
+          {phase === 'idle' ? `Keep ${childName} jumping! 🎮` : `${score}s and counting…`}
+        </span>
+      </div>
+
+      {/* Game area */}
+      <div
+        ref={containerRef}
+        onClick={handleTap}
+        style={{
+          position: 'relative', width: '100%', height: 240,
+          background: 'rgba(255,255,255,0.03)',
+          borderRadius: 16, border: '1.5px solid rgba(255,255,255,0.08)',
+          overflow: 'hidden', cursor: 'pointer', userSelect: 'none',
+          touchAction: 'none',
+        }}
+      >
+        {/* Ground */}
+        <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: 2, background: 'rgba(255,255,255,0.1)', borderRadius: 1 }} />
+
+        {/* Character */}
+        <div ref={charRef} style={{
+          position: 'absolute', left: CHAR_X, bottom: 0,
+          fontSize: CHAR_SIZE, lineHeight: 1,
+          userSelect: 'none', pointerEvents: 'none',
+        }}>
+          📖
+        </div>
+
+        {/* Idle overlay */}
+        {phase === 'idle' && (
+          <div style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 4, background: 'rgba(26,26,46,0.6)', backdropFilter: 'blur(2px)' }}>
+            <span style={{ fontSize: 22 }}>👆</span>
+            <span style={{ fontSize: 13, fontWeight: 800, color: '#fff' }}>Tap to start!</span>
+            <span style={{ fontSize: 11, color: 'rgba(255,255,255,0.4)', textAlign: 'center', maxWidth: 220 }}>
+              Keep {childName} jumping while the story generates
+            </span>
+          </div>
+        )}
+      </div>
+
+      <p style={{ textAlign: 'center', fontSize: 11, color: 'rgba(255,255,255,0.25)', marginTop: 8 }}>
+        Space / Arrow Up to jump · Story ready in ~2 min
+      </p>
+    </div>
+  );
+}
+
 export function PreviewResultPage() {
   const { jobId } = useParams<{ jobId: string }>();
   const [searchParams] = useSearchParams();
@@ -154,15 +400,7 @@ export function PreviewResultPage() {
   const [resultUrls, setResultUrls] = useState<[string | null, string | null]>([null, null]);
   const [status, setStatus] = useState<'processing' | 'done' | 'failed'>('processing');
   const [errorMsg, setErrorMsg] = useState('');
-  const [waitLine, setWaitLine] = useState(0);
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
-
-  // Rotate waiting messages
-  useEffect(() => {
-    if (status !== 'processing') return;
-    const t = setInterval(() => setWaitLine(i => (i + 1) % WAITING_LINES.length), 3500);
-    return () => clearInterval(t);
-  }, [status]);
 
   // Poll for results
   useEffect(() => {
@@ -213,7 +451,7 @@ export function PreviewResultPage() {
       </div>
 
       {/* Main */}
-      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '40px 20px 60px', maxWidth: 860, margin: '0 auto', width: '100%' }}>
+      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '40px 20px 60px', maxWidth: 1100, margin: '0 auto', width: '100%' }}>
 
         {/* Title */}
         <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4 }}
@@ -231,17 +469,13 @@ export function PreviewResultPage() {
           )}
         </motion.div>
 
-        {/* Waiting message */}
+        {/* Progress bar + story teaser */}
+        {status === 'processing' && <StoryTeaser childName={childName} />}
+
+        {/* Mini game while waiting */}
         {status === 'processing' && (
-          <div style={{ marginBottom: 28, height: 28, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <AnimatePresence mode="wait">
-              <motion.p key={waitLine}
-                initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -6 }}
-                transition={{ duration: 0.35 }}
-                style={{ fontSize: 14, color: 'rgba(255,255,255,0.55)', fontWeight: 600, textAlign: 'center', margin: 0 }}>
-                {WAITING_LINES[waitLine](childName)}
-              </motion.p>
-            </AnimatePresence>
+          <div style={{ width: '100%', marginBottom: 32 }}>
+            <StoryGame childName={childName} />
           </div>
         )}
 
@@ -285,7 +519,7 @@ export function PreviewResultPage() {
 
         {/* Processing indicator dots */}
         {status === 'processing' && (
-          <div style={{ display: 'flex', gap: 6, marginTop: 8 }}>
+          <div style={{ display: 'flex', gap: 6, marginTop: 20 }}>
             {[0, 1, 2].map(i => (
               <motion.div key={i}
                 animate={{ opacity: [0.25, 1, 0.25], scale: [0.8, 1, 0.8] }}
