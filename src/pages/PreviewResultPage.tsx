@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { useParams, useSearchParams, useNavigate } from 'react-router-dom';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion, AnimatePresence, useMotionValue, useTransform } from 'framer-motion';
 
 const C = {
   saffron: '#FF6B35',
@@ -22,11 +22,10 @@ const WAITING_LINES = [
 function ShimmerCard() {
   return (
     <div style={{
-      width: '100%', aspectRatio: '16/9', borderRadius: 16,
-      background: 'linear-gradient(90deg, #F0EEE8 0%, #E8E4DC 40%, #F0EEE8 100%)',
+      width: '100%', height: '100%', minHeight: 180,
+      background: 'linear-gradient(90deg, #2a2840 0%, #1e1c36 40%, #2a2840 100%)',
       backgroundSize: '200% 100%',
       animation: 'shimmer 1.6s infinite linear',
-      overflow: 'hidden',
     }}>
       <style>{`
         @keyframes shimmer {
@@ -38,27 +37,264 @@ function ShimmerCard() {
   );
 }
 
-function SceneCard({ url, index }: { url: string | null; index: number }) {
-  const [loaded, setLoaded] = useState(false);
+// ── Book viewer with 3D page flip ────────────────────────────────────────────
+const FLIP_DURATION = 0.85;
+
+function FlippingPage({
+  fromUrl, toUrl, dir, onDone,
+}: { fromUrl: string | null; toUrl: string | null; dir: 1 | -1; onDone: () => void }) {
+  // Use keyframe arrays so we don't need a MotionValue — no conditional hooks
+  const gleamAnim   = { opacity: [0, 0, 0.55, 0] as number[] };
+  const gleamTimes  = [0, 0.3, 0.5, 1];
+  const shadowAnim  = { opacity: [0, 0.5, 0.5, 0] as number[] };
+  const shadowTimes = [0, 0.25, 0.6, 1];
+  const t = { duration: FLIP_DURATION, ease: [0.33, 0, 0.15, 1] as [number,number,number,number] };
+
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-      <div style={{ position: 'relative', width: '100%', aspectRatio: '16/9', borderRadius: 16, overflow: 'hidden', background: '#F0EEE8' }}>
-        {!loaded && <div style={{ position: 'absolute', inset: 0 }}><ShimmerCard /></div>}
-        {url && (
-          <motion.img
-            src={url}
-            alt={`Preview scene ${index + 1}`}
+    <>
+      {/* Shadow cast onto the destination half — sweeps as page turns */}
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={shadowAnim}
+        transition={{ duration: FLIP_DURATION, times: shadowTimes, ease: 'easeInOut' }}
+        style={{
+          position: 'absolute', top: 0, bottom: 0, zIndex: 2, pointerEvents: 'none',
+          ...(dir === 1 ? { left: '50%', right: 0 } : { left: 0, right: '50%' }),
+          background: dir === 1
+            ? 'linear-gradient(to right, rgba(0,0,0,0.65) 0%, rgba(0,0,0,0.15) 55%, transparent 100%)'
+            : 'linear-gradient(to left,  rgba(0,0,0,0.65) 0%, rgba(0,0,0,0.15) 55%, transparent 100%)',
+        }}
+      />
+
+      {/* The turning page */}
+      <motion.div
+        initial={{ rotateY: 0 }}
+        animate={{ rotateY: dir === 1 ? -180 : 180 }}
+        transition={t}
+        onAnimationComplete={onDone}
+        style={{
+          position: 'absolute', top: 0, bottom: 0, zIndex: 3,
+          ...(dir === 1 ? { left: '50%', right: 0 } : { left: 0, right: '50%' }),
+          transformOrigin: dir === 1 ? 'left center' : 'right center',
+          transformStyle: 'preserve-3d',
+        }}
+      >
+        {/* ── Front face — peeling half of the from-scene ── */}
+        <div style={{ position: 'absolute', inset: 0, backfaceVisibility: 'hidden', overflow: 'hidden' }}>
+          {fromUrl
+            ? <img src={fromUrl} style={{
+                position: 'absolute', top: 0, height: '100%', objectFit: 'cover', display: 'block',
+                ...(dir === 1 ? { right: 0, width: '200%', objectPosition: 'right' }
+                              : { left: 0,  width: '200%', objectPosition: 'left'  }),
+              }} />
+            : <ShimmerCard />}
+
+          {/* Spine lift shadow */}
+          <div style={{
+            position: 'absolute', inset: 0, pointerEvents: 'none',
+            background: dir === 1
+              ? 'linear-gradient(to right, rgba(0,0,0,0.38) 0%, rgba(0,0,0,0.04) 20%, transparent 50%)'
+              : 'linear-gradient(to left,  rgba(0,0,0,0.38) 0%, rgba(0,0,0,0.04) 20%, transparent 50%)',
+          }} />
+
+          {/* Light gleam at ~90° */}
+          <motion.div
             initial={{ opacity: 0 }}
-            animate={{ opacity: loaded ? 1 : 0 }}
-            transition={{ duration: 0.6 }}
-            onLoad={() => setLoaded(true)}
-            style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
+            animate={gleamAnim}
+            transition={{ duration: FLIP_DURATION, times: gleamTimes, ease: 'easeInOut' }}
+            style={{
+              position: 'absolute', inset: 0, pointerEvents: 'none',
+              background: 'linear-gradient(to right, transparent 15%, rgba(255,255,255,0.7) 50%, transparent 85%)',
+            }}
           />
-        )}
+        </div>
+
+        {/* ── Back face — destination scene content ── */}
+        {/*
+          The back face has rotateY(180deg). When parent is at -180deg, net = 0deg (faces viewer).
+          But horizontal axis is mirrored by the parent's flip, so we apply scaleX(-1) to the img
+          to show the correct orientation of the destination scene's matching half.
+        */}
+        <div style={{
+          position: 'absolute', inset: 0, backfaceVisibility: 'hidden',
+          transform: 'rotateY(180deg)', overflow: 'hidden',
+          background: '#0d0a04',
+        }}>
+          {toUrl && (
+            <img src={toUrl} style={{
+              position: 'absolute', top: 0, height: '100%', objectFit: 'cover', display: 'block',
+              // No scaleX needed: back face rotateY(180°) + parent's flip compound to net 0° —
+              // content renders correctly oriented without any extra mirror correction.
+              ...(dir === 1
+                ? { left: 0,  width: '200%', objectPosition: 'left'  }
+                : { right: 0, width: '200%', objectPosition: 'right' }),
+            }} />
+          )}
+          {/* Edge shading on the back face */}
+          <div style={{
+            position: 'absolute', inset: 0, pointerEvents: 'none',
+            background: dir === 1
+              ? 'linear-gradient(to right, rgba(0,0,0,0.18) 0%, transparent 40%)'
+              : 'linear-gradient(to left,  rgba(0,0,0,0.18) 0%, transparent 40%)',
+          }} />
+        </div>
+      </motion.div>
+    </>
+  );
+}
+
+function BookViewer({ urls }: { urls: [string | null, string | null] }) {
+  const [page, setPage]         = useState(0);
+  const [flip, setFlip]         = useState<{ from: number; to: number; dir: 1 | -1 } | null>(null);
+  const [loaded, setLoaded]     = useState([false, false]);
+
+  const total = urls.filter(Boolean).length;
+  const isFlipping = flip !== null;
+
+  const go = (d: 1 | -1) => {
+    const next = page + d;
+    if (next < 0 || next >= total || isFlipping) return;
+    setFlip({ from: page, to: next, dir: d });
+  };
+
+  const onFlipDone = useCallback(() => {
+    if (!flip) return;
+    setPage(flip.to);
+    setFlip(null);
+  }, [flip]);
+
+  const markLoaded = (i: number) =>
+    setLoaded(prev => { const n = [...prev]; n[i] = true; return n; });
+
+  return (
+    <div style={{ width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 20, marginBottom: 32 }}>
+      <style>{`
+        @keyframes pageHint { 0%,100%{transform:translateX(0);opacity:.6} 50%{transform:translateX(7px);opacity:1} }
+      `}</style>
+
+      <div style={{ position: 'relative', width: '100%', maxWidth: 860, perspective: '1600px', perspectiveOrigin: '50% 45%' }}>
+
+        {/* Ground shadow */}
+        <div style={{
+          position: 'absolute', bottom: -22, left: '5%', right: '5%', height: 30,
+          background: 'radial-gradient(ellipse, rgba(0,0,0,0.52) 0%, transparent 75%)',
+          filter: 'blur(12px)', zIndex: 0,
+        }} />
+
+        {/* Book body */}
+        <div style={{
+          position: 'relative', width: '100%', aspectRatio: '16/9', borderRadius: 3,
+          boxShadow: '0 22px 60px rgba(0,0,0,0.7), inset 0 0 0 1px rgba(255,255,255,0.06)',
+          background: '#0d0a04', zIndex: 1,
+        }}>
+
+          {/* Layer 0 — destination always underneath */}
+          {isFlipping && urls[flip.to] && (
+            <img src={urls[flip.to]!} onLoad={() => markLoaded(flip.to)}
+              style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', borderRadius: 3, display: 'block' }} />
+          )}
+
+          {/* Layer 1 — idle: full current scene */}
+          {!isFlipping && (
+            urls[page]
+              ? <img src={urls[page]!} onLoad={() => markLoaded(page)}
+                  style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', borderRadius: 3, display: 'block', opacity: loaded[page] ? 1 : 0, transition: 'opacity 0.5s' }} />
+              : <div style={{ position: 'absolute', inset: 0 }}><ShimmerCard /></div>
+          )}
+
+          {/* Layer 2 — static half of from-scene during flip */}
+          {isFlipping && (
+            <div style={{
+              position: 'absolute', top: 0, bottom: 0, zIndex: 2, overflow: 'hidden',
+              ...(flip.dir === 1 ? { left: 0, width: '50%' } : { right: 0, width: '50%' }),
+            }}>
+              {urls[flip.from]
+                ? <img src={urls[flip.from]!} style={{
+                    height: '100%', objectFit: 'cover', display: 'block',
+                    ...(flip.dir === 1
+                      ? { width: '200%', objectPosition: 'left' }
+                      : { width: '200%', objectPosition: 'right', marginLeft: '-100%' }),
+                  }} />
+                : <ShimmerCard />}
+            </div>
+          )}
+
+          {/* Layer 3 — the animated flip (isolated component so hooks are stable) */}
+          {isFlipping && (
+            <FlippingPage
+              key={`${flip.from}-${flip.to}`}
+              fromUrl={urls[flip.from]}
+              toUrl={urls[flip.to]}
+              dir={flip.dir}
+              onDone={onFlipDone}
+            />
+          )}
+
+          {/* Spine — always on top */}
+          <div style={{
+            position: 'absolute', top: 0, bottom: 0, left: '50%',
+            width: 24, transform: 'translateX(-50%)', zIndex: 10, pointerEvents: 'none',
+            background: 'linear-gradient(to right, rgba(0,0,0,0.32) 0%, rgba(0,0,0,0.05) 40%, rgba(0,0,0,0.05) 60%, rgba(0,0,0,0.26) 100%)',
+          }} />
+
+          {/* Click zones */}
+          {!isFlipping && page > 0 && (
+            <button onClick={() => go(-1)} aria-label="Previous"
+              style={{ position: 'absolute', left: 0, top: 0, bottom: 0, width: '30%', background: 'transparent', border: 'none', cursor: 'pointer', zIndex: 11 }} />
+          )}
+          {!isFlipping && page < total - 1 && (
+            <button onClick={() => go(1)} aria-label="Next"
+              style={{ position: 'absolute', right: 0, top: 0, bottom: 0, width: '30%', background: 'transparent', border: 'none', cursor: 'pointer', zIndex: 11 }} />
+          )}
+
+          {/* Hint arrow */}
+          {!isFlipping && page === 0 && total > 1 && (
+            <div style={{
+              position: 'absolute', right: 16, top: '50%', transform: 'translateY(-50%)',
+              fontSize: 22, color: 'rgba(255,255,255,0.4)', zIndex: 11, pointerEvents: 'none',
+              animation: 'pageHint 1.7s ease-in-out infinite',
+            }}>›</div>
+          )}
+        </div>
+
+        {/* Side arrow buttons */}
+        <button onClick={() => go(-1)} disabled={page === 0 || isFlipping} style={{
+          position: 'absolute', left: -24, top: '50%', transform: 'translateY(-50%)',
+          width: 44, height: 44, borderRadius: '50%', border: 'none', zIndex: 12,
+          background: page === 0 ? 'rgba(255,255,255,0.04)' : 'rgba(255,255,255,0.13)',
+          color: page === 0 ? 'rgba(255,255,255,0.12)' : '#fff',
+          cursor: page === 0 ? 'default' : 'pointer', fontSize: 22,
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          backdropFilter: 'blur(8px)', transition: 'all 0.2s',
+        }}>‹</button>
+
+        <button onClick={() => go(1)} disabled={page >= total - 1 || isFlipping} style={{
+          position: 'absolute', right: -24, top: '50%', transform: 'translateY(-50%)',
+          width: 44, height: 44, borderRadius: '50%', border: 'none', zIndex: 12,
+          background: page >= total - 1 ? 'rgba(255,255,255,0.04)' : 'rgba(255,107,53,0.9)',
+          color: page >= total - 1 ? 'rgba(255,255,255,0.12)' : '#fff',
+          cursor: page >= total - 1 ? 'default' : 'pointer', fontSize: 22,
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          backdropFilter: 'blur(8px)', transition: 'all 0.2s',
+          boxShadow: page < total - 1 ? '0 4px 20px rgba(255,107,53,0.5)' : 'none',
+        }}>›</button>
       </div>
-      <div style={{ fontSize: 11, fontWeight: 700, color: 'rgba(255,255,255,0.35)', letterSpacing: '0.1em', textTransform: 'uppercase', textAlign: 'center' }}>
-        Scene {index + 1}
+
+      {/* Dots */}
+      <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+        {urls.map((u, i) => u && (
+          <button key={i} onClick={() => !isFlipping && go((i > page ? 1 : -1) as 1 | -1)}
+            style={{
+              width: i === page ? 22 : 7, height: 7, borderRadius: 99, padding: 0,
+              background: i === page ? C.saffron : 'rgba(255,255,255,0.2)',
+              border: 'none', cursor: 'pointer', transition: 'all 0.3s ease',
+            }} />
+        ))}
       </div>
+
+      <p style={{ fontSize: 11, fontWeight: 700, color: 'rgba(255,255,255,0.28)', letterSpacing: '0.12em', textTransform: 'uppercase', margin: 0 }}>
+        Scene {page + 1} of {total} · Tap right side to turn the page
+      </p>
     </div>
   );
 }
@@ -479,11 +715,8 @@ export function PreviewResultPage() {
           </div>
         )}
 
-        {/* Scene cards */}
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: 16, width: '100%', marginBottom: 32 }}>
-          <SceneCard url={resultUrls[0]} index={0} />
-          <SceneCard url={resultUrls[1]} index={1} />
-        </div>
+        {/* Book viewer */}
+        {(resultUrls[0] || resultUrls[1]) && <BookViewer urls={resultUrls} />}
 
         {/* Error */}
         {status === 'failed' && (
