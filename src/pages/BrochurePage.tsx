@@ -1233,69 +1233,92 @@ function OrderForm({ price }: { price: number; scrollTo: (id: string) => void })
 // ── Real child reaction carousel ────────────────────────────────────────────
 
 const REACTION_VIDEOS = [
+  { id: 'UoNgye4Y2DA', name: 'Harsh' },
   { id: 'OsUGHz9LILY', name: 'Shreyansh' },
-  { id: 'ZDYwns8fCQ8', name: 'Bhanvi Likhita' },
 ];
 
 function HeroVideo() {
   const [active, setActive] = useState(0);
-  const [muted, setMuted] = useState(true);
-  const iframeRefs = useRef<(HTMLIFrameElement | null)[]>([]);
+  const [playing, setPlaying] = useState(false);
+  const [muted, setMuted] = useState(true); // Harsh autoplays muted
+  const iframeRef = useRef<HTMLIFrameElement>(null);
 
-  // Auto-advance every 12 s
+  // Auto-advance thumbnails only when not on the first video (Harsh plays fully)
   useEffect(() => {
-    const t = setInterval(() => setActive(i => (i + 1) % REACTION_VIDEOS.length), 12000);
+    if (playing || active === 0) return;
+    const t = setInterval(() => setActive(i => (i + 1) % REACTION_VIDEOS.length), 4000);
     return () => clearInterval(t);
-  }, []);
+  }, [playing, active]);
 
-  const toggleMute = () => {
-    const cmd = muted ? 'unMute' : 'mute';
-    iframeRefs.current[active]?.contentWindow?.postMessage(
-      JSON.stringify({ event: 'command', func: cmd, args: [] }), '*'
-    );
-    setMuted(m => !m);
-  };
+  // Reset state when slide changes
+  useEffect(() => { setPlaying(false); setMuted(true); }, [active]);
 
-  // Re-mute whenever the active slide changes (new iframe starts muted)
-  useEffect(() => { setMuted(true); }, [active]);
+  const { id, name } = REACTION_VIDEOS[active];
+
+  // First video (Harsh) autoplays muted on load; others need a tap
+  const isFirst = active === 0;
+  const showIframe = isFirst || playing;
 
   return (
     <div className="relative rounded-2xl overflow-hidden shadow-2xl mx-auto aspect-[9/16] max-h-[55vh] sm:aspect-auto sm:max-h-none sm:h-full">
-      {REACTION_VIDEOS.map(({ id, name }, i) => (
-        <div key={id} style={{ position: 'absolute', inset: 0, transition: 'opacity 0.5s ease', opacity: i === active ? 1 : 0, pointerEvents: i === active ? 'auto' : 'none' }}>
+      {showIframe ? (
+        <>
           <iframe
-            ref={el => { iframeRefs.current[i] = el; }}
+            ref={iframeRef}
+            key={id}
             src={`https://www.youtube.com/embed/${id}?autoplay=1&mute=1&playsinline=1&loop=1&playlist=${id}&controls=0&modestbranding=1&rel=0&enablejsapi=1`}
             title={name}
             allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
             allowFullScreen
-            className="w-full h-full border-0"
+            className="w-full h-full border-0 absolute inset-0"
           />
+          {/* Unmute button — postMessage to YT API, no reload needed */}
+          {muted && (
+            <button
+              onClick={() => {
+                iframeRef.current?.contentWindow?.postMessage(
+                  JSON.stringify({ event: 'command', func: 'unMute', args: [] }), '*'
+                );
+                iframeRef.current?.contentWindow?.postMessage(
+                  JSON.stringify({ event: 'command', func: 'setVolume', args: [100] }), '*'
+                );
+                setMuted(false);
+              }}
+              style={{
+                position: 'absolute', bottom: 56, left: '50%', transform: 'translateX(-50%)',
+                zIndex: 5, background: 'rgba(0,0,0,0.65)', border: '1.5px solid rgba(255,255,255,0.3)',
+                borderRadius: 50, color: '#fff', fontSize: 13, fontWeight: 700,
+                padding: '8px 18px', cursor: 'pointer', fontFamily: 'inherit',
+                display: 'flex', alignItems: 'center', gap: 7, whiteSpace: 'nowrap',
+                backdropFilter: 'blur(6px)',
+              }}
+            >
+              🔇 Tap to unmute
+            </button>
+          )}
+        </>
+      ) : (
+        <div onClick={() => setPlaying(true)} style={{ position: 'absolute', inset: 0, cursor: 'pointer' }}>
+          <img
+            src={`https://img.youtube.com/vi/${id}/maxresdefault.jpg`}
+            alt={name}
+            style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
+          />
+          {/* Dark overlay */}
+          <div style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.3)' }} />
+          {/* Play button */}
+          <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 2 }}>
+            <div style={{ width: 56, height: 56, borderRadius: '50%', background: 'rgba(255,255,255,0.92)', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 4px 20px rgba(0,0,0,0.4)' }}>
+              <svg viewBox="0 0 24 24" width="24" height="24" fill={C.saffron}>
+                <polygon points="5 3 19 12 5 21 5 3"/>
+              </svg>
+            </div>
+          </div>
         </div>
-      ))}
-
-      {/* Mute toggle */}
-      <button
-        onClick={toggleMute}
-        className="absolute top-3 right-3 rounded-full flex items-center justify-center transition-opacity hover:opacity-90"
-        style={{ width: 36, height: 36, background: 'rgba(0,0,0,0.55)', backdropFilter: 'blur(4px)', border: 'none', cursor: 'pointer', zIndex: 10 }}
-        aria-label={muted ? 'Unmute video' : 'Mute video'}>
-        {muted ? (
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/>
-            <line x1="23" y1="9" x2="17" y2="15"/><line x1="17" y1="9" x2="23" y2="15"/>
-          </svg>
-        ) : (
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/>
-            <path d="M19.07 4.93a10 10 0 0 1 0 14.14"/>
-            <path d="M15.54 8.46a5 5 0 0 1 0 7.07"/>
-          </svg>
-        )}
-      </button>
+      )}
 
       {/* Caption */}
-      <div className="absolute bottom-0 left-0 right-0 px-3 py-2.5" style={{ background: 'linear-gradient(transparent, rgba(0,0,0,0.75))', zIndex: 2 }}>
+      <div className="absolute bottom-0 left-0 right-0 px-3 py-2.5" style={{ background: 'linear-gradient(transparent, rgba(0,0,0,0.75))', zIndex: 3, pointerEvents: 'none' }}>
         <p className="text-[11px] font-bold text-white">Real child reaction</p>
         <p className="text-[9px] mt-0.5" style={{ color: 'rgba(255,255,255,0.7)' }}>
           Watch their story unfold
@@ -1303,7 +1326,7 @@ function HeroVideo() {
       </div>
 
       {/* Dot indicators */}
-      <div style={{ position: 'absolute', bottom: 44, left: '50%', transform: 'translateX(-50%)', display: 'flex', gap: 6, zIndex: 3 }}>
+      <div style={{ position: 'absolute', bottom: 44, left: '50%', transform: 'translateX(-50%)', display: 'flex', gap: 6, zIndex: 4 }}>
         {REACTION_VIDEOS.map((_, i) => (
           <button key={i} onClick={() => setActive(i)}
             style={{ width: i === active ? 20 : 7, height: 7, borderRadius: 4, background: i === active ? C.saffron : 'rgba(255,255,255,0.5)', border: 'none', cursor: 'pointer', padding: 0, transition: 'width 0.3s ease, background 0.3s ease' }} />
@@ -1319,6 +1342,7 @@ export function BrochurePage() {
   const [openFaq, setOpenFaq]         = useState<number | null>(null);
   const [themesTab, setThemesTab]     = useState<'3–5' | '5–8' | '8–12'>('3–5');
   const [heroSlide, setHeroSlide]     = useState(0);
+  const [promoPlaying, setPromoPlaying] = useState(false);
   const price = Number(import.meta.env.VITE_STORYBOOK_PRICE) || 499;
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
@@ -1382,16 +1406,35 @@ export function BrochurePage() {
             <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }}
               transition={{ duration: 0.5, delay: 0.1 }}
               className="w-full sm:w-1/2 min-w-0 flex flex-col">
-              {/* YouTube Shorts embed — iframe scaled up to clip YouTube UI, overlay blocks hover controls */}
+              {/* YouTube Shorts — load iframe only after user taps play */}
               <div style={{ position: 'relative', width: '100%', aspectRatio: '9/16', borderRadius: 16, overflow: 'hidden', background: '#000', maxHeight: 480 }}>
-                <iframe
-                  src="https://www.youtube.com/embed/o1yTBcrjLaM?autoplay=1&mute=1&loop=1&playlist=o1yTBcrjLaM&controls=0&rel=0&modestbranding=1&showinfo=0&iv_load_policy=3&disablekb=1"
-                  title="Protago preview"
-                  allow="autoplay; encrypted-media"
-                  allowFullScreen
-                  style={{ position: 'absolute', top: 0, left: '-5%', width: '110%', height: '115%', border: 'none' }}
-                />
-                <div style={{ position: 'absolute', inset: 0, zIndex: 2 }} />
+                {promoPlaying ? (
+                  <iframe
+                    src="https://www.youtube.com/embed/o1yTBcrjLaM?autoplay=1&mute=1&loop=1&playlist=o1yTBcrjLaM&controls=1&rel=0&modestbranding=1"
+                    title="Protago preview"
+                    allow="autoplay; encrypted-media"
+                    allowFullScreen
+                    style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', border: 'none' }}
+                  />
+                ) : (
+                  <div onClick={() => setPromoPlaying(true)} style={{ position: 'absolute', inset: 0, cursor: 'pointer' }}>
+                    <img
+                      src="https://img.youtube.com/vi/o1yTBcrjLaM/maxresdefault.jpg"
+                      alt="Watch Protago preview"
+                      style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
+                    />
+                    <div style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.35)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                      <div style={{ width: 64, height: 64, borderRadius: '50%', background: 'rgba(255,255,255,0.92)', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 4px 20px rgba(0,0,0,0.4)' }}>
+                        <svg viewBox="0 0 24 24" width="28" height="28" fill={C.saffron}>
+                          <polygon points="5 3 19 12 5 21 5 3"/>
+                        </svg>
+                      </div>
+                    </div>
+                    <div style={{ position: 'absolute', bottom: 12, left: 0, right: 0, textAlign: 'center' }}>
+                      <span style={{ fontSize: 11, fontWeight: 700, color: '#fff', background: 'rgba(0,0,0,0.5)', borderRadius: 20, padding: '3px 10px' }}>Tap to play</span>
+                    </div>
+                  </div>
+                )}
               </div>
               {/* Free preview CTA */}
               <motion.button
