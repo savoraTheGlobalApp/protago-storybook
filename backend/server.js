@@ -1077,9 +1077,9 @@ app.post('/api/order-inquiry', async (req, res) => {
             parentName, email, phone,
             childName, childAge, childGender,
             theme, storyTheme, artStyle, storyFormat,
-            deliveryType, address, addressLine1, addressLine2, city, state, pincode, notes,
+            deliveryType, address, addressLine1, addressLine2, city, state, pincode,
             photoPath, photoSignedUrl, additionalPhotoPaths, additionalPhotoSignedUrls, couponCode, referralSource,
-            isCustomStory, customStoryBrief,
+            isCustomStory, customStoryBrief, dedicationMessage,
         } = req.body;
 
         if (!email || !phone || !childName) {
@@ -1142,7 +1142,6 @@ app.post('/api/order-inquiry', async (req, res) => {
                     city: city || null,
                     state: state || null,
                     pincode: pincode || null,
-                    notes: notes || null,
                     photo_url: photoPath || null,
                     photo_signed_url: photoSignedUrl || null,
                     additional_photo_urls: (additionalPhotoPaths && additionalPhotoPaths.length) ? additionalPhotoPaths : null,
@@ -1155,6 +1154,7 @@ app.post('/api/order-inquiry', async (req, res) => {
                     currency: 'INR',
                     is_custom_story: isCustomStory || false,
                     custom_story_brief: customStoryBrief || null,
+                    dedication_message: dedicationMessage || null,
                 }),
             });
             if (!supabaseRes.ok) {
