@@ -623,6 +623,83 @@ function StoryGame({ childName }: { childName: string }) {
   );
 }
 
+// ── Sample book video overlay ─────────────────────────────────────────────────
+const SAMPLE_VIDEO_ID = 'UoNgye4Y2DA'; // Harsh's book — real customer
+
+function SampleVideoOverlay({ childName, onDismiss }: { childName: string; onDismiss: () => void }) {
+
+  return (
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      transition={{ duration: 0.35 }}
+      style={{
+        position: 'fixed', inset: 0, zIndex: 100,
+        background: 'rgba(10,8,20,0.96)',
+        display: 'flex', flexDirection: 'column',
+        alignItems: 'center', justifyContent: 'center',
+        padding: '24px 20px',
+        backdropFilter: 'blur(6px)',
+      }}
+    >
+      {/* Skip button */}
+
+      {/* Text */}
+      <motion.div
+        initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.15 }}
+        style={{ textAlign: 'center', marginBottom: 22, maxWidth: 500 }}
+      >
+        <p style={{ fontSize: 11, fontWeight: 800, color: C.saffron, textTransform: 'uppercase', letterSpacing: '0.15em', marginBottom: 8 }}>
+          While {childName}'s preview is being generated
+        </p>
+        <h2 style={{ fontFamily: "'Baloo 2', sans-serif", fontWeight: 800, color: '#fff', fontSize: 'clamp(1.2rem, 3.5vw, 1.7rem)', lineHeight: 1.25, margin: '0 0 10px' }}>
+          Watch how we made Harsh's book
+        </h2>
+        <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.5)', fontWeight: 600, margin: 0, lineHeight: 1.5 }}>
+          The previews are just a glimpse — the final book your child receives will be something they'll treasure forever.
+        </p>
+      </motion.div>
+
+      {/* Video */}
+      <motion.div
+        initial={{ opacity: 0, scale: 0.96 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: 0.25 }}
+        style={{
+          width: '100%', maxWidth: 380,
+          aspectRatio: '9/16',
+          borderRadius: 18,
+          overflow: 'hidden',
+          boxShadow: '0 20px 60px rgba(0,0,0,0.6)',
+          background: '#000',
+          position: 'relative',
+        }}
+      >
+        <iframe
+          src={`https://www.youtube.com/embed/${SAMPLE_VIDEO_ID}?autoplay=1&mute=1&playsinline=1&controls=1&rel=0&modestbranding=1`}
+          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+          allowFullScreen
+          style={{ width: '100%', height: '100%', border: 'none', display: 'block' }}
+        />
+      </motion.div>
+
+      {/* Skip button — bottom center */}
+      <button
+        onClick={onDismiss}
+        style={{
+          position: 'absolute', bottom: 28, left: '50%', transform: 'translateX(-50%)',
+          background: C.saffron, border: 'none',
+          borderRadius: 50, color: '#fff', fontSize: 15, fontWeight: 800,
+          padding: '12px 32px', cursor: 'pointer', fontFamily: 'inherit',
+          letterSpacing: 0.4, boxShadow: '0 4px 20px rgba(255,107,53,0.5)',
+          whiteSpace: 'nowrap',
+        }}
+      >
+        Skip — show me the preview ›
+      </button>
+    </motion.div>
+  );
+}
+
 export function PreviewResultPage() {
   const { jobId } = useParams<{ jobId: string }>();
   const [searchParams] = useSearchParams();
@@ -636,6 +713,7 @@ export function PreviewResultPage() {
   const [resultUrls, setResultUrls] = useState<[string | null, string | null]>([null, null]);
   const [status, setStatus] = useState<'processing' | 'done' | 'failed'>('processing');
   const [errorMsg, setErrorMsg] = useState('');
+  const [videoState, setVideoState] = useState<'overlay' | 'mini'>('overlay');
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   // Poll for results
@@ -678,6 +756,49 @@ export function PreviewResultPage() {
   return (
     <div style={{ minHeight: '100vh', background: C.navy, fontFamily: "'Nunito', sans-serif", display: 'flex', flexDirection: 'column' }}>
       <link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@700;800&family=Nunito:wght@400;600;700&display=swap" rel="stylesheet" />
+
+      {/* Sample video overlay — full screen while processing */}
+      <AnimatePresence>
+        {status === 'processing' && videoState === 'overlay' && (
+          <SampleVideoOverlay childName={childName} onDismiss={() => setVideoState('mini')} />
+        )}
+      </AnimatePresence>
+
+      {/* Mini bar — persistent at top while still processing */}
+      <AnimatePresence>
+        {status === 'processing' && videoState === 'mini' && (
+          <motion.div
+            initial={{ opacity: 0, y: -40 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -40 }}
+            transition={{ duration: 0.3 }}
+            onClick={() => setVideoState('overlay')}
+            style={{
+              position: 'fixed', top: 0, left: 0, right: 0, zIndex: 50,
+              background: 'linear-gradient(90deg, #1a1230 0%, #1e1538 100%)',
+              borderBottom: `2px solid ${C.saffron}`,
+              padding: '10px 20px',
+              display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10,
+              cursor: 'pointer',
+            }}
+          >
+            <div style={{
+              width: 28, height: 28, borderRadius: '50%', background: C.saffron,
+              display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
+            }}>
+              <svg viewBox="0 0 24 24" width="12" height="12" fill="#fff">
+                <polygon points="5 3 19 12 5 21 5 3" />
+              </svg>
+            </div>
+            <span style={{ fontSize: 13, fontWeight: 700, color: '#fff' }}>
+              Watch how Harsh's book was made
+            </span>
+            <span style={{ fontSize: 12, color: 'rgba(255,255,255,0.45)', fontWeight: 600 }}>
+              Tap to watch
+            </span>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* Header */}
       <div style={{ padding: '18px 24px', borderBottom: '1px solid rgba(255,255,255,0.08)', display: 'flex', alignItems: 'center', gap: 10 }}>
