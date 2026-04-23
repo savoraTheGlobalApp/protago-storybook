@@ -703,8 +703,12 @@ function SampleVideoOverlay({ childName, onDismiss }: { childName: string; onDis
 export function PreviewResultPage() {
   const { jobId } = useParams<{ jobId: string }>();
   const [searchParams] = useSearchParams();
-  const childName = searchParams.get('name') || 'Your child';
-  const themeSlug = searchParams.get('theme') || '';
+  const childName  = searchParams.get('name') || 'Your child';
+  const themeSlug  = searchParams.get('theme') || '';
+  const previewGender   = searchParams.get('gender') || '';
+  const previewAgeGroup = searchParams.get('ageGroup') || '';
+  const previewAge      = searchParams.get('age') || '';
+  const previewEmail    = searchParams.get('email') || '';
   const themeName = themeSlug.replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
 
   const API_BASE = import.meta.env.VITE_API_BASE_URL || '';
@@ -747,7 +751,10 @@ export function PreviewResultPage() {
 
   const handleOrder = () => {
     navigate(`/theme/${themeSlug}`, {
-      state: { previewUrls: resultUrls, childName, fromPreview: true },
+      state: {
+        previewUrls: resultUrls, childName, fromPreview: true,
+        gender: previewGender, ageGroup: previewAgeGroup, age: previewAge, email: previewEmail,
+      },
     });
   };
 

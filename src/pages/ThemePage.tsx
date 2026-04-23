@@ -24,7 +24,7 @@ export function ThemePage() {
   const { slug } = useParams<{ slug: string }>();
   const navigate = useNavigate();
   const location = useLocation();
-  const locationState = location.state as { previewUrls?: [string | null, string | null]; childName?: string; fromPreview?: boolean } | null;
+  const locationState = location.state as { previewUrls?: [string | null, string | null]; childName?: string; fromPreview?: boolean; gender?: string; ageGroup?: string; age?: string; email?: string } | null;
   const API_BASE = import.meta.env.VITE_API_BASE_URL || '';
 
   const theme = THEMES.find(t => t.slug === slug);
@@ -51,16 +51,35 @@ export function ThemePage() {
   const [generating, setGenerating] = useState(false);
   const [gender, setGender] = useState<'boy' | 'girl' | null>(null);
   const [selectedAgeGroup, setSelectedAgeGroup] = useState<'young' | 'middle' | 'older' | null>(null);
+  const [selectedAge, setSelectedAge] = useState<number | null>(null);
+
+  const pickAge = (age: number) => {
+    setSelectedAge(age);
+    setSelectedAgeGroup(age <= 5 ? 'young' : age <= 8 ? 'middle' : 'older');
+  };
 
   // Reset on theme change
-  useEffect(() => { setGender(null); setSelectedAgeGroup(null); }, [slug]);
+  useEffect(() => { setGender(null); setSelectedAgeGroup(null); setSelectedAge(null); }, [slug]);
 
   useEffect(() => {
     if (locationState?.fromPreview) {
-      // Arriving from PreviewResultPage — open order form and pre-fill child name
+      // Arriving from PreviewResultPage — prefill everything from the preview form
       setShowOrder(true);
-      if (locationState.childName) {
-        setOrderForm(f => ({ ...f, childName: locationState.childName! }));
+      const ls = locationState;
+      // Resolve exact age number: prefer the specific age, fall back to ageGroup midpoints
+      const exactAge = ls.age ? Number(ls.age) : ls.ageGroup === 'young' ? 4 : ls.ageGroup === 'middle' ? 6 : ls.ageGroup === 'older' ? 10 : null;
+      setOrderForm(f => ({
+        ...f,
+        childName: ls.childName || f.childName,
+        email: ls.email || f.email,
+        childGender: ls.gender === 'boy' ? 'Boy' : ls.gender === 'girl' ? 'Girl' : f.childGender,
+        childAge: exactAge ? String(exactAge) : f.childAge,
+      }));
+      if (ls.email) setPreviewEmail(ls.email);
+      if (ls.gender === 'boy' || ls.gender === 'girl') setGender(ls.gender);
+      if (ls.ageGroup === 'young' || ls.ageGroup === 'middle' || ls.ageGroup === 'older') {
+        setSelectedAgeGroup(ls.ageGroup);
+        setSelectedAge(exactAge);
       }
       setTimeout(() => {
         document.getElementById('inline-order')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -289,6 +308,10 @@ export function ThemePage() {
         return;
       }
       const params = new URLSearchParams({ name: childName, theme: theme.slug });
+      if (gender) params.set('gender', gender);
+      if (selectedAgeGroup) params.set('ageGroup', selectedAgeGroup);
+      if (selectedAge !== null) params.set('age', String(selectedAge));
+      if (emailTrimmed) params.set('email', emailTrimmed);
       if (newTab) newTab.location.href = `/preview/${data.jobId}?${params}`;
       setGenerating(false);
       setJobStatus('opened');
@@ -505,29 +528,28 @@ export function ThemePage() {
                     </div>
                   </div>
 
-                  {/* Age group */}
+                  {/* Age picker — individual ages 3–12 */}
                   <div style={{ marginBottom: 14 }}>
                     <label style={{ fontSize: 12, fontWeight: 700, color: C.navy, display: 'block', marginBottom: 8 }}>
-                      Child's age group <span style={{ color: C.saffron }}>*</span>
+                      Child's age <span style={{ color: C.saffron }}>*</span>
                     </label>
-                    <div style={{ display: 'flex', gap: 8 }}>
-                      {([
-                        { key: 'young', label: '3–5 yrs' },
-                        { key: 'middle', label: '5–8 yrs' },
-                        { key: 'older', label: '8–12 yrs' },
-                      ] as const).map(({ key, label }) => (
-                        <button key={key} type="button" onClick={() => setSelectedAgeGroup(key)}
-                          style={{
-                            flex: 1, padding: '11px 0', borderRadius: 10, cursor: 'pointer', fontFamily: 'inherit',
-                            border: `1.5px solid ${selectedAgeGroup === key ? C.saffron : '#E5E7EB'}`,
-                            background: selectedAgeGroup === key ? C.saffron + '18' : '#fff',
-                            color: selectedAgeGroup === key ? C.saffron : C.gray,
-                            fontWeight: 800, fontSize: 13,
-                            transition: 'all 0.15s',
-                          }}>
-                          {label}
-                        </button>
-                      ))}
+                    <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+                      {[3,4,5,6,7,8,9,10,11,12].map(age => {
+                        const sel = selectedAge === age;
+                        return (
+                          <button key={age} type="button" onClick={() => pickAge(age)}
+                            style={{
+                              width: 40, height: 40, borderRadius: 10, cursor: 'pointer',
+                              fontFamily: 'inherit', fontWeight: 800, fontSize: 14,
+                              border: `1.5px solid ${sel ? C.saffron : '#E5E7EB'}`,
+                              background: sel ? C.saffron : '#fff',
+                              color: sel ? '#fff' : C.gray,
+                              transition: 'all 0.15s',
+                            }}>
+                            {age}
+                          </button>
+                        );
+                      })}
                     </div>
                   </div>
 
