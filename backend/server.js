@@ -1079,10 +1079,8 @@ app.post('/api/order-inquiry', async (req, res) => {
             theme, storyTheme, artStyle, storyFormat,
             deliveryType, address, addressLine1, addressLine2, city, state, pincode,
             photoPath, photoSignedUrl, additionalPhotoPaths, additionalPhotoSignedUrls, couponCode, referralSource,
-            isCustomStory, customStoryBrief, dedicationMessage, notes,
+            isCustomStory, customStoryBrief, dedicationMessage,
         } = req.body;
-
-        const finalDedicationMessage = dedicationMessage || notes || null;
 
         if (!email || !phone || !childName) {
             return res.status(400).json({ error: 'Name, email and phone are required' });
@@ -1156,7 +1154,7 @@ app.post('/api/order-inquiry', async (req, res) => {
                     currency: 'INR',
                     is_custom_story: isCustomStory || false,
                     custom_story_brief: customStoryBrief || null,
-                    dedication_message: finalDedicationMessage,
+                    dedication_message: dedicationMessage || null,
                 }),
             });
             if (!supabaseRes.ok) {
