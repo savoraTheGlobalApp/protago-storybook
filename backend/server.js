@@ -1116,6 +1116,8 @@ app.post('/api/order-inquiry', async (req, res) => {
             !process.env.SUPABASE_URL_STORY.includes('your_');
 
         if (hasSupabase) {
+            const orderType = isCustomStory ? 'custom-story' : `theme:${storyTheme || theme || 'unknown'}`;
+            console.log(`[order-inquiry][${orderType}] Inserting into Supabase:`, { email, childName, childAge, childGender, customStoryBrief: customStoryBrief?.slice(0, 60) });
             const supabaseRes = await fetch(`${process.env.SUPABASE_URL_STORY}/rest/v1/storybook_orders`, {
                 method: 'POST',
                 headers: {
@@ -1159,11 +1161,12 @@ app.post('/api/order-inquiry', async (req, res) => {
             });
             if (!supabaseRes.ok) {
                 const err = await supabaseRes.text();
-                console.error('Supabase insert failed (order-inquiry):', err);
+                console.error(`[order-inquiry][${orderType}] Supabase insert failed:`, err);
                 return res.status(500).json({ error: `Database error: ${err}` });
             }
+            console.log(`[order-inquiry][${orderType}] Supabase insert success`);
         } else {
-            console.warn('Supabase not configured — order logged locally only');
+            console.warn('[order-inquiry] Supabase not configured — skipping DB insert. SUPABASE_URL_STORY:', process.env.SUPABASE_URL_STORY ? 'set' : 'MISSING');
         }
 
         return res.status(200).json({
@@ -1330,7 +1333,7 @@ const VALID_AGE_GROUPS = new Set(['young', 'middle', 'older']);
 
 app.post('/api/preview/trigger', async (req, res) => {
   try {
-    const { storySlug, photoUrl, childName, email, gender, ageGroup } = req.body;
+    const { storySlug, photoUrl, childName, email, gender, ageGroup, childAge } = req.body;
     if (!storySlug || !photoUrl) {
       return res.status(400).json({ error: 'storySlug and photoUrl are required' });
     }
@@ -1362,6 +1365,9 @@ app.post('/api/preview/trigger', async (req, res) => {
         photo_path: photoUrl,
         child_name: childName || null,
         email: email || null,
+        gender: safeGender || null,
+        age_group: safeAgeGroup || null,
+        child_age: childAge ? parseInt(childAge, 10) : null,
       }),
     });
 

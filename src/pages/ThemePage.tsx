@@ -302,7 +302,7 @@ export function ThemePage() {
       const res = await fetch(`${API_BASE}/api/preview/trigger`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ storySlug: theme.slug, photoUrl: photo.signedUrl, childName: firstName, email: emailTrimmed, gender: gender ?? undefined, ageGroup: selectedAgeGroup ?? undefined }),
+        body: JSON.stringify({ storySlug: theme.slug, photoUrl: photo.signedUrl, childName: firstName, email: emailTrimmed, gender: gender ?? undefined, ageGroup: selectedAgeGroup ?? undefined, childAge: selectedAge ?? undefined }),
       });
       const data = await res.json();
       if (!res.ok) {
@@ -772,13 +772,18 @@ export function ThemePage() {
                       ))}
                     </div>
                     {!orderPhoto ? (
-                      <label style={{ border: '2px dashed #D1D5DB', borderRadius: 10, padding: '12px 10px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4, cursor: 'pointer', background: '#FAFAFA', flex: 1, justifyContent: 'center' }}
-                        onMouseEnter={e => (e.currentTarget.style.borderColor = C.saffron)}
-                        onMouseLeave={e => (e.currentTarget.style.borderColor = '#D1D5DB')}>
-                        <span style={{ fontSize: 24 }}>📸</span>
-                        <span style={{ fontWeight: 700, color: C.navy, fontSize: 12, textAlign: 'center' }}>Upload photo</span>
-                        <input type="file" accept="image/*" style={{ display: 'none' }} onChange={e => { const f = e.target.files?.[0]; if (f) handleOrderPhotoAdd(f); }} />
-                      </label>
+                      <>
+                        <label style={{ border: `2px dashed ${C.saffron}`, borderRadius: 10, padding: '12px 10px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4, cursor: 'pointer', background: '#FFF8F0', flex: 1, justifyContent: 'center' }}
+                          onMouseEnter={e => (e.currentTarget.style.background = '#FFF0E0')}
+                          onMouseLeave={e => (e.currentTarget.style.background = '#FFF8F0')}>
+                          <span style={{ fontSize: 24 }}>📸</span>
+                          <span style={{ fontWeight: 700, color: C.navy, fontSize: 12, textAlign: 'center' }}>Upload photo</span>
+                          <input type="file" accept="image/*" style={{ display: 'none' }} onChange={e => { const f = e.target.files?.[0]; if (f) handleOrderPhotoAdd(f); }} />
+                        </label>
+                        <p style={{ fontSize: 11, color: C.saffron, fontWeight: 700, margin: '2px 0 0', textAlign: 'center', lineHeight: 1.4 }}>
+                          ⚠️ Required to place order
+                        </p>
+                      </>
                     ) : (
                       <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 12px', background: '#F0FDF4', borderRadius: 10, border: '1.5px solid #BBF7D0' }}>
                         <img src={orderPhoto.preview} style={{ width: 44, height: 44, borderRadius: 8, objectFit: 'cover', flexShrink: 0 }} alt="" />
