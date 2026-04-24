@@ -2051,7 +2051,7 @@ export function BrochurePage() {
               { emoji: '📝', n: '01', title: 'Tell us about\nyour child',   desc: 'Name, age, photo, theme and art style.' },
               { emoji: '✍️', n: '02', title: 'AI writes\nthe story',        desc: 'Unique, personalised, quality-checked.' },
               { emoji: '🎨', n: '03', title: 'AI creates\nevery scene',     desc: 'Full-page illustrations, your child in each.' },
-              { emoji: '📦', n: '04', title: 'Your book\nships',            desc: 'Hardcopy delivered to your door in 5–7 days.' },
+              { emoji: '📦', n: '04', title: 'Your book\nships',            desc: 'Hardcopy delivered to your door in 5–7 business days.' },
             ].map((step, i) => (
               <motion.div key={step.n} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }} transition={{ delay: i * 0.1 }}
@@ -2071,7 +2071,7 @@ export function BrochurePage() {
             <p className="font-extrabold" style={{ fontFamily: "'Baloo 2', sans-serif", color: C.navy, fontSize: '1.1rem' }}>
               Starting at ₹{price} · protago.in
             </p>
-            <p className="text-xs mt-0.5" style={{ color: C.gray }}>Hardcopy delivered in 5–7 days</p>
+            <p className="text-xs mt-0.5" style={{ color: C.gray }}>Hardcopy delivered in 5–7 business days</p>
           </motion.div>
         </div>
       </section>

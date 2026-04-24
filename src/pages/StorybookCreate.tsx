@@ -554,7 +554,7 @@ export function StorybookCreate() {
                         <div className="flex items-start gap-3">
                           <span className="text-base">📦</span>
                           <div>
-                            <p className="text-sm font-semibold text-gray-800">Delivered in 5–7 days</p>
+                            <p className="text-sm font-semibold text-gray-800">Delivered in 5–7 business days</p>
                             <p className="text-xs text-gray-400">Updates sent to {parentEmail || parentPhone}</p>
                           </div>
                         </div>
@@ -865,7 +865,7 @@ export function StorybookCreate() {
 
                     <div className="flex items-center justify-center gap-5 mt-4 text-xs text-gray-400">
                       <span className="flex items-center gap-1"><Shield size={11} /> Secure payment</span>
-                      <span className="flex items-center gap-1"><Clock size={11} /> 5–7 day delivery</span>
+                      <span className="flex items-center gap-1"><Clock size={11} /> 5–7 business day delivery</span>
                       <span className="flex items-center gap-1"><Truck size={11} /> Free shipping</span>
                     </div>
                   </motion.form>

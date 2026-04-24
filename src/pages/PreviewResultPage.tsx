@@ -866,7 +866,7 @@ export function PreviewResultPage() {
                 Order this Book →
               </button>
               <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.35)', margin: 0 }}>
-                Delivered in 5–7 days · Premium 200GSM glossy paper
+                Delivered in 5–7 business days · Premium 200GSM glossy paper
               </p>
 
               {/* Divider */}

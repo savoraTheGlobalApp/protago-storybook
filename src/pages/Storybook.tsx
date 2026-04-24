@@ -315,7 +315,7 @@ export function Storybook() {
               <h2 className="text-3xl sm:text-4xl font-extrabold text-gray-900 mb-2">
                 From click to <span className="text-purple-600">keepsake</span>
               </h2>
-              <p className="text-gray-500 text-base">Order today, delivered in 5–7 days anywhere in India.</p>
+              <p className="text-gray-500 text-base">Order today, delivered in 5–7 business days anywhere in India.</p>
             </motion.div>
 
             {/* Cards — horizontal scroll on mobile, flex row with arrows on desktop */}
