@@ -107,7 +107,7 @@ export function FaceSwapPreview({ storySlug, photoUrl, childName }: FaceSwapPrev
         ))}
       </div>
       <p className="text-sm text-gray-500 text-center max-w-md">
-        These are 2 scenes from your book. The full story has 12 beautifully illustrated pages.
+        These are 4 pages from your book. The full story has 26 beautifully illustrated pages.
       </p>
     </div>
   );

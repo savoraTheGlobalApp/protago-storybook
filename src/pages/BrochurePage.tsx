@@ -1576,7 +1576,7 @@ export function BrochurePage() {
                 onClick={() => scrollTo('themes')}
                 className="w-full py-4 rounded-2xl font-extrabold text-base mt-2"
                 style={{ background: C.saffron, color: '#fff', border: 'none', cursor: 'pointer', fontFamily: "'Baloo 2', sans-serif", fontSize: 16, boxShadow: '0 4px 20px rgba(255,107,53,0.45)' }}>
-                ✨ Generate Free Preview
+                ✨ Generate Free 4-Page Preview
               </motion.button>
               <p className="text-center mt-2 text-xs font-semibold" style={{ color: 'rgba(255,255,255,0.55)' }}>
                 Free · ~2 min · No card required
