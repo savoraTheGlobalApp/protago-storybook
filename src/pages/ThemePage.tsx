@@ -160,6 +160,10 @@ export function ThemePage() {
   const handleOrderSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!orderConsent) return;
+    if (!orderPhoto?.uploadedPath) {
+      setOrderError("Please upload your child's photo before placing the order.");
+      return;
+    }
     setOrderSubmitting(true);
     setOrderError('');
     try {
@@ -892,8 +896,8 @@ export function ThemePage() {
                   </span>
                 </label>
 
-                <button type="submit" disabled={orderSubmitting || !orderConsent}
-                  style={{ background: (!orderConsent || orderSubmitting) ? '#E5E7EB' : `linear-gradient(135deg, ${C.saffron} 0%, #FF8C42 100%)`, color: (!orderConsent || orderSubmitting) ? '#9CA3AF' : '#fff', border: 'none', borderRadius: 12, padding: '14px 20px', fontWeight: 800, fontSize: 16, cursor: (!orderConsent || orderSubmitting) ? 'default' : 'pointer', fontFamily: "'Baloo 2', sans-serif", boxShadow: (!orderConsent || orderSubmitting) ? 'none' : '0 4px 16px rgba(255,107,53,0.4)' }}>
+                <button type="submit" disabled={orderSubmitting || !orderConsent || !orderPhoto?.uploadedPath}
+                  style={{ background: (!orderConsent || orderSubmitting || !orderPhoto?.uploadedPath) ? '#E5E7EB' : `linear-gradient(135deg, ${C.saffron} 0%, #FF8C42 100%)`, color: (!orderConsent || orderSubmitting || !orderPhoto?.uploadedPath) ? '#9CA3AF' : '#fff', border: 'none', borderRadius: 12, padding: '14px 20px', fontWeight: 800, fontSize: 16, cursor: (!orderConsent || orderSubmitting || !orderPhoto?.uploadedPath) ? 'default' : 'pointer', fontFamily: "'Baloo 2', sans-serif", boxShadow: (!orderConsent || orderSubmitting || !orderPhoto?.uploadedPath) ? 'none' : '0 4px 16px rgba(255,107,53,0.4)' }}>
                   {orderSubmitting ? 'Processing…' : `Pay ₹${couponApplied ? couponApplied.finalPrice : (Number(import.meta.env.VITE_STORYBOOK_PRICE) || 499)} & Order →`}
                 </button>
                 <p style={{ fontSize: 11, color: C.lgray, textAlign: 'center', margin: '-4px 0 0' }}>We'll confirm within 24 hours · Delivered in 5–7 days</p>

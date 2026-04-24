@@ -1336,6 +1336,139 @@ function HeroVideo() {
   );
 }
 
+// ── Custom story inquiry section ─────────────────────────────────────────────
+
+function CustomStorySection() {
+  const API_BASE = import.meta.env.VITE_API_BASE_URL || '';
+  const [form, setForm] = useState({ parentName: '', email: '', phone: '', childName: '', childAge: '', childGender: '', customStoryBrief: '' });
+  const [submitting, setSubmitting] = useState(false);
+  const [submitted, setSubmitted] = useState(false);
+  const [error, setError] = useState('');
+  const set = (k: string, v: string) => setForm(f => ({ ...f, [k]: v }));
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!form.email || !form.phone || !form.childName || !form.customStoryBrief) return;
+    setSubmitting(true);
+    setError('');
+    try {
+      const res = await fetch(`${API_BASE}/api/order-inquiry`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ...form, isCustomStory: true }),
+      });
+      if (!res.ok) { const d = await res.json().catch(() => ({})); throw new Error(d.error || 'Failed to submit'); }
+      setSubmitted(true);
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'Something went wrong. Please try again.');
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const inp = (style?: React.CSSProperties): React.CSSProperties => ({
+    width: '100%', border: '1.5px solid #E5E7EB', borderRadius: 9, padding: '10px 12px',
+    fontSize: 14, outline: 'none', boxSizing: 'border-box', fontFamily: 'inherit', background: '#fff', ...style,
+  });
+  const lbl: React.CSSProperties = { fontSize: 10, fontWeight: 700, color: '#9CA3AF', display: 'block', marginBottom: 4, textTransform: 'uppercase', letterSpacing: '0.07em' };
+
+  return (
+    <div id="custom-story" style={{ background: C.warmTint, borderRadius: 24, padding: '48px 32px', border: '1px solid #F0EEE8' }}>
+      <div style={{ maxWidth: 680, margin: '0 auto' }}>
+
+        {/* Header */}
+        <div style={{ textAlign: 'center', marginBottom: 36 }}>
+          <span style={{ display: 'inline-block', background: `linear-gradient(135deg, ${C.saffron}, ${C.gold})`, color: '#fff', fontSize: 11, fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', borderRadius: 20, padding: '4px 14px', marginBottom: 16 }}>Custom Story</span>
+          <h2 style={{ fontFamily: "'Baloo 2', sans-serif", fontWeight: 800, fontSize: 'clamp(26px, 5vw, 38px)', color: C.navy, margin: '0 0 12px', lineHeight: 1.2 }}>
+            Your story, your rules
+          </h2>
+          <p style={{ fontSize: 16, color: C.gray, lineHeight: 1.65, maxWidth: 520, margin: '0 auto' }}>
+            Have a unique idea — a birthday adventure, a family trip, a lesson you want them to live?
+            Share the brief and we'll write &amp; illustrate it completely bespoke.
+          </p>
+        </div>
+
+        {/* Form / success */}
+        <div style={{ background: '#fff', borderRadius: 20, boxShadow: '0 8px 40px rgba(0,0,0,0.08)', padding: '32px 28px', border: '1px solid #F0EEE8' }}>
+          {submitted ? (
+            <div style={{ textAlign: 'center', padding: '24px 0' }}>
+              <div style={{ fontSize: 52, marginBottom: 16 }}>🎉</div>
+              <h3 style={{ fontFamily: "'Baloo 2', sans-serif", fontWeight: 800, color: C.navy, fontSize: 22, margin: '0 0 8px' }}>Brief received!</h3>
+              <p style={{ fontSize: 14, color: C.gray, lineHeight: 1.7, margin: 0 }}>
+                We'll reach out to <strong>{form.email}</strong> within 24 hours to discuss the story &amp; pricing.
+              </p>
+            </div>
+          ) : (
+            <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+
+              {/* Row 1 — parent/contact */}
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: 12 }}>
+                {([['parentName', 'Your name', 'Priya Sharma', 'text'], ['email', 'Email *', 'you@email.com', 'email'], ['phone', 'WhatsApp *', '+91 98765 43210', 'tel']] as [string,string,string,string][]).map(([key, label, placeholder, type]) => (
+                  <div key={key}>
+                    <label style={lbl}>{label}</label>
+                    <input required={label.includes('*')} type={type} placeholder={placeholder} value={form[key as keyof typeof form]}
+                      onChange={e => set(key, e.target.value)}
+                      onFocus={e => (e.target.style.borderColor = C.saffron)}
+                      onBlur={e => (e.target.style.borderColor = '#E5E7EB')}
+                      style={inp()} />
+                  </div>
+                ))}
+              </div>
+
+              {/* Row 2 — child info */}
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 100px auto', gap: 12, alignItems: 'end' }}>
+                <div>
+                  <label style={lbl}>Child's name *</label>
+                  <input required placeholder="Arjun" value={form.childName} onChange={e => set('childName', e.target.value)}
+                    onFocus={e => (e.target.style.borderColor = C.saffron)} onBlur={e => (e.target.style.borderColor = '#E5E7EB')}
+                    style={inp()} />
+                </div>
+                <div>
+                  <label style={lbl}>Age</label>
+                  <select value={form.childAge} onChange={e => set('childAge', e.target.value)}
+                    style={inp({ background: '#fff' })}>
+                    <option value="">Age</option>
+                    {Array.from({ length: 10 }, (_, i) => i + 3).map(a => <option key={a} value={a}>{a}</option>)}
+                  </select>
+                </div>
+                <div>
+                  <label style={lbl}>Gender</label>
+                  <div style={{ display: 'flex', gap: 6 }}>
+                    {['Boy', 'Girl'].map(g => (
+                      <button type="button" key={g} onClick={() => set('childGender', g)}
+                        style={{ padding: '10px 14px', borderRadius: 9, fontSize: 13, fontWeight: 700, cursor: 'pointer', border: `1.5px solid ${form.childGender === g ? C.saffron : '#E5E7EB'}`, background: form.childGender === g ? '#FFF3EE' : '#fff', color: form.childGender === g ? C.saffron : '#9CA3AF' }}>
+                        {g}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              </div>
+
+              {/* Story brief */}
+              <div>
+                <label style={lbl}>Tell us the story *</label>
+                <textarea required rows={5} value={form.customStoryBrief} onChange={e => set('customStoryBrief', e.target.value)}
+                  placeholder="e.g. Arjun's 5th birthday — he loves dinosaurs and wants to be a palaeontologist. The story should show him on a dig discovering a new species, learning that patience pays off, and naming it after his little sister..."
+                  onFocus={e => (e.target.style.borderColor = C.saffron)} onBlur={e => (e.target.style.borderColor = '#E5E7EB')}
+                  style={{ ...inp(), resize: 'vertical', lineHeight: 1.6 }} />
+                <p style={{ fontSize: 11, color: C.lgray, margin: '4px 0 0' }}>Characters · setting · the lesson · any real names or places — more detail = better book</p>
+              </div>
+
+              {error && <p style={{ fontSize: 13, color: '#C0392B', margin: 0 }}>{error}</p>}
+
+              <button type="submit" disabled={submitting}
+                style={{ background: submitting ? '#E5E7EB' : `linear-gradient(135deg, ${C.saffron} 0%, #FF8C42 100%)`, color: submitting ? '#9CA3AF' : '#fff', border: 'none', borderRadius: 12, padding: '14px 20px', fontWeight: 800, fontSize: 16, cursor: submitting ? 'default' : 'pointer', fontFamily: "'Baloo 2', sans-serif", boxShadow: submitting ? 'none' : '0 4px 16px rgba(255,107,53,0.4)' }}>
+                {submitting ? 'Submitting…' : 'Submit Story Brief →'}
+              </button>
+              <p style={{ fontSize: 11, color: C.lgray, textAlign: 'center', margin: '-4px 0 0' }}>We'll reach out within 24 hours · Custom pricing based on brief</p>
+            </form>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // ── Main page ───────────────────────────────────────────────────────────────
 
 export function BrochurePage() {
@@ -1505,7 +1638,26 @@ export function BrochurePage() {
                   <motion.div key={themesTab} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
                     exit={{ opacity: 0, y: -10 }} transition={{ duration: 0.2 }}
                     style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: 20 }}>
-                    {tabThemes.map(t => (
+                    {tabThemes.slice(0, 5).map(t => (
+                      <BrochureThemeCard key={t.slug} slug={t.slug} icon={t.icon} name={t.name} onClick={() => navigate(`/theme/${t.slug}`)} />
+                    ))}
+
+                    {/* ── Custom story card — 6th slot ── */}
+                    <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.15 }}
+                      onClick={() => document.getElementById('custom-story')?.scrollIntoView({ behavior: 'smooth', block: 'start' })}
+                      style={{ borderRadius: 20, border: `2px dashed ${C.saffron}`, background: 'linear-gradient(135deg, #FFF3EE 0%, #FFF8F0 100%)', cursor: 'pointer', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 12, padding: '32px 24px', textAlign: 'center', minHeight: 200 }}
+                      whileHover={{ scale: 1.02, boxShadow: '0 8px 32px rgba(255,107,53,0.18)' }}>
+                      <span style={{ fontSize: 48 }}>✨</span>
+                      <div>
+                        <p style={{ fontFamily: "'Baloo 2', sans-serif", fontWeight: 800, fontSize: 21, color: C.navy, margin: '0 0 8px' }}>Your own story</p>
+                        <p style={{ fontSize: 15, color: C.gray, margin: 0, lineHeight: 1.5 }}>Don't see the right theme?<br />We'll write it from scratch.</p>
+                      </div>
+                      <span style={{ background: `linear-gradient(135deg, ${C.saffron} 0%, #FF8C42 100%)`, color: '#fff', borderRadius: 10, padding: '10px 22px', fontWeight: 800, fontSize: 15, fontFamily: "'Baloo 2', sans-serif", boxShadow: '0 4px 12px rgba(255,107,53,0.35)' }}>
+                        Request Custom Story →
+                      </span>
+                    </motion.div>
+
+                    {tabThemes.slice(5).map(t => (
                       <BrochureThemeCard key={t.slug} slug={t.slug} icon={t.icon} name={t.name} onClick={() => navigate(`/theme/${t.slug}`)} />
                     ))}
                   </motion.div>
@@ -1538,11 +1690,15 @@ export function BrochurePage() {
 
                 <div className="mt-8 text-center">
                   <p className="text-xs" style={{ color: C.lgray }}>Click any theme to see how we personalise it for your child</p>
-
                 </div>
               </>
             );
           })()}
+
+          {/* Custom story — below all themes */}
+          <div className="mt-10">
+            <CustomStorySection />
+          </div>
         </div>
       </section>
 

@@ -1159,7 +1159,8 @@ app.post('/api/order-inquiry', async (req, res) => {
             });
             if (!supabaseRes.ok) {
                 const err = await supabaseRes.text();
-                console.error('Supabase insert failed:', err);
+                console.error('Supabase insert failed (order-inquiry):', err);
+                return res.status(500).json({ error: `Database error: ${err}` });
             }
         } else {
             console.warn('Supabase not configured — order logged locally only');
