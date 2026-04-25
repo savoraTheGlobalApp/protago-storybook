@@ -8,8 +8,16 @@
 
 const BACKEND = process.env.PREVIEW_BACKEND || 'modal';
 
-// Always preview scene 01 (cover) and scene 02 (first story scene)
-const HERO_SCENES = [1, 2];
+// Number of preview scenes per theme/ageGroup combo.
+// Key format: `${storySlug}/${ageGroup}` or just `${storySlug}` as fallback.
+// All themes default to 2 (cover + first story scene).
+const SCENE_COUNT = {
+  'colours-shapes/young': 5,
+};
+
+function getSceneCount(storySlug, ageGroup) {
+  return SCENE_COUNT[`${storySlug}/${ageGroup}`] ?? SCENE_COUNT[storySlug] ?? 2;
+}
 
 // Whitelist of storySlug+variant combos uploaded to GCS.
 // Format: `${storySlug}/${ageGroup}_${gender}`
@@ -44,6 +52,9 @@ const VARIATIONS_AVAILABLE = new Set([
   'growth-mindset/middle_girl', 'history-india/middle_girl', 'indian-festivals/middle_girl',
   'internet-safety/middle_girl', 'krishna/middle_girl', 'managing-emotions/middle_girl',
   'new-sibling/middle_girl', 'numbers-maths/middle_girl', 'phonics-reading/middle_girl', 'ramayana/middle_girl',
+
+  // young_boy / young_girl — colours-shapes age 3–6 (5-scene preview)
+  'colours-shapes/young_boy', 'colours-shapes/young_girl',
 ]);
 
 // GCS story-scenes bucket is public read — no auth needed to download scenes.
@@ -55,8 +66,9 @@ function getSceneUrls(storySlug, { gender, ageGroup } = {}) {
   const variantKey = gender && ageGroup ? `${storySlug}/${ageGroup}_${gender}` : null;
   const useVariant = variantKey && VARIATIONS_AVAILABLE.has(variantKey);
   const prefix = useVariant ? `${storySlug}/${ageGroup}_${gender}` : storySlug;
-  return HERO_SCENES.map(n =>
-    `${base}/${prefix}/scene_${String(n).padStart(2, '0')}_spread.png`
+  const count = getSceneCount(storySlug, ageGroup);
+  return Array.from({ length: count }, (_, i) =>
+    `${base}/${prefix}/scene_${String(i + 1).padStart(2, '0')}_spread.png`
   );
 }
 
@@ -73,10 +85,10 @@ async function triggerModalPreview({ jobId, storySlug, photoUrl, childName = '',
     body: JSON.stringify({
       job_id:               jobId,
       story_slug:           storySlug,
+      age_group:            ageGroup || '',
       photo_url:            photoUrl,
       scene_urls:           sceneUrls,
       steps,
-      // Supabase DB only — for job status updates, not storage
       child_name:           childName || '',
       supabase_url:         process.env.SUPABASE_URL_STORY || process.env.SUPABASE_URL,
       supabase_service_key: process.env.SUPABASE_SERVICE_KEY_STORY || process.env.SUPABASE_SERVICE_KEY,
@@ -106,4 +118,4 @@ async function triggerPreview(args) {
   return triggerModalPreview(args);
 }
 
-export { triggerPreview, getSceneUrls, HERO_SCENES, VARIATIONS_AVAILABLE };
+export { triggerPreview, getSceneUrls, getSceneCount, SCENE_COUNT, VARIATIONS_AVAILABLE };

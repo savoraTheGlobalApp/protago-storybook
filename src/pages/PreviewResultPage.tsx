@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
-import { useParams, useSearchParams, useNavigate } from 'react-router-dom';
+import { useParams, useSearchParams } from 'react-router-dom';
 import { motion, AnimatePresence, useMotionValue, useTransform } from 'framer-motion';
 
 const C = {
@@ -143,10 +143,10 @@ function FlippingPage({
   );
 }
 
-function BookViewer({ urls }: { urls: [string | null, string | null] }) {
+function BookViewer({ urls, firstIsCover = false, isComplete = false, onOrder }: { urls: (string | null)[], firstIsCover?: boolean, isComplete?: boolean, onOrder?: () => void }) {
   const [page, setPage]         = useState(0);
   const [flip, setFlip]         = useState<{ from: number; to: number; dir: 1 | -1 } | null>(null);
-  const [loaded, setLoaded]     = useState([false, false]);
+  const [loaded, setLoaded]     = useState<boolean[]>(Array(urls.length).fill(false));
 
   const total = urls.filter(Boolean).length;
   const isFlipping = flip !== null;
@@ -189,21 +189,29 @@ function BookViewer({ urls }: { urls: [string | null, string | null] }) {
         }}>
 
           {/* Layer 0 — destination always underneath */}
-          {isFlipping && urls[flip.to] && (
+          {/* Skip for backward flip to cover: animation only covers left half so the cover
+              would show on the right prematurely. Layer 1 handles it after flip completes. */}
+          {isFlipping && urls[flip.to] && !(firstIsCover && flip.to === 0 && flip.dir === -1) && (
             <img src={urls[flip.to]!} onLoad={() => markLoaded(flip.to)}
               style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', borderRadius: 3, display: 'block' }} />
           )}
 
-          {/* Layer 1 — idle: full current scene */}
-          {!isFlipping && (
-            urls[page]
-              ? <img src={urls[page]!} onLoad={() => markLoaded(page)}
-                  style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', borderRadius: 3, display: 'block', opacity: loaded[page] ? 1 : 0, transition: 'opacity 0.5s' }} />
-              : <div style={{ position: 'absolute', inset: 0 }}><ShimmerCard /></div>
-          )}
+          {/* Layer 1 — idle: full current scene (cover pinned to right half) */}
+          {!isFlipping && (() => {
+            const isCoverPage = firstIsCover && page === 0;
+            if (!urls[page]) return <div style={{ position: 'absolute', inset: 0 }}><ShimmerCard /></div>;
+            return isCoverPage ? (
+              <img src={urls[page]!} onLoad={() => markLoaded(page)}
+                style={{ position: 'absolute', top: 0, right: 0, width: '50%', height: '100%', objectFit: 'cover', borderRadius: '0 3px 3px 0', display: 'block', opacity: loaded[page] ? 1 : 0, transition: 'opacity 0.5s' }} />
+            ) : (
+              <img src={urls[page]!} onLoad={() => markLoaded(page)}
+                style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', borderRadius: 3, display: 'block', opacity: loaded[page] ? 1 : 0, transition: 'opacity 0.5s' }} />
+            );
+          })()}
 
           {/* Layer 2 — static half of from-scene during flip */}
-          {isFlipping && (
+          {/* Skip when flipping forward from cover — its left half is empty */}
+          {isFlipping && !(firstIsCover && flip.from === 0 && flip.dir === 1) && (
             <div style={{
               position: 'absolute', top: 0, bottom: 0, zIndex: 2, overflow: 'hidden',
               ...(flip.dir === 1 ? { left: 0, width: '50%' } : { right: 0, width: '50%' }),
@@ -224,11 +232,27 @@ function BookViewer({ urls }: { urls: [string | null, string | null] }) {
             <FlippingPage
               key={`${flip.from}-${flip.to}`}
               fromUrl={urls[flip.from]}
-              toUrl={urls[flip.to]}
+              toUrl={firstIsCover && flip.to === 0 && flip.dir === -1 ? null : urls[flip.to]}
               dir={flip.dir}
               onDone={onFlipDone}
             />
           )}
+
+          {/* Page numbers — bottom corners */}
+          {(() => {
+            const isCover = firstIsCover && page === 0;
+            const leftPage  = isCover ? null : page * 2;
+            const rightPage = isCover ? 1 : page * 2 + 1;
+            const numStyle: React.CSSProperties = {
+              position: 'absolute', bottom: 10, zIndex: 9, pointerEvents: 'none',
+              fontSize: 11, fontWeight: 700, color: 'rgba(255,255,255,0.35)',
+              fontFamily: "'Nunito', sans-serif", letterSpacing: '0.05em',
+            };
+            return <>
+              {leftPage && <span style={{ ...numStyle, left: 18 }}>{leftPage}</span>}
+              <span style={{ ...numStyle, right: 18 }}>{rightPage}</span>
+            </>;
+          })()}
 
           {/* Spine — always on top */}
           <div style={{
@@ -268,16 +292,30 @@ function BookViewer({ urls }: { urls: [string | null, string | null] }) {
           backdropFilter: 'blur(8px)', transition: 'all 0.2s',
         }}>‹</button>
 
-        <button onClick={() => go(1)} disabled={page >= total - 1 || isFlipping} style={{
-          position: 'absolute', right: -24, top: '50%', transform: 'translateY(-50%)',
-          width: 44, height: 44, borderRadius: '50%', border: 'none', zIndex: 12,
-          background: page >= total - 1 ? 'rgba(255,255,255,0.04)' : 'rgba(255,107,53,0.9)',
-          color: page >= total - 1 ? 'rgba(255,255,255,0.12)' : '#fff',
-          cursor: page >= total - 1 ? 'default' : 'pointer', fontSize: 22,
-          display: 'flex', alignItems: 'center', justifyContent: 'center',
-          backdropFilter: 'blur(8px)', transition: 'all 0.2s',
-          boxShadow: page < total - 1 ? '0 4px 20px rgba(255,107,53,0.5)' : 'none',
-        }}>›</button>
+        {page >= total - 1 && isComplete ? (
+          <button onClick={onOrder} style={{
+            position: 'absolute', right: -52, top: '50%', transform: 'translateY(-50%)',
+            height: 44, padding: '0 14px', borderRadius: 22, border: 'none', zIndex: 12,
+            background: 'rgba(255,107,53,0.95)', color: '#fff',
+            cursor: 'pointer', fontSize: 12, fontWeight: 800,
+            fontFamily: "'Nunito', sans-serif", letterSpacing: '0.04em', whiteSpace: 'nowrap',
+            display: 'flex', alignItems: 'center', gap: 6,
+            boxShadow: '0 4px 20px rgba(255,107,53,0.6)', transition: 'all 0.2s',
+          }}>
+            Order Now ›
+          </button>
+        ) : (
+          <button onClick={() => go(1)} disabled={page >= total - 1 || isFlipping} style={{
+            position: 'absolute', right: -24, top: '50%', transform: 'translateY(-50%)',
+            width: 44, height: 44, borderRadius: '50%', border: 'none', zIndex: 12,
+            background: page >= total - 1 ? 'rgba(255,255,255,0.04)' : 'rgba(255,107,53,0.9)',
+            color: page >= total - 1 ? 'rgba(255,255,255,0.12)' : '#fff',
+            cursor: page >= total - 1 ? 'default' : 'pointer', fontSize: 22,
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            backdropFilter: 'blur(8px)', transition: 'all 0.2s',
+            boxShadow: page < total - 1 ? '0 4px 20px rgba(255,107,53,0.5)' : 'none',
+          }}>›</button>
+        )}
       </div>
 
       {/* Dots */}
@@ -293,7 +331,7 @@ function BookViewer({ urls }: { urls: [string | null, string | null] }) {
       </div>
 
       <p style={{ fontSize: 11, fontWeight: 700, color: 'rgba(255,255,255,0.28)', letterSpacing: '0.12em', textTransform: 'uppercase', margin: 0 }}>
-        Scene {page + 1} of {total} · Tap right side to turn the page
+        {firstIsCover && page === 0 ? 'Cover' : `Pages ${page * 2}–${page * 2 + 1}`} · {page < total - 1 ? 'Tap right to turn page' : 'End of preview'}
       </p>
     </div>
   );
@@ -712,29 +750,27 @@ export function PreviewResultPage() {
   const themeName = themeSlug.replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
 
   const API_BASE = import.meta.env.VITE_API_BASE_URL || '';
-  const navigate = useNavigate();
 
-  const [resultUrls, setResultUrls] = useState<[string | null, string | null]>([null, null]);
+
+  const [resultUrls, setResultUrls] = useState<(string | null)[]>([null, null, null, null, null]);
   const [status, setStatus] = useState<'processing' | 'done' | 'failed'>('processing');
   const [errorMsg, setErrorMsg] = useState('');
   const [videoState, setVideoState] = useState<'overlay' | 'mini'>('overlay');
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
-  // Poll for results
+  // Poll for results — fetch immediately on mount, then every 3s while processing
   useEffect(() => {
     if (!jobId) return;
-    intervalRef.current = setInterval(async () => {
+
+    const poll = async () => {
       try {
         const r = await fetch(`${API_BASE}/api/preview/status/${jobId}`);
         const d = await r.json();
-        // Show scenes as soon as they're available, even if still processing
-        if (d.resultScene1 || d.resultScene2) {
-          setResultUrls([d.resultScene1 || null, d.resultScene2 || null]);
-        }
+        const scenes = [d.resultScene1, d.resultScene2, d.resultScene3, d.resultScene4, d.resultScene5].map((u: string | null) => u || null);
+        if (scenes.some(Boolean)) setResultUrls(scenes);
         if (d.status === 'done') {
           clearInterval(intervalRef.current!);
           setStatus('done');
-          // Fire-and-forget — send preview email if job has one
           fetch(`${API_BASE}/api/preview/send-email`, {
             method: 'POST', headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ jobId }),
@@ -745,17 +781,23 @@ export function PreviewResultPage() {
           setStatus('failed');
         }
       } catch { /* network blip — keep polling */ }
-    }, 3000);
+    };
+
+    poll(); // immediate fetch — no waiting for first interval tick
+    intervalRef.current = setInterval(poll, 3000);
     return () => clearInterval(intervalRef.current!);
   }, [jobId, API_BASE]);
 
   const handleOrder = () => {
-    navigate(`/theme/${themeSlug}`, {
-      state: {
-        previewUrls: resultUrls, childName, fromPreview: true,
-        gender: previewGender, ageGroup: previewAgeGroup, age: previewAge, email: previewEmail,
-      },
+    const params = new URLSearchParams({
+      fromPreview: 'true',
+      name: childName,
+      gender: previewGender,
+      ageGroup: previewAgeGroup,
+      age: previewAge,
+      email: previewEmail,
     });
+    window.open(`/theme/${themeSlug}?${params}`, '_blank');
   };
 
   const done = status === 'done';
@@ -844,7 +886,7 @@ export function PreviewResultPage() {
         )}
 
         {/* Book viewer */}
-        {(resultUrls[0] || resultUrls[1]) && <BookViewer urls={resultUrls} />}
+        {resultUrls.some(Boolean) && <BookViewer urls={resultUrls} firstIsCover={themeSlug === 'colours-shapes'} isComplete={done} onOrder={handleOrder} />}
 
         {/* Error */}
         {status === 'failed' && (
