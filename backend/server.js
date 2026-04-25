@@ -1563,7 +1563,7 @@ app.get('/api/preview/status/:jobId', async (req, res) => {
     const SUPABASE_KEY = process.env.SUPABASE_SERVICE_KEY_STORY || process.env.SUPABASE_SERVICE_KEY;
 
     const pollRes = await fetch(
-      `${SUPABASE_URL}/rest/v1/preview_jobs?id=eq.${jobId}&select=status,result_scene_1,result_scene_2,error_message`,
+      `${SUPABASE_URL}/rest/v1/preview_jobs?id=eq.${jobId}&select=status,result_scene_1,result_scene_2,result_scene_3,result_scene_4,result_scene_5,error_message`,
       {
         headers: {
           'apikey': SUPABASE_KEY,
@@ -1577,8 +1577,16 @@ app.get('/api/preview/status/:jobId', async (req, res) => {
     const rows = await pollRes.json();
     if (!rows.length) return res.status(404).json({ error: 'Job not found' });
 
-    const { status, result_scene_1, result_scene_2, error_message } = rows[0];
-    return res.json({ status, resultScene1: result_scene_1, resultScene2: result_scene_2, error: error_message });
+    const { status, result_scene_1, result_scene_2, result_scene_3, result_scene_4, result_scene_5, error_message } = rows[0];
+    return res.json({
+      status,
+      resultScene1: result_scene_1,
+      resultScene2: result_scene_2,
+      resultScene3: result_scene_3 || null,
+      resultScene4: result_scene_4 || null,
+      resultScene5: result_scene_5 || null,
+      error: error_message,
+    });
   } catch (err) {
     console.error('preview/status error:', err);
     return res.status(500).json({ error: 'Internal server error' });

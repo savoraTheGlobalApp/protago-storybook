@@ -143,10 +143,10 @@ function FlippingPage({
   );
 }
 
-function BookViewer({ urls }: { urls: [string | null, string | null] }) {
+function BookViewer({ urls }: { urls: (string | null)[] }) {
   const [page, setPage]         = useState(0);
   const [flip, setFlip]         = useState<{ from: number; to: number; dir: 1 | -1 } | null>(null);
-  const [loaded, setLoaded]     = useState([false, false]);
+  const [loaded, setLoaded]     = useState<boolean[]>(Array(urls.length).fill(false));
 
   const total = urls.filter(Boolean).length;
   const isFlipping = flip !== null;
@@ -714,7 +714,7 @@ export function PreviewResultPage() {
   const API_BASE = import.meta.env.VITE_API_BASE_URL || '';
   const navigate = useNavigate();
 
-  const [resultUrls, setResultUrls] = useState<[string | null, string | null]>([null, null]);
+  const [resultUrls, setResultUrls] = useState<(string | null)[]>([null, null, null, null, null]);
   const [status, setStatus] = useState<'processing' | 'done' | 'failed'>('processing');
   const [errorMsg, setErrorMsg] = useState('');
   const [videoState, setVideoState] = useState<'overlay' | 'mini'>('overlay');
@@ -728,8 +728,9 @@ export function PreviewResultPage() {
         const r = await fetch(`${API_BASE}/api/preview/status/${jobId}`);
         const d = await r.json();
         // Show scenes as soon as they're available, even if still processing
-        if (d.resultScene1 || d.resultScene2) {
-          setResultUrls([d.resultScene1 || null, d.resultScene2 || null]);
+        const scenes = [d.resultScene1, d.resultScene2, d.resultScene3, d.resultScene4, d.resultScene5].map(u => u || null);
+        if (scenes.some(Boolean)) {
+          setResultUrls(scenes);
         }
         if (d.status === 'done') {
           clearInterval(intervalRef.current!);
@@ -844,7 +845,7 @@ export function PreviewResultPage() {
         )}
 
         {/* Book viewer */}
-        {(resultUrls[0] || resultUrls[1]) && <BookViewer urls={resultUrls} />}
+        {resultUrls.some(Boolean) && <BookViewer urls={resultUrls} />}
 
         {/* Error */}
         {status === 'failed' && (
