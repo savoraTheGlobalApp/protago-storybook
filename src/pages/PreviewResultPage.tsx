@@ -886,7 +886,7 @@ export function PreviewResultPage() {
         )}
 
         {/* Book viewer */}
-        {resultUrls.some(Boolean) && <BookViewer urls={resultUrls} firstIsCover={themeSlug === 'colours-shapes'} isComplete={done} onOrder={handleOrder} />}
+        {resultUrls.some(Boolean) && <BookViewer urls={resultUrls} firstIsCover={['colours-shapes', 'bedtime-routines', 'numbers-maths'].includes(themeSlug ?? '')} isComplete={done} onOrder={handleOrder} />}
 
         {/* Error */}
         {status === 'failed' && (
