@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useParams, useNavigate, useLocation } from 'react-router-dom';
+import { useParams, useNavigate, useLocation, useSearchParams } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { MessageCircle } from 'lucide-react';
 import { THEMES } from '../data/themes';
@@ -24,7 +24,17 @@ export function ThemePage() {
   const { slug } = useParams<{ slug: string }>();
   const navigate = useNavigate();
   const location = useLocation();
-  const locationState = location.state as { previewUrls?: [string | null, string | null]; childName?: string; fromPreview?: boolean; gender?: string; ageGroup?: string; age?: string; email?: string } | null;
+  const [searchParams] = useSearchParams();
+  // Support two entry paths: navigate() with state (same tab) or window.open() with query params (new tab)
+  const locationState = (location.state as { previewUrls?: (string | null)[]; childName?: string; fromPreview?: boolean; gender?: string; ageGroup?: string; age?: string; email?: string } | null)
+    ?? (searchParams.get('fromPreview') === 'true' ? {
+        fromPreview: true,
+        childName:  searchParams.get('name')     || undefined,
+        gender:     searchParams.get('gender')   || undefined,
+        ageGroup:   searchParams.get('ageGroup') || undefined,
+        age:        searchParams.get('age')      || undefined,
+        email:      searchParams.get('email')    || undefined,
+      } : null);
   const API_BASE = import.meta.env.VITE_API_BASE_URL || '';
 
   const theme = THEMES.find(t => t.slug === slug);
