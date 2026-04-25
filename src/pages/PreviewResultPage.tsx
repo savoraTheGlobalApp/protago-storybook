@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
-import { useParams, useSearchParams, useNavigate } from 'react-router-dom';
+import { useParams, useSearchParams } from 'react-router-dom';
 import { motion, AnimatePresence, useMotionValue, useTransform } from 'framer-motion';
 
 const C = {
@@ -750,7 +750,7 @@ export function PreviewResultPage() {
   const themeName = themeSlug.replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
 
   const API_BASE = import.meta.env.VITE_API_BASE_URL || '';
-  const navigate = useNavigate();
+
 
   const [resultUrls, setResultUrls] = useState<(string | null)[]>([null, null, null, null, null]);
   const [status, setStatus] = useState<'processing' | 'done' | 'failed'>('processing');
