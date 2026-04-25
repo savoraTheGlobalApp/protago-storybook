@@ -758,22 +758,19 @@ export function PreviewResultPage() {
   const [videoState, setVideoState] = useState<'overlay' | 'mini'>('overlay');
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
-  // Poll for results
+  // Poll for results — fetch immediately on mount, then every 3s while processing
   useEffect(() => {
     if (!jobId) return;
-    intervalRef.current = setInterval(async () => {
+
+    const poll = async () => {
       try {
         const r = await fetch(`${API_BASE}/api/preview/status/${jobId}`);
         const d = await r.json();
-        // Show scenes as soon as they're available, even if still processing
-        const scenes = [d.resultScene1, d.resultScene2, d.resultScene3, d.resultScene4, d.resultScene5].map(u => u || null);
-        if (scenes.some(Boolean)) {
-          setResultUrls(scenes);
-        }
+        const scenes = [d.resultScene1, d.resultScene2, d.resultScene3, d.resultScene4, d.resultScene5].map((u: string | null) => u || null);
+        if (scenes.some(Boolean)) setResultUrls(scenes);
         if (d.status === 'done') {
           clearInterval(intervalRef.current!);
           setStatus('done');
-          // Fire-and-forget — send preview email if job has one
           fetch(`${API_BASE}/api/preview/send-email`, {
             method: 'POST', headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ jobId }),
@@ -784,7 +781,10 @@ export function PreviewResultPage() {
           setStatus('failed');
         }
       } catch { /* network blip — keep polling */ }
-    }, 3000);
+    };
+
+    poll(); // immediate fetch — no waiting for first interval tick
+    intervalRef.current = setInterval(poll, 3000);
     return () => clearInterval(intervalRef.current!);
   }, [jobId, API_BASE]);
 

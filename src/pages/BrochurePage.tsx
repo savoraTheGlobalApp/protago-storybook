@@ -1237,13 +1237,13 @@ const REACTION_VIDEOS = [
   { id: 'OsUGHz9LILY', name: 'Shreyansh' },
 ];
 
+
 function HeroVideo() {
   const [active, setActive] = useState(0);
   const [playing, setPlaying] = useState(false);
-  const [muted, setMuted] = useState(true); // Harsh autoplays muted
-  const iframeRef = useRef<HTMLIFrameElement>(null);
+  const [muted, setMuted] = useState(true);
 
-  // Auto-advance thumbnails only when not on the first video (Harsh plays fully)
+  // Auto-advance thumbnails only when not on the first video
   useEffect(() => {
     if (playing || active === 0) return;
     const t = setInterval(() => setActive(i => (i + 1) % REACTION_VIDEOS.length), 4000);
@@ -1254,35 +1254,30 @@ function HeroVideo() {
   useEffect(() => { setPlaying(false); setMuted(true); }, [active]);
 
   const { id, name } = REACTION_VIDEOS[active];
-
-  // First video (Harsh) autoplays muted on load; others need a tap
   const isFirst = active === 0;
   const showIframe = isFirst || playing;
+
+  const iframeSrc = `https://www.youtube.com/embed/${id}?autoplay=1&mute=1&playsinline=1&loop=1&playlist=${id}&controls=1&rel=0`;
 
   return (
     <div className="relative rounded-2xl overflow-hidden shadow-2xl mx-auto aspect-[9/16] max-h-[55vh] sm:aspect-auto sm:max-h-none sm:h-full">
       {showIframe ? (
         <>
           <iframe
-            ref={iframeRef}
             key={id}
-            src={`https://www.youtube.com/embed/${id}?autoplay=1&mute=1&playsinline=1&loop=1&playlist=${id}&controls=0&modestbranding=1&rel=0&enablejsapi=1`}
+            src={iframeSrc}
             title={name}
-            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+            allow="autoplay; encrypted-media; picture-in-picture"
             allowFullScreen
-            className="w-full h-full border-0 absolute inset-0"
+            style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', border: 'none' }}
           />
-          {/* Unmute button — postMessage to YT API, no reload needed */}
           {muted && (
             <button
               onClick={() => {
-                iframeRef.current?.contentWindow?.postMessage(
-                  JSON.stringify({ event: 'command', func: 'unMute', args: [] }), '*'
-                );
-                iframeRef.current?.contentWindow?.postMessage(
-                  JSON.stringify({ event: 'command', func: 'setVolume', args: [100] }), '*'
-                );
                 setMuted(false);
+                // Reload iframe without mute to unmute
+                const iframe = document.querySelector(`iframe[title="${name}"]`) as HTMLIFrameElement;
+                if (iframe) iframe.src = iframeSrc.replace('mute=1', 'mute=0');
               }}
               style={{
                 position: 'absolute', bottom: 56, left: '50%', transform: 'translateX(-50%)',
