@@ -143,7 +143,7 @@ function FlippingPage({
   );
 }
 
-function BookViewer({ urls, firstIsCover = false }: { urls: (string | null)[], firstIsCover?: boolean }) {
+function BookViewer({ urls, firstIsCover = false, isComplete = false, onOrder }: { urls: (string | null)[], firstIsCover?: boolean, isComplete?: boolean, onOrder?: () => void }) {
   const [page, setPage]         = useState(0);
   const [flip, setFlip]         = useState<{ from: number; to: number; dir: 1 | -1 } | null>(null);
   const [loaded, setLoaded]     = useState<boolean[]>(Array(urls.length).fill(false));
@@ -292,8 +292,8 @@ function BookViewer({ urls, firstIsCover = false }: { urls: (string | null)[], f
           backdropFilter: 'blur(8px)', transition: 'all 0.2s',
         }}>‹</button>
 
-        {page >= total - 1 && done ? (
-          <button onClick={handleOrder} style={{
+        {page >= total - 1 && isComplete ? (
+          <button onClick={onOrder} style={{
             position: 'absolute', right: -52, top: '50%', transform: 'translateY(-50%)',
             height: 44, padding: '0 14px', borderRadius: 22, border: 'none', zIndex: 12,
             background: 'rgba(255,107,53,0.95)', color: '#fff',
@@ -883,7 +883,7 @@ export function PreviewResultPage() {
         )}
 
         {/* Book viewer */}
-        {resultUrls.some(Boolean) && <BookViewer urls={resultUrls} firstIsCover={themeSlug === 'colours-shapes'} />}
+        {resultUrls.some(Boolean) && <BookViewer urls={resultUrls} firstIsCover={themeSlug === 'colours-shapes'} isComplete={done} onOrder={handleOrder} />}
 
         {/* Error */}
         {status === 'failed' && (
