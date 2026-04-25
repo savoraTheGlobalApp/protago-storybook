@@ -190,8 +190,11 @@ function BookViewer({ urls, firstIsCover = false }: { urls: (string | null)[], f
 
           {/* Layer 0 — destination always underneath */}
           {isFlipping && urls[flip.to] && (
-            <img src={urls[flip.to]!} onLoad={() => markLoaded(flip.to)}
-              style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', borderRadius: 3, display: 'block' }} />
+            firstIsCover && flip.to === 0
+              ? <img src={urls[flip.to]!} onLoad={() => markLoaded(flip.to)}
+                  style={{ position: 'absolute', top: 0, right: 0, width: '50%', height: '100%', objectFit: 'cover', borderRadius: '0 3px 3px 0', display: 'block' }} />
+              : <img src={urls[flip.to]!} onLoad={() => markLoaded(flip.to)}
+                  style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', borderRadius: 3, display: 'block' }} />
           )}
 
           {/* Layer 1 — idle: full current scene (cover pinned to right half) */}
@@ -208,7 +211,8 @@ function BookViewer({ urls, firstIsCover = false }: { urls: (string | null)[], f
           })()}
 
           {/* Layer 2 — static half of from-scene during flip */}
-          {isFlipping && (
+          {/* Skip when flipping forward from cover — its left half is empty */}
+          {isFlipping && !(firstIsCover && flip.from === 0 && flip.dir === 1) && (
             <div style={{
               position: 'absolute', top: 0, bottom: 0, zIndex: 2, overflow: 'hidden',
               ...(flip.dir === 1 ? { left: 0, width: '50%' } : { right: 0, width: '50%' }),
@@ -229,7 +233,7 @@ function BookViewer({ urls, firstIsCover = false }: { urls: (string | null)[], f
             <FlippingPage
               key={`${flip.from}-${flip.to}`}
               fromUrl={urls[flip.from]}
-              toUrl={urls[flip.to]}
+              toUrl={firstIsCover && flip.to === 0 && flip.dir === -1 ? null : urls[flip.to]}
               dir={flip.dir}
               onDone={onFlipDone}
             />
