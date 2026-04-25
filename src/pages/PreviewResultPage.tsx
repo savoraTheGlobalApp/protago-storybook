@@ -143,7 +143,7 @@ function FlippingPage({
   );
 }
 
-function BookViewer({ urls }: { urls: (string | null)[] }) {
+function BookViewer({ urls, firstIsCover = false }: { urls: (string | null)[], firstIsCover?: boolean }) {
   const [page, setPage]         = useState(0);
   const [flip, setFlip]         = useState<{ from: number; to: number; dir: 1 | -1 } | null>(null);
   const [loaded, setLoaded]     = useState<boolean[]>(Array(urls.length).fill(false));
@@ -194,13 +194,18 @@ function BookViewer({ urls }: { urls: (string | null)[] }) {
               style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', borderRadius: 3, display: 'block' }} />
           )}
 
-          {/* Layer 1 — idle: full current scene */}
-          {!isFlipping && (
-            urls[page]
-              ? <img src={urls[page]!} onLoad={() => markLoaded(page)}
-                  style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', borderRadius: 3, display: 'block', opacity: loaded[page] ? 1 : 0, transition: 'opacity 0.5s' }} />
-              : <div style={{ position: 'absolute', inset: 0 }}><ShimmerCard /></div>
-          )}
+          {/* Layer 1 — idle: full current scene (cover pinned to right half) */}
+          {!isFlipping && (() => {
+            const isCoverPage = firstIsCover && page === 0;
+            if (!urls[page]) return <div style={{ position: 'absolute', inset: 0 }}><ShimmerCard /></div>;
+            return isCoverPage ? (
+              <img src={urls[page]!} onLoad={() => markLoaded(page)}
+                style={{ position: 'absolute', top: 0, right: 0, width: '50%', height: '100%', objectFit: 'cover', borderRadius: '0 3px 3px 0', display: 'block', opacity: loaded[page] ? 1 : 0, transition: 'opacity 0.5s' }} />
+            ) : (
+              <img src={urls[page]!} onLoad={() => markLoaded(page)}
+                style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', borderRadius: 3, display: 'block', opacity: loaded[page] ? 1 : 0, transition: 'opacity 0.5s' }} />
+            );
+          })()}
 
           {/* Layer 2 — static half of from-scene during flip */}
           {isFlipping && (
@@ -845,7 +850,7 @@ export function PreviewResultPage() {
         )}
 
         {/* Book viewer */}
-        {resultUrls.some(Boolean) && <BookViewer urls={resultUrls} />}
+        {resultUrls.some(Boolean) && <BookViewer urls={resultUrls} firstIsCover={themeSlug === 'colours-shapes'} />}
 
         {/* Error */}
         {status === 'failed' && (
