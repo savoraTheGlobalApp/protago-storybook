@@ -292,16 +292,30 @@ function BookViewer({ urls, firstIsCover = false }: { urls: (string | null)[], f
           backdropFilter: 'blur(8px)', transition: 'all 0.2s',
         }}>‹</button>
 
-        <button onClick={() => go(1)} disabled={page >= total - 1 || isFlipping} style={{
-          position: 'absolute', right: -24, top: '50%', transform: 'translateY(-50%)',
-          width: 44, height: 44, borderRadius: '50%', border: 'none', zIndex: 12,
-          background: page >= total - 1 ? 'rgba(255,255,255,0.04)' : 'rgba(255,107,53,0.9)',
-          color: page >= total - 1 ? 'rgba(255,255,255,0.12)' : '#fff',
-          cursor: page >= total - 1 ? 'default' : 'pointer', fontSize: 22,
-          display: 'flex', alignItems: 'center', justifyContent: 'center',
-          backdropFilter: 'blur(8px)', transition: 'all 0.2s',
-          boxShadow: page < total - 1 ? '0 4px 20px rgba(255,107,53,0.5)' : 'none',
-        }}>›</button>
+        {page >= total - 1 && done ? (
+          <button onClick={handleOrder} style={{
+            position: 'absolute', right: -52, top: '50%', transform: 'translateY(-50%)',
+            height: 44, padding: '0 14px', borderRadius: 22, border: 'none', zIndex: 12,
+            background: 'rgba(255,107,53,0.95)', color: '#fff',
+            cursor: 'pointer', fontSize: 12, fontWeight: 800,
+            fontFamily: "'Nunito', sans-serif", letterSpacing: '0.04em', whiteSpace: 'nowrap',
+            display: 'flex', alignItems: 'center', gap: 6,
+            boxShadow: '0 4px 20px rgba(255,107,53,0.6)', transition: 'all 0.2s',
+          }}>
+            Order Now ›
+          </button>
+        ) : (
+          <button onClick={() => go(1)} disabled={page >= total - 1 || isFlipping} style={{
+            position: 'absolute', right: -24, top: '50%', transform: 'translateY(-50%)',
+            width: 44, height: 44, borderRadius: '50%', border: 'none', zIndex: 12,
+            background: page >= total - 1 ? 'rgba(255,255,255,0.04)' : 'rgba(255,107,53,0.9)',
+            color: page >= total - 1 ? 'rgba(255,255,255,0.12)' : '#fff',
+            cursor: page >= total - 1 ? 'default' : 'pointer', fontSize: 22,
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            backdropFilter: 'blur(8px)', transition: 'all 0.2s',
+            boxShadow: page < total - 1 ? '0 4px 20px rgba(255,107,53,0.5)' : 'none',
+          }}>›</button>
+        )}
       </div>
 
       {/* Dots */}
