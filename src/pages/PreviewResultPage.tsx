@@ -789,12 +789,15 @@ export function PreviewResultPage() {
   }, [jobId, API_BASE]);
 
   const handleOrder = () => {
-    navigate(`/theme/${themeSlug}`, {
-      state: {
-        previewUrls: resultUrls, childName, fromPreview: true,
-        gender: previewGender, ageGroup: previewAgeGroup, age: previewAge, email: previewEmail,
-      },
+    const params = new URLSearchParams({
+      fromPreview: 'true',
+      name: childName,
+      gender: previewGender,
+      ageGroup: previewAgeGroup,
+      age: previewAge,
+      email: previewEmail,
     });
+    window.open(`/theme/${themeSlug}?${params}`, '_blank');
   };
 
   const done = status === 'done';
