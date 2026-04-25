@@ -38,6 +38,7 @@ export function ThemePage() {
   const API_BASE = import.meta.env.VITE_API_BASE_URL || '';
 
   const theme = THEMES.find(t => t.slug === slug);
+  const previewPageCount = theme?.slug === 'colours-shapes' ? 9 : 4;
 
   const [activeIdx, setActiveIdx] = useState(0);
   const [childName, setChildName] = useState('');
@@ -489,7 +490,7 @@ export function ThemePage() {
                   style={{ display: 'flex', flexDirection: 'column', gap: 0 }}>
 
                   {/* Header */}
-                  <p style={{ fontSize: 11, fontWeight: 700, color: C.saffron, textTransform: 'uppercase', letterSpacing: 1.5, margin: '0 0 4px' }}>Free 4-Page Preview</p>
+                  <p style={{ fontSize: 11, fontWeight: 700, color: C.saffron, textTransform: 'uppercase', letterSpacing: 1.5, margin: '0 0 4px' }}>Free {previewPageCount}-Page Preview</p>
                   <h2 style={{ fontFamily: "'Baloo 2', sans-serif", fontWeight: 800, fontSize: 21, color: C.navy, margin: '0 0 24px', lineHeight: 1.2 }}>
                     See your child<br />in this story
                   </h2>
@@ -669,7 +670,7 @@ export function ThemePage() {
                       fontFamily: "'Baloo 2', sans-serif", transition: 'all 0.2s',
                       boxShadow: canGenerate ? '0 4px 16px rgba(255,107,53,0.4)' : 'none',
                     }}>
-                    ✨ Generate Free 4-Page Preview
+                    ✨ Generate Free {previewPageCount}-Page Preview
                   </button>
                   <p style={{ fontSize: 11, color: C.lgray, textAlign: 'center', margin: '10px 0 0' }}>Free · ~2 min · No card required</p>
 

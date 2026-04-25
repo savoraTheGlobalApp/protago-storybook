@@ -240,7 +240,7 @@ function FaceToSceneAnimation() {
 
 const FACE_SIZE_BROCHURE = 110;
 
-function BrochureThemeCard({ slug, icon, name, onClick }: { slug: string; icon: string; name: string; onClick: () => void }) {
+function BrochureThemeCard({ slug, icon, name, badge, onClick }: { slug: string; icon: string; name: string; badge?: string; onClick: () => void }) {
   const [activeIdx, setActiveIdx] = useState(0);
   const [hasLoaded, setHasLoaded] = useState(false);
   const cardRef = useRef<HTMLDivElement>(null);
@@ -262,8 +262,12 @@ function BrochureThemeCard({ slug, icon, name, onClick }: { slug: string; icon: 
     <motion.div
       ref={cardRef}
       className="rounded-2xl overflow-hidden cursor-pointer"
-      style={{ border: '1.5px solid #E5E7EB', background: C.white }}
-      whileHover={{ scale: 1.02, boxShadow: '0 8px 24px rgba(0,0,0,0.10)' }}
+      style={{
+        border: badge ? `2px solid ${C.saffron}` : '1.5px solid #E5E7EB',
+        background: C.white,
+        boxShadow: badge ? '0 0 0 3px rgba(255,107,53,0.15)' : undefined,
+      }}
+      whileHover={{ scale: 1.02, boxShadow: badge ? '0 8px 28px rgba(255,107,53,0.25)' : '0 8px 24px rgba(0,0,0,0.10)' }}
       transition={{ type: 'spring', stiffness: 300, damping: 24 }}
       onClick={onClick}>
       <div style={{ paddingTop: FACE_SIZE_BROCHURE / 2, position: 'relative' }}>
@@ -309,6 +313,12 @@ function BrochureThemeCard({ slug, icon, name, onClick }: { slug: string; icon: 
               key={`arrowhead-${activeIdx}`}
             />
           </svg>
+          {/* Badge */}
+          {badge && (
+            <div style={{ position: 'absolute', top: 10, left: 10, zIndex: 6, background: C.saffron, color: '#fff', fontSize: 10, fontWeight: 800, borderRadius: 50, padding: '3px 10px', letterSpacing: 0.4, boxShadow: '0 2px 8px rgba(255,107,53,0.4)' }}>
+              {badge}
+            </div>
+          )}
           {/* Title overlay */}
           <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, padding: '20px 14px 10px', background: 'linear-gradient(transparent, rgba(0,0,0,0.55))', zIndex: 4 }}>
             <p className="font-extrabold" style={{ fontFamily: "'Baloo 2', sans-serif", color: '#fff', fontSize: 19 }}>{icon} {name}</p>
@@ -1634,7 +1644,7 @@ export function BrochurePage() {
                     exit={{ opacity: 0, y: -10 }} transition={{ duration: 0.2 }}
                     style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: 20 }}>
                     {tabThemes.slice(0, 5).map(t => (
-                      <BrochureThemeCard key={t.slug} slug={t.slug} icon={t.icon} name={t.name} onClick={() => navigate(`/theme/${t.slug}`)} />
+                      <BrochureThemeCard key={t.slug} slug={t.slug} icon={t.icon} name={t.name} badge={t.slug === 'colours-shapes' ? '✨ 9-Page Preview' : undefined} onClick={() => navigate(`/theme/${t.slug}`)} />
                     ))}
 
                     {/* ── Custom story card — 6th slot ── */}
@@ -1653,7 +1663,7 @@ export function BrochurePage() {
                     </motion.div>
 
                     {tabThemes.slice(5).map(t => (
-                      <BrochureThemeCard key={t.slug} slug={t.slug} icon={t.icon} name={t.name} onClick={() => navigate(`/theme/${t.slug}`)} />
+                      <BrochureThemeCard key={t.slug} slug={t.slug} icon={t.icon} name={t.name} badge={t.slug === 'colours-shapes' ? '✨ 9-Page Preview' : undefined} onClick={() => navigate(`/theme/${t.slug}`)} />
                     ))}
                   </motion.div>
                 </AnimatePresence>
@@ -1677,7 +1687,7 @@ export function BrochurePage() {
                     </div>
                     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: 20 }}>
                       {mythologyThemes.map(t => (
-                        <BrochureThemeCard key={t.slug} slug={t.slug} icon={t.icon} name={t.name} onClick={() => navigate(`/theme/${t.slug}`)} />
+                        <BrochureThemeCard key={t.slug} slug={t.slug} icon={t.icon} name={t.name} badge={t.slug === 'colours-shapes' ? '✨ 9-Page Preview' : undefined} onClick={() => navigate(`/theme/${t.slug}`)} />
                       ))}
                     </div>
                   </motion.div>
