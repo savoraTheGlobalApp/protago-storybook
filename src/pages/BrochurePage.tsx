@@ -1644,7 +1644,7 @@ export function BrochurePage() {
                     exit={{ opacity: 0, y: -10 }} transition={{ duration: 0.2 }}
                     style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: 20 }}>
                     {tabThemes.slice(0, 5).map(t => (
-                      <BrochureThemeCard key={t.slug} slug={t.slug} icon={t.icon} name={t.name} badge={t.slug === 'colours-shapes' ? '✨ 9-Page Preview' : undefined} onClick={() => navigate(`/theme/${t.slug}`)} />
+                      <BrochureThemeCard key={t.slug} slug={t.slug} icon={t.icon} name={t.name} badge={['colours-shapes', 'bedtime-routines', 'numbers-maths'].includes(t.slug) ? '✨ 9-Page Preview' : undefined} onClick={() => navigate(`/theme/${t.slug}`)} />
                     ))}
 
                     {/* ── Custom story card — 6th slot ── */}
@@ -1663,7 +1663,7 @@ export function BrochurePage() {
                     </motion.div>
 
                     {tabThemes.slice(5).map(t => (
-                      <BrochureThemeCard key={t.slug} slug={t.slug} icon={t.icon} name={t.name} badge={t.slug === 'colours-shapes' ? '✨ 9-Page Preview' : undefined} onClick={() => navigate(`/theme/${t.slug}`)} />
+                      <BrochureThemeCard key={t.slug} slug={t.slug} icon={t.icon} name={t.name} badge={['colours-shapes', 'bedtime-routines', 'numbers-maths'].includes(t.slug) ? '✨ 9-Page Preview' : undefined} onClick={() => navigate(`/theme/${t.slug}`)} />
                     ))}
                   </motion.div>
                 </AnimatePresence>
@@ -1687,7 +1687,7 @@ export function BrochurePage() {
                     </div>
                     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: 20 }}>
                       {mythologyThemes.map(t => (
-                        <BrochureThemeCard key={t.slug} slug={t.slug} icon={t.icon} name={t.name} badge={t.slug === 'colours-shapes' ? '✨ 9-Page Preview' : undefined} onClick={() => navigate(`/theme/${t.slug}`)} />
+                        <BrochureThemeCard key={t.slug} slug={t.slug} icon={t.icon} name={t.name} badge={['colours-shapes', 'bedtime-routines', 'numbers-maths'].includes(t.slug) ? '✨ 9-Page Preview' : undefined} onClick={() => navigate(`/theme/${t.slug}`)} />
                       ))}
                     </div>
                   </motion.div>

@@ -38,7 +38,8 @@ export function ThemePage() {
   const API_BASE = import.meta.env.VITE_API_BASE_URL || '';
 
   const theme = THEMES.find(t => t.slug === slug);
-  const previewPageCount = theme?.slug === 'colours-shapes' ? 9 : 4;
+  const NINE_PAGE_THEMES = new Set(['colours-shapes', 'bedtime-routines', 'numbers-maths']);
+  const previewPageCount = theme && NINE_PAGE_THEMES.has(theme.slug) ? 9 : 4;
 
   const [activeIdx, setActiveIdx] = useState(0);
   const [childName, setChildName] = useState('');

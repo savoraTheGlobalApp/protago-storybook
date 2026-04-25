@@ -12,7 +12,9 @@ const BACKEND = process.env.PREVIEW_BACKEND || 'modal';
 // Key format: `${storySlug}/${ageGroup}` or just `${storySlug}` as fallback.
 // All themes default to 2 (cover + first story scene).
 const SCENE_COUNT = {
-  'colours-shapes/young': 5,
+  'colours-shapes/young':    5,
+  'bedtime-routines/young':  5,
+  'numbers-maths/middle':    5,
 };
 
 function getSceneCount(storySlug, ageGroup) {
@@ -53,8 +55,12 @@ const VARIATIONS_AVAILABLE = new Set([
   'internet-safety/middle_girl', 'krishna/middle_girl', 'managing-emotions/middle_girl',
   'new-sibling/middle_girl', 'numbers-maths/middle_girl', 'phonics-reading/middle_girl', 'ramayana/middle_girl',
 
-  // young_boy / young_girl — colours-shapes age 3–6 (5-scene preview)
-  'colours-shapes/young_boy', 'colours-shapes/young_girl',
+  // young_boy / young_girl — colours-shapes & bedtime-routines age 3–6 (5-scene preview)
+  'colours-shapes/young_boy',   'colours-shapes/young_girl',
+  'bedtime-routines/young_boy', 'bedtime-routines/young_girl',
+
+  // middle_boy / middle_girl — numbers-maths age 5–8 (5-scene preview)
+  'numbers-maths/middle_boy',   'numbers-maths/middle_girl',
 ]);
 
 // GCS story-scenes bucket is public read — no auth needed to download scenes.
