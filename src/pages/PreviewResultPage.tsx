@@ -189,12 +189,11 @@ function BookViewer({ urls, firstIsCover = false }: { urls: (string | null)[], f
         }}>
 
           {/* Layer 0 — destination always underneath */}
-          {isFlipping && urls[flip.to] && (
-            firstIsCover && flip.to === 0
-              ? <img src={urls[flip.to]!} onLoad={() => markLoaded(flip.to)}
-                  style={{ position: 'absolute', top: 0, right: 0, width: '50%', height: '100%', objectFit: 'cover', borderRadius: '0 3px 3px 0', display: 'block' }} />
-              : <img src={urls[flip.to]!} onLoad={() => markLoaded(flip.to)}
-                  style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', borderRadius: 3, display: 'block' }} />
+          {/* Skip for backward flip to cover: animation only covers left half so the cover
+              would show on the right prematurely. Layer 1 handles it after flip completes. */}
+          {isFlipping && urls[flip.to] && !(firstIsCover && flip.to === 0 && flip.dir === -1) && (
+            <img src={urls[flip.to]!} onLoad={() => markLoaded(flip.to)}
+              style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', borderRadius: 3, display: 'block' }} />
           )}
 
           {/* Layer 1 — idle: full current scene (cover pinned to right half) */}
@@ -238,6 +237,22 @@ function BookViewer({ urls, firstIsCover = false }: { urls: (string | null)[], f
               onDone={onFlipDone}
             />
           )}
+
+          {/* Page numbers — bottom corners */}
+          {(() => {
+            const isCover = firstIsCover && page === 0;
+            const leftPage  = isCover ? null : page * 2;
+            const rightPage = isCover ? 1 : page * 2 + 1;
+            const numStyle: React.CSSProperties = {
+              position: 'absolute', bottom: 10, zIndex: 9, pointerEvents: 'none',
+              fontSize: 11, fontWeight: 700, color: 'rgba(255,255,255,0.35)',
+              fontFamily: "'Nunito', sans-serif", letterSpacing: '0.05em',
+            };
+            return <>
+              {leftPage && <span style={{ ...numStyle, left: 18 }}>{leftPage}</span>}
+              <span style={{ ...numStyle, right: 18 }}>{rightPage}</span>
+            </>;
+          })()}
 
           {/* Spine — always on top */}
           <div style={{
@@ -302,7 +317,7 @@ function BookViewer({ urls, firstIsCover = false }: { urls: (string | null)[], f
       </div>
 
       <p style={{ fontSize: 11, fontWeight: 700, color: 'rgba(255,255,255,0.28)', letterSpacing: '0.12em', textTransform: 'uppercase', margin: 0 }}>
-        Scene {page + 1} of {total} · Tap right side to turn the page
+        {firstIsCover && page === 0 ? 'Cover' : `Pages ${page * 2}–${page * 2 + 1}`} · {page < total - 1 ? 'Tap right to turn page' : 'End of preview'}
       </p>
     </div>
   );
