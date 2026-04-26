@@ -902,7 +902,7 @@ function OrderForm({ price }: { price: number; scrollTo: (id: string) => void })
                 <div>
                   <label style={labelStyle}>Theme *</label>
 
-                  {(['3–5', '5–8', '8–12'] as const).map(range => {
+                  {(['3–5', '6–8', '9–12'] as const).map(range => {
                     const rangeThemes = THEMES.filter(t => !t.category && (Array.isArray(t.ageRange) ? t.ageRange.includes(range) : t.ageRange === range));
                     const isRelevant = form.childAge ? ageToRange(Number(form.childAge)) === range : true;
                     return (
@@ -1478,7 +1478,7 @@ function CustomStorySection() {
 
 export function BrochurePage() {
   const [openFaq, setOpenFaq]         = useState<number | null>(null);
-  const [themesTab, setThemesTab]     = useState<'3–5' | '5–8' | '8–12'>('3–5');
+  const [themesTab, setThemesTab]     = useState<'3–5' | '6–8' | '9–12'>('3–5');
   const [heroSlide, setHeroSlide]     = useState(0);
   const [promoPlaying, setPromoPlaying] = useState(false);
   const price = Number(import.meta.env.VITE_STORYBOOK_PRICE) || 499;
@@ -1615,8 +1615,8 @@ export function BrochurePage() {
           {(() => {
             const AGE_TABS = [
               { range: '3–5'  as const, label: 'Pre-school',    color: '#FF6B35' },
-              { range: '5–8'  as const, label: 'Early School',  color: '#F7B731' },
-              { range: '8–12' as const, label: 'Upper Primary', color: '#1A1A2E' },
+              { range: '6–8'  as const, label: 'Early School',  color: '#F7B731' },
+              { range: '9–12' as const, label: 'Upper Primary', color: '#1A1A2E' },
             ];
             const tabThemes = THEMES.filter(t => !t.category && (Array.isArray(t.ageRange) ? t.ageRange.includes(themesTab) : t.ageRange === themesTab));
             const mythologyThemes = THEMES.filter(t => t.category === 'mythology');

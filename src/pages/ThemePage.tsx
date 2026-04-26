@@ -111,7 +111,7 @@ export function ThemePage() {
     return null;
   }
 
-  const AGE_COLOR: Record<string, string> = { '3–5': C.saffron, '5–8': C.gold, '8–12': C.navy };
+  const AGE_COLOR: Record<string, string> = { '3–5': C.saffron, '6–8': C.gold, '9–12': C.navy };
   const color = AGE_COLOR[Array.isArray(theme.ageRange) ? theme.ageRange[0] : theme.ageRange] || C.saffron;
 
 

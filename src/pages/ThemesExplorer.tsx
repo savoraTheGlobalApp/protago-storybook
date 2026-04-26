@@ -86,7 +86,7 @@ const AGE_GROUPS: AgeGroup[] = [
     ],
   },
   {
-    range: '5–8',
+    range: '6–8',
     label: 'Early School',
     color: '#F7B731',
     themes: [
@@ -147,7 +147,7 @@ const AGE_GROUPS: AgeGroup[] = [
     ],
   },
   {
-    range: '8–12',
+    range: '9–12',
     label: 'Upper Primary',
     color: '#1A1A2E',
     themes: [

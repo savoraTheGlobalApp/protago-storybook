@@ -14,6 +14,7 @@ const BACKEND = process.env.PREVIEW_BACKEND || 'modal';
 const SCENE_COUNT = {
   'colours-shapes/young':    5,
   'bedtime-routines/young':  5,
+  'numbers-maths/young':     5,
   'numbers-maths/middle':    5,
 };
 
@@ -59,6 +60,8 @@ const VARIATIONS_AVAILABLE = new Set([
   'colours-shapes/young_boy',   'colours-shapes/young_girl',
   'bedtime-routines/young_boy', 'bedtime-routines/young_girl',
 
+  // young_boy / young_girl — numbers-maths age 3–5
+  'numbers-maths/young_boy',    'numbers-maths/young_girl',
   // middle_boy / middle_girl — numbers-maths age 5–8 (5-scene preview)
   'numbers-maths/middle_boy',   'numbers-maths/middle_girl',
 ]);
