@@ -12,10 +12,9 @@ const BACKEND = process.env.PREVIEW_BACKEND || 'modal';
 // Key format: `${storySlug}/${ageGroup}` or just `${storySlug}` as fallback.
 // All themes default to 2 (cover + first story scene).
 const SCENE_COUNT = {
-  'colours-shapes/young':    5,
-  'bedtime-routines/young':  5,
-  'numbers-maths/young':     5,
-  'numbers-maths/middle':    5,
+  'colours-shapes':   5,  // all age groups
+  'bedtime-routines': 5,  // all age groups
+  'numbers-maths':    5,  // all age groups
 };
 
 function getSceneCount(storySlug, ageGroup) {
@@ -42,8 +41,8 @@ const VARIATIONS_AVAILABLE = new Set([
   'new-sibling/older_girl', 'numbers-maths/older_girl', 'phonics-reading/older_girl',
   'ramayana/older_girl', 'sharing-sorry/older_girl', 'sudama/older_girl',
 
-  // middle_boy — 16 themes (bedtime-routines, financial-literacy, history-india missing)
-  'body-safety/middle_boy', 'colours-shapes/middle_boy', 'environmental-science/middle_boy',
+  // middle_boy — 17 themes (financial-literacy, history-india missing)
+  'bedtime-routines/middle_boy', 'body-safety/middle_boy', 'colours-shapes/middle_boy', 'environmental-science/middle_boy',
   'first-day-school/middle_boy', 'growth-mindset/middle_boy', 'hanuman/middle_boy',
   'indian-festivals/middle_boy', 'internet-safety/middle_boy', 'krishna/middle_boy',
   'managing-emotions/middle_boy', 'new-sibling/middle_boy', 'numbers-maths/middle_boy',
@@ -56,13 +55,11 @@ const VARIATIONS_AVAILABLE = new Set([
   'internet-safety/middle_girl', 'krishna/middle_girl', 'managing-emotions/middle_girl',
   'new-sibling/middle_girl', 'numbers-maths/middle_girl', 'phonics-reading/middle_girl', 'ramayana/middle_girl',
 
-  // young_boy / young_girl — colours-shapes & bedtime-routines age 3–6 (5-scene preview)
+  // young_boy / young_girl — 5-scene themes
   'colours-shapes/young_boy',   'colours-shapes/young_girl',
   'bedtime-routines/young_boy', 'bedtime-routines/young_girl',
-
-  // young_boy / young_girl — numbers-maths age 3–5
   'numbers-maths/young_boy',    'numbers-maths/young_girl',
-  // middle_boy / middle_girl — numbers-maths age 5–8 (5-scene preview)
+  // middle_boy / middle_girl — numbers-maths (5-scene)
   'numbers-maths/middle_boy',   'numbers-maths/middle_girl',
 ]);
 
