@@ -12,9 +12,11 @@ const BACKEND = process.env.PREVIEW_BACKEND || 'modal';
 // Key format: `${storySlug}/${ageGroup}` or just `${storySlug}` as fallback.
 // All themes default to 2 (cover + first story scene).
 const SCENE_COUNT = {
-  'colours-shapes':   5,  // all age groups
-  'bedtime-routines': 5,  // all age groups
-  'numbers-maths':    5,  // all age groups
+  'colours-shapes':    5,  // all age groups
+  'bedtime-routines':  5,  // all age groups
+  'numbers-maths':     5,  // all age groups
+  'sharing-sorry':     5,  // all age groups
+  'first-day-school':  5,  // all age groups
 };
 
 function getSceneCount(storySlug, ageGroup) {
@@ -56,11 +58,18 @@ const VARIATIONS_AVAILABLE = new Set([
   'new-sibling/middle_girl', 'numbers-maths/middle_girl', 'phonics-reading/middle_girl', 'ramayana/middle_girl',
 
   // young_boy / young_girl — 5-scene themes
-  'colours-shapes/young_boy',   'colours-shapes/young_girl',
-  'bedtime-routines/young_boy', 'bedtime-routines/young_girl',
-  'numbers-maths/young_boy',    'numbers-maths/young_girl',
-  // middle_boy / middle_girl — numbers-maths (5-scene)
-  'numbers-maths/middle_boy',   'numbers-maths/middle_girl',
+  'colours-shapes/young_boy',    'colours-shapes/young_girl',
+  'bedtime-routines/young_boy',  'bedtime-routines/young_girl',
+  'numbers-maths/young_boy',     'numbers-maths/young_girl',
+  'sharing-sorry/young_boy',     'sharing-sorry/young_girl',
+  'first-day-school/young_boy',  'first-day-school/young_girl',
+  // middle_boy / middle_girl — 5-scene themes
+  'numbers-maths/middle_boy',    'numbers-maths/middle_girl',
+  'sharing-sorry/middle_boy',    'sharing-sorry/middle_girl',
+  'first-day-school/middle_boy', 'first-day-school/middle_girl',
+  // older_boy / older_girl — 5-scene themes
+  'sharing-sorry/older_boy',     'sharing-sorry/older_girl',
+  'first-day-school/older_boy',  'first-day-school/older_girl',
 ]);
 
 // GCS story-scenes bucket is public read — no auth needed to download scenes.
