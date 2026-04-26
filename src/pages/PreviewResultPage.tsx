@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
+import { trackPreviewGenerated } from '../utils/analytics';
 import { useParams, useSearchParams } from 'react-router-dom';
 import { motion, AnimatePresence, useMotionValue, useTransform } from 'framer-motion';
 
@@ -757,6 +758,7 @@ export function PreviewResultPage() {
   const [errorMsg, setErrorMsg] = useState('');
   const [videoState, setVideoState] = useState<'overlay' | 'mini'>('overlay');
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const previewGeneratedFired = useRef(false);
 
   // Poll for results — fetch immediately on mount, then every 3s while processing
   useEffect(() => {
@@ -771,6 +773,10 @@ export function PreviewResultPage() {
         if (d.status === 'done') {
           clearInterval(intervalRef.current!);
           setStatus('done');
+          if (!previewGeneratedFired.current) {
+            previewGeneratedFired.current = true;
+            trackPreviewGenerated(themeSlug, jobId!);
+          }
           fetch(`${API_BASE}/api/preview/send-email`, {
             method: 'POST', headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ jobId }),
