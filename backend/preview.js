@@ -17,6 +17,9 @@ const SCENE_COUNT = {
   'numbers-maths':     5,  // all age groups
   'sharing-sorry':     5,  // all age groups
   'first-day-school':  5,  // all age groups
+  'managing-emotions': 5,  // all age groups
+  'indian-festivals':  5,  // all age groups
+  'phonics-reading':   5,  // all age groups
 };
 
 function getSceneCount(storySlug, ageGroup) {
@@ -58,18 +61,27 @@ const VARIATIONS_AVAILABLE = new Set([
   'new-sibling/middle_girl', 'numbers-maths/middle_girl', 'phonics-reading/middle_girl', 'ramayana/middle_girl',
 
   // young_boy / young_girl — 5-scene themes
-  'colours-shapes/young_boy',    'colours-shapes/young_girl',
-  'bedtime-routines/young_boy',  'bedtime-routines/young_girl',
-  'numbers-maths/young_boy',     'numbers-maths/young_girl',
-  'sharing-sorry/young_boy',     'sharing-sorry/young_girl',
-  'first-day-school/young_boy',  'first-day-school/young_girl',
+  'colours-shapes/young_boy',       'colours-shapes/young_girl',
+  'bedtime-routines/young_boy',     'bedtime-routines/young_girl',
+  'numbers-maths/young_boy',        'numbers-maths/young_girl',
+  'sharing-sorry/young_boy',        'sharing-sorry/young_girl',
+  'first-day-school/young_boy',     'first-day-school/young_girl',
+  'managing-emotions/young_boy',    'managing-emotions/young_girl',
+  'indian-festivals/young_boy',     'indian-festivals/young_girl',
+  'phonics-reading/young_boy',      'phonics-reading/young_girl',
   // middle_boy / middle_girl — 5-scene themes
-  'numbers-maths/middle_boy',    'numbers-maths/middle_girl',
-  'sharing-sorry/middle_boy',    'sharing-sorry/middle_girl',
-  'first-day-school/middle_boy', 'first-day-school/middle_girl',
+  'numbers-maths/middle_boy',       'numbers-maths/middle_girl',
+  'sharing-sorry/middle_boy',       'sharing-sorry/middle_girl',
+  'first-day-school/middle_boy',    'first-day-school/middle_girl',
+  'managing-emotions/middle_boy',   'managing-emotions/middle_girl',
+  'indian-festivals/middle_boy',    'indian-festivals/middle_girl',
+  'phonics-reading/middle_boy',     'phonics-reading/middle_girl',
   // older_boy / older_girl — 5-scene themes
-  'sharing-sorry/older_boy',     'sharing-sorry/older_girl',
-  'first-day-school/older_boy',  'first-day-school/older_girl',
+  'sharing-sorry/older_boy',        'sharing-sorry/older_girl',
+  'first-day-school/older_boy',     'first-day-school/older_girl',
+  'managing-emotions/older_boy',    'managing-emotions/older_girl',
+  'indian-festivals/older_boy',     'indian-festivals/older_girl',
+  'phonics-reading/older_boy',      'phonics-reading/older_girl',
 ]);
 
 // GCS story-scenes bucket is public read — no auth needed to download scenes.
