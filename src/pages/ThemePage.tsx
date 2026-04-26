@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { MessageCircle } from 'lucide-react';
 import { THEMES } from '../data/themes';
 import { NavBar } from '../components/NavBar';
+import { trackPreviewStarted } from '../utils/analytics';
 
 const C = {
   saffron: '#FF6B35',
@@ -307,6 +308,7 @@ export function ThemePage() {
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(emailTrimmed)) { setEmailError('Enter a valid email address'); return; }
     setNameError(false);
     setEmailError('');
+    trackPreviewStarted(theme.slug);
     setGenerating(true);
     setJobStatus('');
     const newTab = window.open('/preview/loading', '_blank');

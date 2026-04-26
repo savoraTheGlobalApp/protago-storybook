@@ -58,3 +58,20 @@ export function trackSectionView(sectionName: string) {
     section_name: sectionName,
   });
 }
+
+// PreviewStarted — analytics only, fired when user submits the Generate Preview form
+export function trackPreviewStarted(theme: string) {
+  if (typeof window.fbq === 'function') {
+    window.fbq('trackCustom', 'PreviewStarted', { theme });
+  }
+  trackEvent('PreviewStarted', { theme });
+}
+
+// PreviewGenerated — ad optimization event, fired once when preview is fully rendered
+// jobId is passed as eventID so Meta can deduplicate if CAPI is added later
+export function trackPreviewGenerated(theme: string, jobId: string) {
+  if (typeof window.fbq === 'function') {
+    window.fbq('trackCustom', 'PreviewGenerated', { theme }, { eventID: jobId });
+  }
+  trackEvent('PreviewGenerated', { theme, job_id: jobId });
+}
