@@ -17,9 +17,12 @@ const SCENE_COUNT = {
   'numbers-maths':     5,  // all age groups
   'sharing-sorry':     5,  // all age groups
   'first-day-school':  5,  // all age groups
-  'managing-emotions': 5,  // all age groups
-  'indian-festivals':  5,  // all age groups
-  'phonics-reading':   5,  // all age groups
+  'managing-emotions':  5,  // all age groups
+  'indian-festivals':   5,  // all age groups
+  'phonics-reading':    5,  // all age groups
+  'history-india':      5,  // all age groups
+  'financial-literacy': 5,  // all age groups
+  'growth-mindset':     5,  // all age groups
 };
 
 function getSceneCount(storySlug, ageGroup) {
@@ -69,6 +72,9 @@ const VARIATIONS_AVAILABLE = new Set([
   'managing-emotions/young_boy',    'managing-emotions/young_girl',
   'indian-festivals/young_boy',     'indian-festivals/young_girl',
   'phonics-reading/young_boy',      'phonics-reading/young_girl',
+  'history-india/young_boy',        'history-india/young_girl',
+  'financial-literacy/young_boy',   'financial-literacy/young_girl',
+  'growth-mindset/young_boy',       'growth-mindset/young_girl',
   // middle_boy / middle_girl — 5-scene themes
   'numbers-maths/middle_boy',       'numbers-maths/middle_girl',
   'sharing-sorry/middle_boy',       'sharing-sorry/middle_girl',
@@ -76,12 +82,18 @@ const VARIATIONS_AVAILABLE = new Set([
   'managing-emotions/middle_boy',   'managing-emotions/middle_girl',
   'indian-festivals/middle_boy',    'indian-festivals/middle_girl',
   'phonics-reading/middle_boy',     'phonics-reading/middle_girl',
+  'history-india/middle_boy',       'history-india/middle_girl',
+  'financial-literacy/middle_boy',  'financial-literacy/middle_girl',
+  'growth-mindset/middle_boy',      'growth-mindset/middle_girl',
   // older_boy / older_girl — 5-scene themes
   'sharing-sorry/older_boy',        'sharing-sorry/older_girl',
   'first-day-school/older_boy',     'first-day-school/older_girl',
   'managing-emotions/older_boy',    'managing-emotions/older_girl',
   'indian-festivals/older_boy',     'indian-festivals/older_girl',
   'phonics-reading/older_boy',      'phonics-reading/older_girl',
+  'history-india/older_boy',        'history-india/older_girl',
+  'financial-literacy/older_boy',   'financial-literacy/older_girl',
+  'growth-mindset/older_boy',       'growth-mindset/older_girl',
 ]);
 
 // GCS story-scenes bucket is public read — no auth needed to download scenes.
