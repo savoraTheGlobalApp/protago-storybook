@@ -73,6 +73,10 @@ export const THEMES: ThemeEntry[] = [
     slug: 'environmental-science', name: 'Environmental Science', icon: '🌿', ageRange: '9–12',
     description: 'Adventure where the child solves a real ecological problem in their own city or region.',
   },
+  {
+    slug: 'professions', name: 'My Dream Career', icon: '🚀', ageRange: ['6–8', '9–12'],
+    description: 'Child steps into their dream profession — astronaut, doctor, chef, engineer — and saves the day using their skills.',
+  },
   // Mythology
   {
     slug: 'ram-setu-squirrel', name: 'Ram Setu — The Squirrel', icon: '🐿️', ageRange: '6–8', category: 'mythology',

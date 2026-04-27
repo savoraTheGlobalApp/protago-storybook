@@ -23,6 +23,7 @@ const SCENE_COUNT = {
   'history-india':      5,  // all age groups
   'financial-literacy': 5,  // all age groups
   'growth-mindset':     5,  // all age groups
+  'professions':        5,  // all age groups
 };
 
 function getSceneCount(storySlug, ageGroup) {
@@ -94,6 +95,10 @@ const VARIATIONS_AVAILABLE = new Set([
   'history-india/older_boy',        'history-india/older_girl',
   'financial-literacy/older_boy',   'financial-literacy/older_girl',
   'growth-mindset/older_boy',       'growth-mindset/older_girl',
+  // professions — all 6 variants
+  'professions/young_boy',          'professions/young_girl',
+  'professions/middle_boy',         'professions/middle_girl',
+  'professions/older_boy',          'professions/older_girl',
 ]);
 
 // GCS story-scenes bucket is public read — no auth needed to download scenes.

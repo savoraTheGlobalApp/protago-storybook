@@ -39,7 +39,7 @@ export function ThemePage() {
   const API_BASE = import.meta.env.VITE_API_BASE_URL || '';
 
   const theme = THEMES.find(t => t.slug === slug);
-  const NINE_PAGE_THEMES = new Set(['colours-shapes', 'bedtime-routines', 'numbers-maths', 'sharing-sorry', 'first-day-school', 'managing-emotions', 'indian-festivals', 'phonics-reading', 'history-india', 'financial-literacy', 'growth-mindset']);
+  const NINE_PAGE_THEMES = new Set(['colours-shapes', 'bedtime-routines', 'numbers-maths', 'sharing-sorry', 'first-day-school', 'managing-emotions', 'indian-festivals', 'phonics-reading', 'history-india', 'financial-literacy', 'growth-mindset', 'professions']);
   const previewPageCount = theme && NINE_PAGE_THEMES.has(theme.slug) ? 9 : 4;
 
   const [activeIdx, setActiveIdx] = useState(0);
@@ -114,6 +114,9 @@ export function ThemePage() {
 
   const AGE_COLOR: Record<string, string> = { '3–5': C.saffron, '6–8': C.gold, '9–12': C.navy };
   const color = AGE_COLOR[Array.isArray(theme.ageRange) ? theme.ageRange[0] : theme.ageRange] || C.saffron;
+  const ageLabel = Array.isArray(theme.ageRange)
+    ? `${theme.ageRange[0].split('–')[0]}–${theme.ageRange[theme.ageRange.length - 1].split('–')[1]}`
+    : theme.ageRange;
 
 
   // Pick 6 other themes (same age group first, then others)
@@ -432,7 +435,7 @@ export function ThemePage() {
             <div style={{ padding: '18px 20px 22px', display: 'flex', flexDirection: 'column', gap: 10 }}>
               <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
                 <span style={{ fontSize: 11, fontWeight: 700, color, background: color + '18', padding: '3px 10px', borderRadius: 20, border: `1px solid ${color}30` }}>
-                  Ages {theme.ageRange}
+                  Ages {ageLabel}
                 </span>
                 <span style={{ fontSize: 11, fontWeight: 700, color: '#6B7280', background: '#F3F4F6', padding: '3px 10px', borderRadius: 20, border: '1px solid #E5E7EB' }}>
                   26 pages
@@ -443,7 +446,7 @@ export function ThemePage() {
               {/* Feature bullets */}
               <div style={{ display: 'flex', flexDirection: 'column', gap: 8, margin: '4px 0' }}>
                 {[
-                  `Perfect for children aged ${theme.ageRange}`,
+                  `Perfect for children aged ${ageLabel}`,
                   'Add your child\'s name & photo',
                   'Preview for free in ~2 minutes',
                   'Order a printed book anytime',
@@ -979,7 +982,7 @@ export function ThemePage() {
 
                 <div style={{ padding: '10px 12px 11px' }}>
                   <p style={{ fontSize: 17, fontWeight: 700, color: C.navy, margin: 0, lineHeight: 1.3 }}>{t.icon} {t.name}</p>
-                  <p style={{ fontSize: 11, color: C.lgray, margin: '3px 0 0' }}>Ages {t.ageRange}</p>
+                  <p style={{ fontSize: 11, color: C.lgray, margin: '3px 0 0' }}>Ages {Array.isArray(t.ageRange) ? `${t.ageRange[0].split('–')[0]}–${t.ageRange[t.ageRange.length-1].split('–')[1]}` : t.ageRange}</p>
                 </div>
               </button>
             ))}

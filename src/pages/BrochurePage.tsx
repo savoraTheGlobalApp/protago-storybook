@@ -1643,11 +1643,11 @@ export function BrochurePage() {
                   <motion.div key={themesTab} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
                     exit={{ opacity: 0, y: -10 }} transition={{ duration: 0.2 }}
                     style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: 20 }}>
-                    {tabThemes.slice(0, 5).map(t => (
-                      <BrochureThemeCard key={t.slug} slug={t.slug} icon={t.icon} name={t.name} badge={['colours-shapes', 'bedtime-routines', 'numbers-maths', 'sharing-sorry', 'first-day-school', 'managing-emotions', 'indian-festivals', 'phonics-reading', 'history-india', 'financial-literacy', 'growth-mindset'].includes(t.slug) ? '✨ 9-Page Preview' : undefined} onClick={() => navigate(`/theme/${t.slug}`)} />
+                    {tabThemes.slice(0, 6).map(t => (
+                      <BrochureThemeCard key={t.slug} slug={t.slug} icon={t.icon} name={t.name} badge={['colours-shapes', 'bedtime-routines', 'numbers-maths', 'sharing-sorry', 'first-day-school', 'managing-emotions', 'indian-festivals', 'phonics-reading', 'history-india', 'financial-literacy', 'growth-mindset', 'professions'].includes(t.slug) ? '✨ 9-Page Preview' : undefined} onClick={() => navigate(`/theme/${t.slug}`)} />
                     ))}
 
-                    {/* ── Custom story card — 6th slot ── */}
+                    {/* ── Custom story card — 7th slot ── */}
                     <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.15 }}
                       onClick={() => document.getElementById('custom-story')?.scrollIntoView({ behavior: 'smooth', block: 'start' })}
                       style={{ borderRadius: 20, border: `2px dashed ${C.saffron}`, background: 'linear-gradient(135deg, #FFF3EE 0%, #FFF8F0 100%)', cursor: 'pointer', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 12, padding: '32px 24px', textAlign: 'center', minHeight: 200 }}
@@ -1662,8 +1662,8 @@ export function BrochurePage() {
                       </span>
                     </motion.div>
 
-                    {tabThemes.slice(5).map(t => (
-                      <BrochureThemeCard key={t.slug} slug={t.slug} icon={t.icon} name={t.name} badge={['colours-shapes', 'bedtime-routines', 'numbers-maths', 'sharing-sorry', 'first-day-school', 'managing-emotions', 'indian-festivals', 'phonics-reading', 'history-india', 'financial-literacy', 'growth-mindset'].includes(t.slug) ? '✨ 9-Page Preview' : undefined} onClick={() => navigate(`/theme/${t.slug}`)} />
+                    {tabThemes.slice(6).map(t => (
+                      <BrochureThemeCard key={t.slug} slug={t.slug} icon={t.icon} name={t.name} badge={['colours-shapes', 'bedtime-routines', 'numbers-maths', 'sharing-sorry', 'first-day-school', 'managing-emotions', 'indian-festivals', 'phonics-reading', 'history-india', 'financial-literacy', 'growth-mindset', 'professions'].includes(t.slug) ? '✨ 9-Page Preview' : undefined} onClick={() => navigate(`/theme/${t.slug}`)} />
                     ))}
                   </motion.div>
                 </AnimatePresence>
@@ -1687,7 +1687,7 @@ export function BrochurePage() {
                     </div>
                     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: 20 }}>
                       {mythologyThemes.map(t => (
-                        <BrochureThemeCard key={t.slug} slug={t.slug} icon={t.icon} name={t.name} badge={['colours-shapes', 'bedtime-routines', 'numbers-maths', 'sharing-sorry', 'first-day-school', 'managing-emotions', 'indian-festivals', 'phonics-reading', 'history-india', 'financial-literacy', 'growth-mindset'].includes(t.slug) ? '✨ 9-Page Preview' : undefined} onClick={() => navigate(`/theme/${t.slug}`)} />
+                        <BrochureThemeCard key={t.slug} slug={t.slug} icon={t.icon} name={t.name} badge={['colours-shapes', 'bedtime-routines', 'numbers-maths', 'sharing-sorry', 'first-day-school', 'managing-emotions', 'indian-festivals', 'phonics-reading', 'history-india', 'financial-literacy', 'growth-mindset', 'professions'].includes(t.slug) ? '✨ 9-Page Preview' : undefined} onClick={() => navigate(`/theme/${t.slug}`)} />
                       ))}
                     </div>
                   </motion.div>
