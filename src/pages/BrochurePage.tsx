@@ -315,7 +315,7 @@ function BrochureThemeCard({ slug, icon, name, badge, onClick }: { slug: string;
           </svg>
           {/* Badge */}
           {badge && (
-            <div style={{ position: 'absolute', top: 10, left: 10, zIndex: 6, background: C.saffron, color: '#fff', fontSize: 10, fontWeight: 800, borderRadius: 50, padding: '3px 10px', letterSpacing: 0.4, boxShadow: '0 2px 8px rgba(255,107,53,0.4)' }}>
+            <div style={{ position: 'absolute', top: 10, left: 10, zIndex: 6, background: C.saffron, color: '#fff', fontSize: 13, fontWeight: 800, borderRadius: 50, padding: '5px 14px', letterSpacing: 0.4, boxShadow: '0 2px 8px rgba(255,107,53,0.4)' }}>
               {badge}
             </div>
           )}
