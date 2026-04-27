@@ -884,10 +884,15 @@ export function PreviewResultPage() {
         {/* Progress bar + story teaser */}
         {status === 'processing' && <StoryTeaser childName={childName} />}
 
-        {/* Mini game while waiting */}
+        {/* Waiting message */}
         {status === 'processing' && (
-          <div style={{ width: '100%', marginBottom: 32 }}>
-            <StoryGame childName={childName} />
+          <div style={{ width: '100%', marginBottom: 32, textAlign: 'center', padding: '28px 24px', background: 'rgba(255,255,255,0.04)', borderRadius: 16, border: '1px solid rgba(255,255,255,0.08)' }}>
+            <p style={{ fontSize: 17, fontWeight: 700, color: '#fff', marginBottom: 8, fontFamily: "'Baloo 2', sans-serif" }}>
+              ⏱ Each page takes about a minute to generate
+            </p>
+            <p style={{ fontSize: 14, color: 'rgba(255,255,255,0.55)', margin: 0, lineHeight: 1.6 }}>
+              We'll notify you when it's ready — you don't need to wait on this page.
+            </p>
           </div>
         )}
 
