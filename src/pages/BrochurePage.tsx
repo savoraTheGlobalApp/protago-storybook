@@ -362,8 +362,8 @@ function BrochureThemeCard({ slug, icon, name, badge, onClick }: { slug: string;
       <div style={{ padding: '10px 12px 12px' }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, marginBottom: 7 }}>
           <span style={{ fontSize: 11, fontWeight: 700, color: '#fff', background: '#22C55E', borderRadius: 50, padding: '2px 8px', letterSpacing: 0.3 }}>15% OFF</span>
-          <span style={{ fontSize: 13, color: '#9CA3AF', textDecoration: 'line-through', fontWeight: 600 }}>₹1,499</span>
-          <span style={{ fontSize: 16, fontWeight: 800, color: C.navy, fontFamily: "'Baloo 2', sans-serif" }}>₹1,274</span>
+          <span style={{ fontSize: 18, color: '#9CA3AF', textDecoration: 'line-through', fontWeight: 600 }}>₹1,499</span>
+          <span style={{ fontSize: 18, fontWeight: 800, color: C.navy, fontFamily: "'Baloo 2', sans-serif" }}>₹1,274</span>
         </div>
         <button
           onClick={onClick}
@@ -1464,8 +1464,8 @@ function CustomStorySection() {
               {/* Pricing */}
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10, padding: '12px 16px', background: '#FFF7ED', borderRadius: 12, border: '1px solid #FFE4CC' }}>
                 <span style={{ fontSize: 11, fontWeight: 800, color: '#fff', background: '#22C55E', borderRadius: 50, padding: '2px 10px' }}>10% OFF</span>
-                <span style={{ fontSize: 13, color: '#9CA3AF', textDecoration: 'line-through', fontWeight: 600 }}>₹2,200</span>
-                <span style={{ fontSize: 20, fontWeight: 800, color: C.navy, fontFamily: "'Baloo 2', sans-serif" }}>Starting ₹1,980</span>
+                <span style={{ fontSize: 18, color: '#9CA3AF', textDecoration: 'line-through', fontWeight: 600 }}>₹2,200</span>
+                <span style={{ fontSize: 18, fontWeight: 800, color: C.navy, fontFamily: "'Baloo 2', sans-serif" }}>Starting ₹1,980</span>
               </div>
 
               <button type="submit" disabled={submitting}
