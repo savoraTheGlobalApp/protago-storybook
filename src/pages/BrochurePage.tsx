@@ -1456,16 +1456,23 @@ function CustomStorySection() {
                   placeholder="e.g. Arjun's 5th birthday — he loves dinosaurs and wants to be a palaeontologist. The story should show him on a dig discovering a new species, learning that patience pays off, and naming it after his little sister..."
                   onFocus={e => (e.target.style.borderColor = C.saffron)} onBlur={e => (e.target.style.borderColor = '#E5E7EB')}
                   style={{ ...inp(), resize: 'vertical', lineHeight: 1.6 }} />
-                <p style={{ fontSize: 11, color: C.lgray, margin: '4px 0 0' }}>Characters · setting · the lesson · any real names or places — more detail = better book</p>
+                <p style={{ fontSize: 13, color: C.lgray, margin: '4px 0 0' }}>Characters · setting · the lesson · any real names or places — more detail = better book</p>
               </div>
 
               {error && <p style={{ fontSize: 13, color: '#C0392B', margin: 0 }}>{error}</p>}
+
+              {/* Pricing */}
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10, padding: '12px 16px', background: '#FFF7ED', borderRadius: 12, border: '1px solid #FFE4CC' }}>
+                <span style={{ fontSize: 11, fontWeight: 800, color: '#fff', background: '#22C55E', borderRadius: 50, padding: '2px 10px' }}>10% OFF</span>
+                <span style={{ fontSize: 13, color: '#9CA3AF', textDecoration: 'line-through', fontWeight: 600 }}>₹2,200</span>
+                <span style={{ fontSize: 20, fontWeight: 800, color: C.navy, fontFamily: "'Baloo 2', sans-serif" }}>Starting ₹1,980</span>
+              </div>
 
               <button type="submit" disabled={submitting}
                 style={{ background: submitting ? '#E5E7EB' : `linear-gradient(135deg, ${C.saffron} 0%, #FF8C42 100%)`, color: submitting ? '#9CA3AF' : '#fff', border: 'none', borderRadius: 12, padding: '14px 20px', fontWeight: 800, fontSize: 16, cursor: submitting ? 'default' : 'pointer', fontFamily: "'Baloo 2', sans-serif", boxShadow: submitting ? 'none' : '0 4px 16px rgba(255,107,53,0.4)' }}>
                 {submitting ? 'Submitting…' : 'Submit Story Brief →'}
               </button>
-              <p style={{ fontSize: 11, color: C.lgray, textAlign: 'center', margin: '-4px 0 0' }}>We'll reach out within 24 hours · Custom pricing based on brief</p>
+              <p style={{ fontSize: 11, color: C.lgray, textAlign: 'center', margin: '-4px 0 0' }}>We'll reach out within 24 hours · Final price confirmed after brief review</p>
             </form>
           )}
         </div>
