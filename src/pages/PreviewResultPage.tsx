@@ -898,7 +898,7 @@ export function PreviewResultPage() {
 
         {/* Book viewer */}
         {done && (
-          <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.45)', textAlign: 'center', margin: '0 0 8px', width: '100%' }}>
+          <p style={{ fontSize: 16, color: 'rgba(255,255,255,0.6)', textAlign: 'center', margin: '0 0 8px', width: '100%' }}>
             Not happy with the preview?{' '}
             <a href="https://wa.me/919452868857" target="_blank" rel="noopener noreferrer"
               style={{ color: C.saffron, fontWeight: 700, textDecoration: 'none' }}>
