@@ -1086,7 +1086,9 @@ app.post('/api/order-inquiry', async (req, res) => {
             return res.status(400).json({ error: 'Name, email and phone are required' });
         }
 
-        const basePrice = parseInt(process.env.STORYBOOK_PRICE, 10) || 499;
+        const basePrice = isCustomStory
+            ? (parseInt(process.env.CUSTOM_STORY_PRICE, 10) || 1980)
+            : (parseInt(process.env.STORYBOOK_PRICE, 10) || 499);
 
         // Validate coupon server-side
         const coupon = couponCode ? await validateCouponCode(couponCode) : null;
