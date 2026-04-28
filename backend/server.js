@@ -1453,7 +1453,7 @@ app.post('/api/preview/send-email', async (req, res) => {
 
     // Fetch job from DB
     const jobRes = await fetch(
-      `${SUPABASE_URL}/rest/v1/preview_jobs?id=eq.${jobId}&select=email,child_name,story_slug,result_scene_1,result_scene_2,email_sent`,
+      `${SUPABASE_URL}/rest/v1/preview_jobs?id=eq.${jobId}&select=email,child_name,story_slug,result_scene_1,result_scene_2,result_scene_3,email_sent`,
       { headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}` } }
     );
     const [job] = await jobRes.json();
@@ -1461,6 +1461,15 @@ app.post('/api/preview/send-email', async (req, res) => {
     if (!job.email) return res.json({ skipped: true, reason: 'No email on this job' });
     if (job.email_sent) return res.json({ skipped: true, reason: 'Email already sent' });
     if (!job.result_scene_1) return res.status(400).json({ error: 'Preview not ready yet' });
+
+    const SKIP_COVER_THEMES = new Set([
+      'colours-shapes', 'bedtime-routines', 'numbers-maths', 'sharing-sorry', 'first-day-school',
+      'managing-emotions', 'indian-festivals', 'phonics-reading', 'history-india',
+      'financial-literacy', 'growth-mindset', 'professions',
+    ]);
+    const skipCover = SKIP_COVER_THEMES.has(job.story_slug);
+    const emailScene1 = skipCover ? job.result_scene_2 : job.result_scene_1;
+    const emailScene2 = skipCover ? job.result_scene_3 : job.result_scene_2;
 
     const childName = job.child_name || 'Your child';
     const themeName = job.story_slug.replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
@@ -1491,13 +1500,13 @@ app.post('/api/preview/send-email', async (req, res) => {
 
         <!-- Scene 1 -->
         <tr><td style="padding:16px 32px 8px">
-          <img src="${job.result_scene_1}" alt="Preview scene 1" width="536"
+          <img src="${emailScene1}" alt="Preview scene 1" width="536"
             style="width:100%;border-radius:12px;display:block;border:0" />
         </td></tr>
 
-        ${job.result_scene_2 ? `<!-- Scene 2 -->
+        ${emailScene2 ? `<!-- Scene 2 -->
         <tr><td style="padding:8px 32px 16px">
-          <img src="${job.result_scene_2}" alt="Preview scene 2" width="536"
+          <img src="${emailScene2}" alt="Preview scene 2" width="536"
             style="width:100%;border-radius:12px;display:block;border:0" />
         </td></tr>` : ''}
 
