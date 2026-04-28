@@ -38,6 +38,14 @@ function ShimmerCard() {
   );
 }
 
+// Themes where scene_01 (cover) is skipped during face-swap — Modal still
+// treats index 0 as a cover and overlays a title, so we drop it from display.
+const SKIP_COVER_THEMES = new Set([
+  'colours-shapes', 'bedtime-routines', 'numbers-maths', 'sharing-sorry', 'first-day-school',
+  'managing-emotions', 'indian-festivals', 'phonics-reading', 'history-india',
+  'financial-literacy', 'growth-mindset', 'professions',
+]);
+
 // ── Book viewer with 3D page flip ────────────────────────────────────────────
 const FLIP_DURATION = 0.85;
 
@@ -906,7 +914,7 @@ export function PreviewResultPage() {
             </a>{' '}and we'll sort it out.
           </p>
         )}
-        {resultUrls.some(Boolean) && <BookViewer urls={resultUrls} firstIsCover={['colours-shapes', 'bedtime-routines', 'numbers-maths', 'sharing-sorry', 'first-day-school', 'managing-emotions', 'indian-festivals', 'phonics-reading', 'history-india', 'financial-literacy', 'growth-mindset', 'professions'].includes(themeSlug ?? '')} isComplete={done} onOrder={handleOrder} />}
+        {resultUrls.some(Boolean) && <BookViewer urls={SKIP_COVER_THEMES.has(themeSlug ?? '') ? resultUrls.slice(1) : resultUrls} firstIsCover={false} isComplete={done} onOrder={handleOrder} />}
 
         {/* Error */}
         {status === 'failed' && (
