@@ -2208,6 +2208,12 @@ export function BrochurePage() {
                 style={{ color: C.gold }}>
                 <MessageCircle size={14} /> WhatsApp: +91 94528 68857
               </a>
+              <a href="https://www.instagram.com/protago.in/" target="_blank" rel="noopener noreferrer"
+                className="flex items-center gap-2 text-sm mt-2 hover:opacity-80 transition-opacity"
+                style={{ color: C.gold }}>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="2" width="20" height="20" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r="1" fill="currentColor" stroke="none"/></svg>
+                @protago.in
+              </a>
             </div>
             <div>
               <h4 className="text-xs font-bold uppercase tracking-widest mb-4" style={{ color: 'rgba(255,255,255,0.25)' }}>Explore</h4>
