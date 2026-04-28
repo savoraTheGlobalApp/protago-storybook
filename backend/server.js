@@ -1333,7 +1333,7 @@ const VALID_AGE_GROUPS = new Set(['young', 'middle', 'older']);
 
 app.post('/api/preview/trigger', async (req, res) => {
   try {
-    const { storySlug, photoUrl, childName, email, gender, ageGroup, childAge } = req.body;
+    const { storySlug, photoUrl, childName, email, phone, gender, ageGroup, childAge } = req.body;
     if (!storySlug || !photoUrl) {
       return res.status(400).json({ error: 'storySlug and photoUrl are required' });
     }
@@ -1365,6 +1365,7 @@ app.post('/api/preview/trigger', async (req, res) => {
         photo_path: photoUrl,
         child_name: childName || null,
         email: email || null,
+        phone: phone || null,
         gender: safeGender || null,
         age_group: safeAgeGroup || null,
         child_age: childAge ? parseInt(childAge, 10) : null,

@@ -47,6 +47,8 @@ export function ThemePage() {
   const [nameError, setNameError] = useState(false);
   const [previewEmail, setPreviewEmail] = useState('');
   const [emailError, setEmailError] = useState('');
+  const [previewPhone, setPreviewPhone] = useState('');
+  const [phoneError, setPhoneError] = useState('');
   const [photo, setPhoto] = useState<{ preview: string; uploading: boolean; signedUrl: string | null } | null>(null);
   const [consent, setConsent] = useState(false);
   const [jobStatus, setJobStatus] = useState('');
@@ -309,8 +311,12 @@ export function ThemePage() {
     const emailTrimmed = previewEmail.trim();
     if (!emailTrimmed) { setEmailError('Email is required'); return; }
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(emailTrimmed)) { setEmailError('Enter a valid email address'); return; }
+    const phoneTrimmed = previewPhone.trim().replace(/[\s\-().+]/g, '');
+    if (!phoneTrimmed) { setPhoneError('WhatsApp number is required'); return; }
+    if (!/^[6-9]\d{9}$/.test(phoneTrimmed)) { setPhoneError('Enter a valid 10-digit Indian mobile number'); return; }
     setNameError(false);
     setEmailError('');
+    setPhoneError('');
     trackPreviewStarted(theme.slug);
     setGenerating(true);
     setJobStatus('');
@@ -319,7 +325,7 @@ export function ThemePage() {
       const res = await fetch(`${API_BASE}/api/preview/trigger`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ storySlug: theme.slug, photoUrl: photo.signedUrl, childName: firstName, email: emailTrimmed, gender: gender ?? undefined, ageGroup: selectedAgeGroup ?? undefined, childAge: selectedAge ?? undefined }),
+        body: JSON.stringify({ storySlug: theme.slug, photoUrl: photo.signedUrl, childName: firstName, email: emailTrimmed, phone: phoneTrimmed, gender: gender ?? undefined, ageGroup: selectedAgeGroup ?? undefined, childAge: selectedAge ?? undefined }),
       });
       const data = await res.json();
       if (!res.ok) {
@@ -339,7 +345,7 @@ export function ThemePage() {
     })();
   };
 
-  const canGenerate = !!childName.trim() && !!photo?.signedUrl && consent && !generating && !!gender && !!selectedAgeGroup;
+  const canGenerate = !!childName.trim() && !!photo?.signedUrl && consent && !generating && !!gender && !!selectedAgeGroup && !!previewPhone.trim();
 
   return (
     <div style={{ minHeight: '100vh', background: '#FAFAFA', fontFamily: "'Nunito', sans-serif" }}>
@@ -596,6 +602,37 @@ export function ThemePage() {
                     {emailError
                       ? <p style={{ fontSize: 11, color: '#E53E3E', margin: '4px 0 0' }}>{emailError}</p>
                       : <p style={{ fontSize: 13, fontWeight: 700, color: '#E53E3E', margin: '6px 0 0' }}>⭐ We'll send your preview here so you can always access it</p>
+                    }
+                  </div>
+
+                  {/* WhatsApp */}
+                  <div style={{ marginBottom: 14 }}>
+                    <label style={{ fontSize: 12, fontWeight: 700, color: C.navy, display: 'block', marginBottom: 6 }}>
+                      WhatsApp number <span style={{ color: C.saffron }}>*</span>
+                    </label>
+                    <div style={{ display: 'flex', border: `1.5px solid ${phoneError ? '#E53E3E' : '#E5E7EB'}`, borderRadius: 10, overflow: 'hidden', background: phoneError ? '#FFF5F5' : '#fff', transition: 'border-color 0.2s' }}
+                      onFocus={() => {}} >
+                      <span style={{ padding: '12px 12px', fontSize: 15, fontWeight: 700, color: C.gray, background: '#F9FAFB', borderRight: '1.5px solid #E5E7EB', whiteSpace: 'nowrap', display: 'flex', alignItems: 'center' }}>+91</span>
+                      <input
+                        type="tel"
+                        placeholder="98765 43210"
+                        value={previewPhone}
+                        maxLength={10}
+                        onChange={e => {
+                          const digits = e.target.value.replace(/\D/g, '').slice(0, 10);
+                          setPreviewPhone(digits);
+                          if (phoneError) setPhoneError('');
+                        }}
+                        style={{
+                          border: 'none', padding: '12px 14px', fontSize: 15, outline: 'none',
+                          flex: 1, fontFamily: 'inherit', background: 'transparent',
+                        }}
+                        onFocus={e => (e.target.closest('div') as HTMLDivElement).style.borderColor = phoneError ? '#E53E3E' : C.saffron}
+                        onBlur={e => (e.target.closest('div') as HTMLDivElement).style.borderColor = phoneError ? '#E53E3E' : '#E5E7EB'} />
+                    </div>
+                    {phoneError
+                      ? <p style={{ fontSize: 11, color: '#E53E3E', margin: '4px 0 0' }}>{phoneError}</p>
+                      : <p style={{ fontSize: 11, color: C.lgray, margin: '4px 0 0' }}>We'll send your preview link on WhatsApp</p>
                     }
                   </div>
 
