@@ -4,6 +4,7 @@ import { motion, AnimatePresence, useInView } from 'framer-motion';
 import { ArrowRight, ChevronDown, MessageCircle } from 'lucide-react';
 import { NavBar } from '../components/NavBar';
 import { THEMES, ThemeEntry, ageToRange } from '../data/themes';
+import { DEFAULT_FACE_SAMPLES, getFaceSamples, getArrowTarget } from '../data/themeMockups';
 import { trackEvent } from '../utils/analytics';
 
 // ── Palette — two backgrounds (white / navy), one warm gradient, saffron + gold accents
@@ -101,16 +102,12 @@ const HERO_SLIDES = [
 ];
 
 // ── FACE → SCENE ANIMATION ────────────────────────────────────────────────
-const FACE_SAMPLES = [
-  { key: 'boy_young', face: '/faces/face_boy_young.webp' },
-  { key: 'boy_older', face: '/faces/face_boy_older.webp' },
-  { key: 'girl',      face: '/faces/face_girl_medium.webp' },
-];
+const FACE_SAMPLES = DEFAULT_FACE_SAMPLES;
 
 const FACE_SCENE_SAMPLES = [
-  { name: 'Boy',  face: '/faces/face_boy_young.webp',  scene: '/themes_mockup/bedtime-routines_boy_young_mockup.webp' },
-  { name: 'Boy',  face: '/faces/face_boy_older.webp',  scene: '/themes_mockup/bedtime-routines_boy_older_mockup.webp' },
-  { name: 'Girl', face: '/faces/face_girl_medium.webp', scene: '/themes_mockup/bedtime-routines_girl_mockup.webp' },
+  { name: 'Boy',  face: '/faces/face_boy_1.webp',  scene: '/themes_mockup/bedtime-routines_boy_1_mockup.webp' },
+  { name: 'Boy',  face: '/faces/face_boy_2.webp',  scene: '/themes_mockup/bedtime-routines_boy_2_mockup.webp' },
+  { name: 'Girl', face: '/faces/face_girl_1.webp', scene: '/themes_mockup/bedtime-routines_girl_1_mockup.webp' },
 ];
 
 const FACE_SIZE_CSS = 'clamp(70px, 18vw, 140px)';
@@ -242,6 +239,8 @@ function FaceToSceneAnimation() {
 const FACE_SIZE_BROCHURE = 72;
 
 function BrochureThemeCard({ slug, icon, name, badge, description, ageRange, onClick }: { slug: string; icon: string; name: string; badge?: string; description?: string; ageRange?: string; onClick: () => void }) {
+  const faceSamples = getFaceSamples(slug);
+  const arrowTarget = getArrowTarget(slug);
   const [activeIdx, setActiveIdx] = useState(0);
   const [hasLoaded, setHasLoaded] = useState(false);
   const cardRef = useRef<HTMLDivElement>(null);
@@ -255,9 +254,9 @@ function BrochureThemeCard({ slug, icon, name, badge, description, ageRange, onC
   // Cycle interval pauses while offscreen, but the images themselves stay in the DOM.
   useEffect(() => {
     if (!inView) return;
-    const t = setInterval(() => setActiveIdx(i => (i + 1) % FACE_SAMPLES.length), 2000);
+    const t = setInterval(() => setActiveIdx(i => (i + 1) % faceSamples.length), 2000);
     return () => clearInterval(t);
-  }, [inView]);
+  }, [inView, faceSamples.length]);
 
   return (
     <motion.div
@@ -277,14 +276,14 @@ function BrochureThemeCard({ slug, icon, name, badge, description, ageRange, onC
         <div style={{ aspectRatio: '4/3', background: '#F7F5F0', position: 'relative', overflow: 'hidden' }}>
           {!hasLoaded ? (
             <img
-              src={`/themes_mockup/${slug}_${FACE_SAMPLES[0].key}_mockup.webp`}
+              src={`/themes_mockup/${slug}_${faceSamples[0].key}_mockup.webp`}
               alt=""
               loading="lazy"
               decoding="async"
               style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'contain', display: 'block', transform: 'scale(1.3)' }}
               onError={e => { (e.target as HTMLImageElement).style.display = 'none'; }}
             />
-          ) : FACE_SAMPLES.map((sample, i) => (
+          ) : faceSamples.map((sample, i) => (
             <motion.img
               key={sample.key}
               src={`/themes_mockup/${slug}_${sample.key}_mockup.webp`}
@@ -301,7 +300,7 @@ function BrochureThemeCard({ slug, icon, name, badge, description, ageRange, onC
           <svg viewBox="0 0 160 90" preserveAspectRatio="none"
             style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', zIndex: 5, pointerEvents: 'none' }}>
             <motion.path
-              d="M 148 4 Q 148 40 80 28"
+              d={`M 148 4 Q 148 40 ${arrowTarget.x} ${arrowTarget.y}`}
               fill="none" stroke={C.saffron} strokeWidth="2.2" strokeDasharray="5 3" strokeLinecap="round"
               initial={{ pathLength: 0, opacity: 0 }}
               animate={{ pathLength: 1, opacity: 1 }}
@@ -309,7 +308,7 @@ function BrochureThemeCard({ slug, icon, name, badge, description, ageRange, onC
               key={activeIdx}
             />
             <motion.path
-              d="M 88 23 L 80 28 L 87 33"
+              d={`M ${arrowTarget.x + 8} ${arrowTarget.y - 5} L ${arrowTarget.x} ${arrowTarget.y} L ${arrowTarget.x + 7} ${arrowTarget.y + 5}`}
               fill="none" stroke={C.saffron} strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"
               initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 1.0 }}
               key={`arrowhead-${activeIdx}`}
@@ -324,10 +323,10 @@ function BrochureThemeCard({ slug, icon, name, badge, description, ageRange, onC
         {/* Face circle */}
         <div style={{ position: 'absolute', top: 0, right: 12, width: FACE_SIZE_BROCHURE, height: FACE_SIZE_BROCHURE, zIndex: 10 }}>
           {!hasLoaded ? (
-            <img src={FACE_SAMPLES[0].face} alt="" loading="lazy" decoding="async" className="rounded-full"
+            <img src={faceSamples[0].face} alt="" loading="lazy" decoding="async" className="rounded-full"
               style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover',
                 border: `2.5px solid ${C.saffron}`, boxShadow: '0 2px 10px rgba(255,107,53,0.3), 0 0 0 2px #fff' }} />
-          ) : FACE_SAMPLES.map((sample, i) => (
+          ) : faceSamples.map((sample, i) => (
             <motion.img key={sample.face} src={sample.face} alt="" loading="lazy" decoding="async" className="rounded-full"
               style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover',
                 border: `2.5px solid ${C.saffron}`, boxShadow: '0 2px 10px rgba(255,107,53,0.3), 0 0 0 2px #fff' }}

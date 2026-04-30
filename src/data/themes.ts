@@ -16,16 +16,16 @@ export const THEMES: ThemeEntry[] = [
     description: 'Child learns colours and shapes through a fun adventure in a world built from them.',
   },
   {
+    slug: 'bedtime-routines', name: 'Bedtime Routines', icon: '🌙', ageRange: '3–5',
+    description: 'Child goes on a dream adventure that starts only after they brush teeth, wash up and sleep.',
+  },
+  {
     slug: 'sharing-sorry', name: 'Sharing & Saying Sorry', icon: '🤝', ageRange: '3–5',
     description: 'Story about learning to share toys and apologise — with a real friend as a side character.',
   },
   {
     slug: 'first-day-school', name: 'First Day at School', icon: '🏫', ageRange: '3–5',
     description: 'Helps anxious children prepare for school by seeing themselves navigate it confidently.',
-  },
-  {
-    slug: 'bedtime-routines', name: 'Bedtime Routines', icon: '🌙', ageRange: '3–5',
-    description: 'Child goes on a dream adventure that starts only after they brush teeth, wash up and sleep.',
   },
   {
     slug: 'new-sibling', name: 'New Sibling', icon: '👶', ageRange: '3–5',

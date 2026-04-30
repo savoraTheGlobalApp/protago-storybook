@@ -3,6 +3,7 @@ import { useParams, useNavigate, useLocation, useSearchParams } from 'react-rout
 import { motion, AnimatePresence } from 'framer-motion';
 import { MessageCircle } from 'lucide-react';
 import { THEMES } from '../data/themes';
+import { getFaceSamples, getArrowTarget } from '../data/themeMockups';
 import { NavBar } from '../components/NavBar';
 import { trackPreviewStarted } from '../utils/analytics';
 
@@ -15,11 +16,6 @@ const C = {
   lgray:   '#999999',
 };
 
-const FACE_SAMPLES = [
-  { key: 'boy_young', face: '/faces/face_boy_young.webp' },
-  { key: 'boy_older', face: '/faces/face_boy_older.webp' },
-  { key: 'girl',      face: '/faces/face_girl_medium.webp' },
-];
 
 export function ThemePage() {
   const { slug } = useParams<{ slug: string }>();
@@ -105,7 +101,7 @@ export function ThemePage() {
   }, [slug]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
-    const t = setInterval(() => setActiveIdx(i => (i + 1) % FACE_SAMPLES.length), 2000);
+    const t = setInterval(() => setActiveIdx(i => (i + 1) % getFaceSamples(slug ?? '').length), 2000);
     return () => clearInterval(t);
   }, []);
 
@@ -385,7 +381,7 @@ export function ThemePage() {
               ) : (
                 /* ── Default face-swap animation ── */
                 <div style={{ aspectRatio: '4/3', background: '#F0EEE8', position: 'relative', overflow: 'hidden' }}>
-                  {FACE_SAMPLES.map((sample, i) => (
+                  {getFaceSamples(theme.slug).map((sample, i) => (
                     <motion.img key={sample.key}
                       src={`/themes_mockup/${theme.slug}_${sample.key}_mockup.webp`}
                       alt="" decoding="async"
@@ -395,20 +391,20 @@ export function ThemePage() {
                       onError={e => { (e.target as HTMLImageElement).style.display = 'none'; }}
                     />
                   ))}
-                  {true && (
+                  {(() => { const at = getArrowTarget(theme.slug); return (
                     <svg viewBox="0 0 160 90" preserveAspectRatio="none"
                       style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', zIndex: 5, pointerEvents: 'none' }}>
-                      <motion.path d="M 148 4 Q 148 40 80 28" fill="none" stroke={C.saffron}
+                      <motion.path d={`M 148 4 Q 148 40 ${at.x} ${at.y}`} fill="none" stroke={C.saffron}
                         strokeWidth="2" strokeDasharray="5 3" strokeLinecap="round"
                         initial={{ pathLength: 0, opacity: 0 }} animate={{ pathLength: 1, opacity: 1 }}
                         transition={{ pathLength: { duration: 1.0, delay: 0.2 }, opacity: { duration: 0.2 } }}
                         key={activeIdx} />
-                      <motion.path d="M 88 23 L 80 28 L 87 33" fill="none" stroke={C.saffron}
+                      <motion.path d={`M ${at.x + 8} ${at.y - 5} L ${at.x} ${at.y} L ${at.x + 7} ${at.y + 5}`} fill="none" stroke={C.saffron}
                         strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
                         initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 1.0 }}
                         key={`ah-${activeIdx}`} />
                     </svg>
-                  )}
+                  ); })()}
                   <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, padding: '30px 16px 12px', background: 'linear-gradient(transparent, rgba(0,0,0,0.7))', zIndex: 4 }}>
                     <p style={{ fontFamily: "'Baloo 2', sans-serif", fontWeight: 800, fontSize: 20, color: '#fff', margin: 0 }}>
                       {theme.icon} {theme.name}
@@ -418,7 +414,7 @@ export function ThemePage() {
               )}
               {!locationState?.previewUrls?.some(u => u) && (
                 <div style={{ position: 'absolute', top: 12, right: 16, width: 72, height: 72, zIndex: 10 }}>
-                  {FACE_SAMPLES.map((sample, i) => (
+                  {getFaceSamples(theme.slug).map((sample, i) => (
                     <motion.img key={sample.face} src={sample.face} alt="" decoding="async"
                       style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover',
                         borderRadius: '50%', border: `3px solid ${C.saffron}`, boxShadow: '0 4px 16px rgba(255,107,53,0.35), 0 0 0 3px #fff' }}
@@ -986,7 +982,7 @@ export function ThemePage() {
 
                 {/* Face circle */}
                 <div style={{ position: 'absolute', top: -16, right: 8, width: 36, height: 36, zIndex: 10, borderRadius: '50%', overflow: 'hidden', border: `2.5px solid ${C.saffron}`, boxShadow: '0 2px 8px rgba(255,107,53,0.3), 0 0 0 1.5px #fff' }}>
-                  {FACE_SAMPLES.map((s, i) => (
+                  {getFaceSamples(t.slug).map((s, i) => (
                     <motion.img key={s.key} src={s.face} alt=""
                       style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }}
                       animate={{ opacity: i === activeIdx ? 1 : 0 }} transition={{ duration: 0.5 }} />
@@ -994,7 +990,7 @@ export function ThemePage() {
                 </div>
 
                 <div style={{ borderRadius: '12px 12px 0 0', aspectRatio: '4/3', background: '#F0EEE8', overflow: 'hidden', position: 'relative' }}>
-                  {FACE_SAMPLES.map((s, i) => (
+                  {getFaceSamples(t.slug).map((s, i) => (
                     <motion.img key={s.key}
                       src={`/themes_mockup/${t.slug}_${s.key}_mockup.webp`} alt=""
                       loading="lazy" decoding="async"
@@ -1004,17 +1000,19 @@ export function ThemePage() {
                       onError={e => { (e.target as HTMLImageElement).style.display = 'none'; }} />
                   ))}
                   {/* Arrow from face to scene */}
-                  <svg viewBox="0 0 160 90" preserveAspectRatio="none"
-                    style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', zIndex: 5, pointerEvents: 'none' }}>
-                    <motion.path d="M 148 4 Q 148 40 80 28" fill="none" stroke={C.saffron}
-                      strokeWidth="1.8" strokeLinecap="round" strokeDasharray="5 3"
-                      initial={{ pathLength: 0, opacity: 0 }} animate={{ pathLength: 1, opacity: 1 }}
-                      transition={{ duration: 0.8, delay: 0.3 }} key={`arrow-${activeIdx}`} />
-                    <motion.path d="M 88 23 L 80 28 L 87 33" fill="none" stroke={C.saffron}
-                      strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"
-                      initial={{ opacity: 0 }} animate={{ opacity: 1 }}
-                      transition={{ delay: 1.0 }} key={`arrowhead-${activeIdx}`} />
-                  </svg>
+                  {(() => { const at = getArrowTarget(t.slug); return (
+                    <svg viewBox="0 0 160 90" preserveAspectRatio="none"
+                      style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', zIndex: 5, pointerEvents: 'none' }}>
+                      <motion.path d={`M 148 4 Q 148 40 ${at.x} ${at.y}`} fill="none" stroke={C.saffron}
+                        strokeWidth="1.8" strokeLinecap="round" strokeDasharray="5 3"
+                        initial={{ pathLength: 0, opacity: 0 }} animate={{ pathLength: 1, opacity: 1 }}
+                        transition={{ duration: 0.8, delay: 0.3 }} key={`arrow-${activeIdx}`} />
+                      <motion.path d={`M ${at.x + 8} ${at.y - 5} L ${at.x} ${at.y} L ${at.x + 7} ${at.y + 5}`} fill="none" stroke={C.saffron}
+                        strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"
+                        initial={{ opacity: 0 }} animate={{ opacity: 1 }}
+                        transition={{ delay: 1.0 }} key={`arrowhead-${activeIdx}`} />
+                    </svg>
+                  ); })()}
                 </div>
 
                 <div style={{ padding: '10px 12px 11px' }}>
