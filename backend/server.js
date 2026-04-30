@@ -1410,6 +1410,19 @@ app.post('/api/preview/feedback', async (req, res) => {
     const SUPABASE_URL = process.env.SUPABASE_URL_STORY || process.env.SUPABASE_URL;
     const SUPABASE_KEY = process.env.SUPABASE_SERVICE_KEY_STORY || process.env.SUPABASE_SERVICE_KEY;
 
+    // Fetch job details to enrich the feedback record
+    let child_name = null, story_slug = null, jobEmail = null, phone = null, age = null;
+    if (SUPABASE_URL && SUPABASE_KEY) {
+      const jobRes = await fetch(
+        `${SUPABASE_URL}/rest/v1/preview_jobs?id=eq.${jobId}&select=child_name,story_slug,email,phone,child_age`,
+        { headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}` } }
+      ).catch(() => null);
+      if (jobRes?.ok) {
+        const [j] = await jobRes.json();
+        if (j) { child_name = j.child_name; story_slug = j.story_slug; jobEmail = j.email; phone = j.phone; age = j.child_age; }
+      }
+    }
+
     // Persist in Supabase (best-effort — table may not exist yet)
     if (SUPABASE_URL && SUPABASE_KEY) {
       await fetch(`${SUPABASE_URL}/rest/v1/preview_feedback`, {
@@ -1420,16 +1433,23 @@ app.post('/api/preview/feedback', async (req, res) => {
           'Content-Type': 'application/json',
           'Prefer': 'return=minimal',
         },
-        body: JSON.stringify({ job_id: jobId, rating, comment: comment || null }),
+        body: JSON.stringify({ job_id: jobId, rating, comment: comment || null, child_name, story_slug, email: jobEmail, phone, age: age ? String(age) : null }),
       }).catch(() => {});
     }
 
     // Notify Discord
     const discordUrl = process.env.PREVIEW_DISCORD_URL;
     if (discordUrl) {
+      const themeName = story_slug ? story_slug.replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase()) : null;
       const stars = '⭐'.repeat(rating) + '☆'.repeat(5 - rating);
-      const msg = [`${stars} **Preview Feedback**`, `🆔 Job: ${jobId}`, comment ? `💬 "${comment}"` : null]
-        .filter(Boolean).join('\n');
+      const msg = [
+        `${stars} **Preview Feedback**`,
+        child_name  ? `👶 Child: ${child_name}${age ? ` (${age} yrs)` : ''}` : null,
+        themeName   ? `📖 Theme: ${themeName}` : null,
+        jobEmail    ? `✉️ Email: ${jobEmail}` : null,
+        phone       ? `📱 Phone: +91${phone}` : null,
+        comment     ? `💬 "${comment}"` : null,
+      ].filter(Boolean).join('\n');
       await fetch(discordUrl, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
