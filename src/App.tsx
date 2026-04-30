@@ -51,7 +51,7 @@ export default function App() {
       <Routes>
         <Route path="/" element={<BrochurePage />} />
         <Route path="/home" element={<Navigate to="/" replace />} />
-        <Route path="/themes" element={<Navigate to="/" replace />} />
+        <Route path="/themes" element={<Navigate to="/?scroll=themes" replace />} />
         <Route path="/explore" element={<Storybook />} />
         <Route path="/create/:bookSlug" element={<StorybookCreate />} />
         <Route path="/theme/:slug" element={<ThemePage />} />
