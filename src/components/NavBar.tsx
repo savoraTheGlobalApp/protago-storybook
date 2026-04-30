@@ -110,7 +110,7 @@ export function NavBar() {
         )}
       </AnimatePresence>
 
-      {/* Launch offer banner — scrolling marquee */}
+      {/* Scrolling marquee banner */}
       <div className="w-full overflow-hidden"
         style={{ background: C.navy, padding: '8px 0' }}>
         <motion.div
@@ -119,13 +119,10 @@ export function NavBar() {
           transition={{ x: { duration: 18, repeat: Infinity, ease: 'linear' } }}>
           {[0, 1].map(copy => (
             <span key={copy} className="flex items-center gap-6 px-6" style={{ fontSize: 15, fontWeight: 700, color: '#fff' }}>
-              <span>🎉</span>
-              <span>Launch Offer — <span style={{ color: '#F7B731' }}>15% OFF</span> with code <span className="font-extrabold tracking-wider" style={{ color: '#F7B731' }}>PROTAGO50</span></span>
-              <span>🎊</span>
+              <span>✨</span>
+              <span>Generate a <span style={{ color: '#F7B731' }}>free preview</span></span>
               <span style={{ color: 'rgba(255,255,255,0.3)' }}>✦</span>
-              <span>🎉</span>
-              <span>Launch Offer — <span style={{ color: '#F7B731' }}>15% OFF</span> with code <span className="font-extrabold tracking-wider" style={{ color: '#F7B731' }}>PROTAGO50</span></span>
-              <span>🎊</span>
+              <span><span style={{ color: '#F7B731' }}>50+ happy customers</span></span>
               <span style={{ color: 'rgba(255,255,255,0.3)' }}>✦</span>
             </span>
           ))}

@@ -238,9 +238,10 @@ function FaceToSceneAnimation() {
   );
 }
 
-const FACE_SIZE_BROCHURE = 110;
 
-function BrochureThemeCard({ slug, icon, name, badge, onClick }: { slug: string; icon: string; name: string; badge?: string; onClick: () => void }) {
+const FACE_SIZE_BROCHURE = 72;
+
+function BrochureThemeCard({ slug, icon, name, badge, description, ageRange, onClick }: { slug: string; icon: string; name: string; badge?: string; description?: string; ageRange?: string; onClick: () => void }) {
   const [activeIdx, setActiveIdx] = useState(0);
   const [hasLoaded, setHasLoaded] = useState(false);
   const cardRef = useRef<HTMLDivElement>(null);
@@ -263,16 +264,17 @@ function BrochureThemeCard({ slug, icon, name, badge, onClick }: { slug: string;
       ref={cardRef}
       className="rounded-2xl overflow-hidden cursor-pointer"
       style={{
-        border: badge ? `2px solid ${C.saffron}` : '1.5px solid #E5E7EB',
+        border: '1px solid #EBEBEB',
         background: C.white,
-        boxShadow: badge ? '0 0 0 3px rgba(255,107,53,0.15)' : undefined,
+        boxShadow: '0 2px 12px rgba(0,0,0,0.06)',
       }}
-      whileHover={{ scale: 1.02, boxShadow: badge ? '0 8px 28px rgba(255,107,53,0.25)' : '0 8px 24px rgba(0,0,0,0.10)' }}
+      whileHover={{ scale: 1.02, boxShadow: '0 8px 28px rgba(0,0,0,0.12)' }}
       transition={{ type: 'spring', stiffness: 300, damping: 24 }}
       onClick={onClick}>
+
+      {/* Mockup image + face circle */}
       <div style={{ paddingTop: FACE_SIZE_BROCHURE / 2, position: 'relative' }}>
-        {/* Scene */}
-        <div style={{ aspectRatio: '4/3', background: '#F0EEE8', position: 'relative', overflow: 'hidden' }}>
+        <div style={{ aspectRatio: '4/3', background: '#F7F5F0', position: 'relative', overflow: 'hidden' }}>
           {!hasLoaded ? (
             <img
               src={`/themes_mockup/${slug}_${FACE_SAMPLES[0].key}_mockup.webp`}
@@ -313,63 +315,61 @@ function BrochureThemeCard({ slug, icon, name, badge, onClick }: { slug: string;
               key={`arrowhead-${activeIdx}`}
             />
           </svg>
-          {/* Badge */}
           {badge && (
-            <div style={{ position: 'absolute', top: 10, left: 10, zIndex: 6, background: C.saffron, color: '#fff', fontSize: 13, fontWeight: 800, borderRadius: 50, padding: '5px 14px', letterSpacing: 0.4, boxShadow: '0 2px 8px rgba(255,107,53,0.4)' }}>
+            <div style={{ position: 'absolute', top: 10, left: 10, zIndex: 6, background: C.saffron, color: '#fff', fontSize: 11, fontWeight: 800, borderRadius: 50, padding: '3px 10px', letterSpacing: 0.3 }}>
               {badge}
             </div>
           )}
-          {/* Title overlay */}
-          <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, padding: '20px 14px 10px', background: 'linear-gradient(transparent, rgba(0,0,0,0.55))', zIndex: 4 }}>
-            <p className="font-extrabold" style={{ fontFamily: "'Baloo 2', sans-serif", color: '#fff', fontSize: 19 }}>{icon} {name}</p>
-          </div>
         </div>
         {/* Face circle */}
         <div style={{ position: 'absolute', top: 0, right: 12, width: FACE_SIZE_BROCHURE, height: FACE_SIZE_BROCHURE, zIndex: 10 }}>
           {!hasLoaded ? (
-            <img
-              src={FACE_SAMPLES[0].face}
-              alt=""
-              loading="lazy"
-              decoding="async"
-              className="rounded-full"
-              style={{
-                position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover',
-                border: `3px solid ${C.saffron}`,
-                boxShadow: '0 4px 16px rgba(255,107,53,0.35), 0 0 0 2px #fff',
-              }}
-            />
+            <img src={FACE_SAMPLES[0].face} alt="" loading="lazy" decoding="async" className="rounded-full"
+              style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover',
+                border: `2.5px solid ${C.saffron}`, boxShadow: '0 2px 10px rgba(255,107,53,0.3), 0 0 0 2px #fff' }} />
           ) : FACE_SAMPLES.map((sample, i) => (
-            <motion.img
-              key={sample.face}
-              src={sample.face}
-              alt=""
-              loading="lazy"
-              decoding="async"
-              className="rounded-full"
-              style={{
-                position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover',
-                border: `3px solid ${C.saffron}`,
-                boxShadow: '0 4px 16px rgba(255,107,53,0.35), 0 0 0 2px #fff',
-              }}
+            <motion.img key={sample.face} src={sample.face} alt="" loading="lazy" decoding="async" className="rounded-full"
+              style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover',
+                border: `2.5px solid ${C.saffron}`, boxShadow: '0 2px 10px rgba(255,107,53,0.3), 0 0 0 2px #fff' }}
               animate={{ opacity: i === activeIdx ? 1 : 0, scale: i === activeIdx ? 1 : 0.9 }}
-              transition={{ duration: 0.4, ease: 'easeInOut' }}
-            />
+              transition={{ duration: 0.4, ease: 'easeInOut' }} />
           ))}
         </div>
       </div>
-      {/* Price + Personalize button */}
-      <div style={{ padding: '10px 12px 12px' }}>
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, marginBottom: 7 }}>
-          <span style={{ fontSize: 11, fontWeight: 700, color: '#fff', background: '#22C55E', borderRadius: 50, padding: '2px 8px', letterSpacing: 0.3 }}>15% OFF</span>
-          <span style={{ fontSize: 18, color: '#9CA3AF', textDecoration: 'line-through', fontWeight: 600 }}>₹1,499</span>
-          <span style={{ fontSize: 18, fontWeight: 800, color: C.navy, fontFamily: "'Baloo 2', sans-serif" }}>₹1,274</span>
+
+      {/* Card body */}
+      <div style={{ padding: '10px 14px 14px' }}>
+        {/* Tags row */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 8, flexWrap: 'wrap' }}>
+          {badge && <span style={{ fontSize: 11, fontWeight: 700, background: 'rgba(255,107,53,0.12)', color: C.saffron, borderRadius: 20, padding: '2px 9px' }}>{badge}</span>}
+          <span style={{ fontSize: 11, fontWeight: 600, background: '#F3F4F6', color: '#555', borderRadius: 20, padding: '2px 9px' }}>26 Pages</span>
+          {ageRange && <span style={{ fontSize: 11, fontWeight: 600, color: '#9CA3AF', marginLeft: 'auto' }}>Ages {ageRange}</span>}
         </div>
-        <button
-          onClick={onClick}
-          style={{ width: '100%', padding: '9px 0', borderRadius: 50, background: C.saffron, color: '#fff', border: 'none', fontWeight: 800, fontSize: 13, cursor: 'pointer', fontFamily: "'Baloo 2', sans-serif" }}>
-          Personalize →
-        </button>
+        {/* Title */}
+        <p style={{ fontFamily: "'Baloo 2', sans-serif", fontWeight: 800, fontSize: 17, color: C.navy, margin: '0 0 4px', lineHeight: 1.3 }}>
+          {icon} {name}
+        </p>
+        {/* Description */}
+        {description && (
+          <p style={{ fontSize: 13, color: '#9CA3AF', margin: '0 0 10px', lineHeight: 1.5, display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
+            {description}
+          </p>
+        )}
+        {/* Price + button */}
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
+          <div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+              <span style={{ fontSize: 22, fontWeight: 800, color: C.navy, fontFamily: "'Baloo 2', sans-serif" }}>₹1,274</span>
+              <span style={{ fontSize: 11, fontWeight: 700, color: '#92400E', background: '#FEF3C7', borderRadius: 20, padding: '2px 8px' }}>15% off</span>
+            </div>
+            <span style={{ fontSize: 13, color: '#9CA3AF', textDecoration: 'line-through', fontWeight: 500 }}>₹1,499</span>
+          </div>
+          <button
+            onClick={onClick}
+            style={{ padding: '12px 22px', borderRadius: 12, background: `linear-gradient(135deg, ${C.saffron} 0%, #F7B731 100%)`, color: '#fff', border: 'none', fontWeight: 800, fontSize: 15, cursor: 'pointer', fontFamily: "'Baloo 2', sans-serif", boxShadow: '0 3px 12px rgba(255,107,53,0.35)', whiteSpace: 'nowrap', letterSpacing: 0.2 }}>
+            Personalize
+          </button>
+        </div>
       </div>
     </motion.div>
   );
@@ -1705,11 +1705,24 @@ export function BrochurePage() {
       <section style={{ background: C.navy }} className="pt-36 pb-14 sm:pt-32 sm:pb-20">
         <div className="max-w-6xl mx-auto px-5 sm:px-8">
           <motion.h2 initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4 }}
-            className="text-center mb-6 sm:mb-8"
+            className="text-center mb-4"
             style={{ fontFamily: "'Baloo 2', sans-serif", fontWeight: 800, color: C.white,
               fontSize: 'clamp(1.3rem, 3vw, 2rem)', lineHeight: 1.1 }}>
-            Your child's face in every page
+            Give your child a storybook<br />where they are the hero
           </motion.h2>
+          <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.4, delay: 0.3 }}
+            className="flex flex-col items-center mb-6 sm:mb-8">
+            <button
+              onClick={() => scrollTo('themes')}
+              className="py-4 px-10 rounded-2xl font-extrabold"
+              style={{ background: C.saffron, color: '#fff', border: 'none', cursor: 'pointer', fontFamily: "'Baloo 2', sans-serif", fontSize: 16, boxShadow: '0 4px 20px rgba(255,107,53,0.45)' }}>
+              ✨ Generate Free Preview
+            </button>
+            <p className="text-center mt-2 text-xs font-semibold" style={{ color: 'rgba(255,255,255,0.55)' }}>
+              Free · ~2 min · No card required
+            </p>
+          </motion.div>
           {/* Two-panel: animation + video — same height, aligned top-to-bottom */}
           <div className="flex flex-col-reverse sm:flex-row gap-4 sm:gap-6 items-stretch">
 
@@ -1778,10 +1791,9 @@ export function BrochurePage() {
       <section id="themes" style={{ background: C.white }} className="py-16 sm:py-20">
         <div className="max-w-6xl mx-auto px-5 sm:px-8">
           <motion.div initial={{ opacity: 0, y: 16 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} className="mb-8">
-            {eyebrow('What will their story be about?')}
-            {heading(<>18 themes across<br />every age group</>)}
+            {heading(<>Choose your story &amp; start personalising</>)}
             <p className="text-sm mt-3 leading-relaxed" style={{ color: C.gray }}>
-              From bedtime routines for toddlers to financial literacy for teens — every theme is built around real learning moments. Click any to explore.
+              Pick a theme, enter your child's name and photo — we'll put them at the centre of the adventure.
             </p>
           </motion.div>
 
@@ -1817,7 +1829,7 @@ export function BrochurePage() {
                     exit={{ opacity: 0, y: -10 }} transition={{ duration: 0.2 }}
                     style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: 20 }}>
                     {tabThemes.slice(0, 6).map(t => (
-                      <BrochureThemeCard key={t.slug} slug={t.slug} icon={t.icon} name={t.name} badge={['colours-shapes', 'bedtime-routines', 'numbers-maths', 'sharing-sorry', 'first-day-school', 'managing-emotions', 'indian-festivals', 'phonics-reading', 'history-india', 'financial-literacy', 'growth-mindset', 'professions'].includes(t.slug) ? '✨ 9-Page Preview' : undefined} onClick={() => navigate(`/theme/${t.slug}`)} />
+                      <BrochureThemeCard key={t.slug} slug={t.slug} icon={t.icon} name={t.name} description={t.description} ageRange={Array.isArray(t.ageRange) ? t.ageRange.join(', ') : t.ageRange} badge={['colours-shapes', 'bedtime-routines', 'numbers-maths', 'sharing-sorry', 'first-day-school', 'managing-emotions', 'indian-festivals', 'phonics-reading', 'history-india', 'financial-literacy', 'growth-mindset', 'professions'].includes(t.slug) ? '✨ 9-Page Preview' : undefined} onClick={() => navigate(`/theme/${t.slug}`)} />
                     ))}
 
                     {/* ── Custom story card — 7th slot ── */}
@@ -1836,7 +1848,7 @@ export function BrochurePage() {
                     </motion.div>
 
                     {tabThemes.slice(6).map(t => (
-                      <BrochureThemeCard key={t.slug} slug={t.slug} icon={t.icon} name={t.name} badge={['colours-shapes', 'bedtime-routines', 'numbers-maths', 'sharing-sorry', 'first-day-school', 'managing-emotions', 'indian-festivals', 'phonics-reading', 'history-india', 'financial-literacy', 'growth-mindset', 'professions'].includes(t.slug) ? '✨ 9-Page Preview' : undefined} onClick={() => navigate(`/theme/${t.slug}`)} />
+                      <BrochureThemeCard key={t.slug} slug={t.slug} icon={t.icon} name={t.name} description={t.description} ageRange={Array.isArray(t.ageRange) ? t.ageRange.join(', ') : t.ageRange} badge={['colours-shapes', 'bedtime-routines', 'numbers-maths', 'sharing-sorry', 'first-day-school', 'managing-emotions', 'indian-festivals', 'phonics-reading', 'history-india', 'financial-literacy', 'growth-mindset', 'professions'].includes(t.slug) ? '✨ 9-Page Preview' : undefined} onClick={() => navigate(`/theme/${t.slug}`)} />
                     ))}
                   </motion.div>
                 </AnimatePresence>
@@ -1860,7 +1872,7 @@ export function BrochurePage() {
                     </div>
                     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: 20 }}>
                       {mythologyThemes.map(t => (
-                        <BrochureThemeCard key={t.slug} slug={t.slug} icon={t.icon} name={t.name} badge={['colours-shapes', 'bedtime-routines', 'numbers-maths', 'sharing-sorry', 'first-day-school', 'managing-emotions', 'indian-festivals', 'phonics-reading', 'history-india', 'financial-literacy', 'growth-mindset', 'professions'].includes(t.slug) ? '✨ 9-Page Preview' : undefined} onClick={() => navigate(`/theme/${t.slug}`)} />
+                        <BrochureThemeCard key={t.slug} slug={t.slug} icon={t.icon} name={t.name} description={t.description} ageRange={Array.isArray(t.ageRange) ? t.ageRange.join(', ') : t.ageRange} badge={['colours-shapes', 'bedtime-routines', 'numbers-maths', 'sharing-sorry', 'first-day-school', 'managing-emotions', 'indian-festivals', 'phonics-reading', 'history-india', 'financial-literacy', 'growth-mindset', 'professions'].includes(t.slug) ? '✨ 9-Page Preview' : undefined} onClick={() => navigate(`/theme/${t.slug}`)} />
                       ))}
                     </div>
                   </motion.div>
