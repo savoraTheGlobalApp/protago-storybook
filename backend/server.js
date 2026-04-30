@@ -1278,13 +1278,14 @@ app.post('/api/preview-job-alert', async (req, res) => {
 
     const { type } = req.body;
     const record = req.body?.record || req.body;
-    const { id: jobId, status, child_name, story_slug, email } = record;
+    const { id: jobId, status, child_name, story_slug, email, phone } = record;
 
     if (!jobId) return res.status(200).json({ ok: true, skipped: true, reason: 'no job id' });
 
     const siteUrl = (process.env.SITE_URL || 'https://protago.in').replace(/\/$/, '');
     const previewUrl = `${siteUrl}/preview/${jobId}?name=${encodeURIComponent(child_name || '')}&theme=${story_slug || ''}`;
     const themeName = (story_slug || '').replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+    const phoneDisplay = phone ? `📱 Phone: +91${phone}` : null;
 
     let msg;
     if (type === 'INSERT' || status === 'processing') {
@@ -1292,21 +1293,24 @@ app.post('/api/preview-job-alert', async (req, res) => {
         '🔄 **New Preview Requested**',
         `👶 Child: ${child_name || '—'} · Theme: ${themeName || '—'}`,
         `✉️ Email: ${email || '—'}`,
-      ].join('\n');
+        phoneDisplay,
+      ].filter(Boolean).join('\n');
     } else if (status === 'done') {
       msg = [
         '✅ **Preview Ready!**',
         `👶 Child: ${child_name || '—'} · Theme: ${themeName || '—'}`,
         `✉️ Email: ${email || '—'}`,
+        phoneDisplay,
         `🔗 ${previewUrl}`,
-      ].join('\n');
+      ].filter(Boolean).join('\n');
     } else if (status === 'failed') {
       msg = [
         '❌ **Preview Failed**',
         `👶 Child: ${child_name || '—'} · Theme: ${themeName || '—'}`,
         `✉️ Email: ${email || '—'}`,
+        phoneDisplay,
         `🆔 Job: ${jobId}`,
-      ].join('\n');
+      ].filter(Boolean).join('\n');
     } else {
       return res.status(200).json({ ok: true, skipped: true, reason: `unhandled status: ${status}` });
     }
