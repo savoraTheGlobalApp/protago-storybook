@@ -966,6 +966,7 @@ app.post('/api/verify-payment', async (req, res) => {
         return res.status(200).json({ success: true });
     } catch (error) {
         console.error('Verify payment error:', error);
+        alertDiscord('Payment Verification Failed', error?.message, { jobId: req.body?.razorpay_order_id });
         return res.status(500).json({ error: 'Payment verification failed' });
     }
 });
@@ -1188,6 +1189,7 @@ app.post('/api/order-inquiry', async (req, res) => {
             if (!supabaseRes.ok) {
                 const err = await supabaseRes.text();
                 console.error(`[order-inquiry][${orderType}] Supabase insert failed:`, err);
+                alertDiscord('Order DB Insert Failed', err, { email: req.body?.email, storySlug: req.body?.storyTheme });
                 return res.status(500).json({ error: `Database error: ${err}` });
             }
             console.log(`[order-inquiry][${orderType}] Supabase insert success`);
@@ -1203,6 +1205,7 @@ app.post('/api/order-inquiry', async (req, res) => {
         });
     } catch (error) {
         console.error('Order inquiry error:', error);
+        alertDiscord('Order Inquiry Failed', error?.message, { email: req.body?.email, storySlug: req.body?.storyTheme });
         return res.status(500).json({ error: 'Internal server error' });
     }
 });
