@@ -1296,6 +1296,14 @@ app.post('/api/preview-job-alert', async (req, res) => {
         phoneDisplay,
       ].filter(Boolean).join('\n');
     } else if (status === 'done') {
+      // Fire send-email in background — handles email_sent dedup internally
+      const siteBase = (process.env.SITE_URL || 'https://protago.in').replace(/\/$/, '');
+      fetch(`${siteBase}/api/preview/send-email`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ jobId }),
+      }).catch(err => console.error(`preview-job-alert: send-email failed for ${jobId}:`, err.message));
+
       msg = [
         '✅ **Preview Ready!**',
         `👶 Child: ${child_name || '—'} · Theme: ${themeName || '—'}`,
