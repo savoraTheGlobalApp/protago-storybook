@@ -1308,6 +1308,9 @@ app.post('/api/preview-job-alert', async (req, res) => {
     const { id: jobId, status, child_name, story_slug, email, phone, error_message } = record;
 
     if (!jobId) return res.status(200).json({ ok: true, skipped: true, reason: 'no job id' });
+    if (type === 'UPDATE' && status !== 'done' && status !== 'failed') {
+      return res.status(200).json({ ok: true, skipped: true, reason: 'intermediate update' });
+    }
 
     const siteUrl = (process.env.SITE_URL || 'https://protago.in').replace(/\/$/, '');
     const previewUrl = `${siteUrl}/preview/${jobId}?name=${encodeURIComponent(child_name || '')}&theme=${story_slug || ''}`;
