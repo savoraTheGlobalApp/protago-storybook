@@ -112,6 +112,88 @@ const FACE_SCENE_SAMPLES = [
 
 const FACE_SIZE_CSS = 'clamp(70px, 18vw, 140px)';
 
+const HERO_FACE_SLIDES = [
+  { slug: 'bedtime-routines',  key: 'boy_1',  face: '/faces/face_boy_1.webp',  label: 'Bedtime Routines' },
+  { slug: 'bedtime-routines',  key: 'girl_1', face: '/faces/face_girl_1.webp', label: 'Bedtime Routines' },
+  { slug: 'colours-shapes',    key: 'boy_1',  face: '/faces/face_boy_1.webp',  label: 'Colours & Shapes' },
+  { slug: 'colours-shapes',    key: 'girl_1', face: '/faces/face_girl_1.webp', label: 'Colours & Shapes' },
+  { slug: 'financial-literacy',key: 'boy_1',  face: '/faces/face_boy_1.webp',  label: 'Financial Literacy' },
+  { slug: 'financial-literacy',key: 'girl_1', face: '/faces/face_girl_1.webp', label: 'Financial Literacy' },
+  { slug: 'first-day-school',  key: 'boy_1',  face: '/faces/face_boy_1.webp',  label: 'First Day at School' },
+  { slug: 'first-day-school',  key: 'girl_1', face: '/faces/face_girl_1.webp', label: 'First Day at School' },
+];
+
+function HeroFaceSwapAnimation() {
+  const [activeIdx, setActiveIdx] = useState(0);
+  const ref = useRef<HTMLDivElement>(null);
+  const inView = useInView(ref, { margin: '200px 0px' });
+
+  useEffect(() => {
+    if (!inView) return;
+    const t = setInterval(() => setActiveIdx(i => (i + 1) % HERO_FACE_SLIDES.length), 2500);
+    return () => clearInterval(t);
+  }, [inView]);
+
+  const FACE_SIZE = 72;
+  const current = HERO_FACE_SLIDES[activeIdx];
+
+  return (
+    <div ref={ref} style={{ position: 'relative', width: '100%', paddingTop: FACE_SIZE / 2 }}>
+      {/* Mockup images */}
+      <div style={{ position: 'relative', width: '100%', aspectRatio: '4/3', borderRadius: 16, overflow: 'hidden', background: '#1a1a2e', boxShadow: '0 8px 40px rgba(0,0,0,0.5)' }}>
+        {HERO_FACE_SLIDES.map((s, i) => (
+          <motion.img
+            key={`${s.slug}-${s.key}`}
+            src={`/themes_mockup/${s.slug}_${s.key}_mockup.webp`}
+            alt={s.label}
+            loading="lazy" decoding="async"
+            style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'contain', transform: 'scale(1.3)' }}
+            animate={{ opacity: i === activeIdx ? 1 : 0 }}
+            transition={{ duration: 0.6, ease: 'easeInOut' }}
+            onError={e => { (e.target as HTMLImageElement).style.display = 'none'; }}
+          />
+        ))}
+        {/* Arrow */}
+        <svg viewBox="0 0 160 90" preserveAspectRatio="none"
+          style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', zIndex: 5, pointerEvents: 'none' }}>
+          <motion.path d="M 148 4 Q 148 40 98 28" fill="none" stroke={C.saffron}
+            strokeWidth="2.2" strokeDasharray="5 3" strokeLinecap="round"
+            initial={{ pathLength: 0, opacity: 0 }} animate={{ pathLength: 1, opacity: 1 }}
+            transition={{ pathLength: { duration: 1.0, ease: 'easeInOut', delay: 0.2 }, opacity: { duration: 0.2 } }}
+            key={activeIdx} />
+          <motion.path d="M 106 23 L 98 28 L 105 33" fill="none" stroke={C.saffron}
+            strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"
+            initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 1.0 }}
+            key={`ah-${activeIdx}`} />
+        </svg>
+        {/* Theme label */}
+        <motion.div key={current.label}
+          initial={{ opacity: 0, y: 4 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3 }}
+          style={{ position: 'absolute', bottom: 10, left: 12, zIndex: 6, background: 'rgba(0,0,0,0.6)', borderRadius: 20, padding: '3px 10px', backdropFilter: 'blur(4px)' }}>
+          <span style={{ fontSize: 11, fontWeight: 700, color: '#fff' }}>{current.label}</span>
+        </motion.div>
+        {/* Dot indicators */}
+        <div style={{ position: 'absolute', bottom: 10, right: 12, zIndex: 6, display: 'flex', gap: 4 }}>
+          {[0,1,2,3].map(themeIdx => (
+            <div key={themeIdx} style={{ width: 6, height: 6, borderRadius: '50%', background: Math.floor(activeIdx / 2) === themeIdx ? C.saffron : 'rgba(255,255,255,0.4)', transition: 'background 0.3s' }} />
+          ))}
+        </div>
+      </div>
+      {/* Face circle */}
+      <div style={{ position: 'absolute', top: 0, right: 12, width: FACE_SIZE, height: FACE_SIZE, zIndex: 10 }}>
+        {HERO_FACE_SLIDES.map((s, i) => (
+          <motion.img key={`${s.slug}-${s.key}-face`} src={s.face} alt="" loading="lazy" decoding="async"
+            className="rounded-full"
+            style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover',
+              border: `2.5px solid ${C.saffron}`, boxShadow: '0 2px 10px rgba(255,107,53,0.4), 0 0 0 2px #fff' }}
+            animate={{ opacity: i === activeIdx ? 1 : 0, scale: i === activeIdx ? 1 : 0.9 }}
+            transition={{ duration: 0.4, ease: 'easeInOut' }} />
+        ))}
+      </div>
+    </div>
+  );
+}
+
 function FaceToSceneAnimation() {
   const [activeIdx, setActiveIdx] = useState(0);
   const [hasLoaded, setHasLoaded] = useState(false);
@@ -1652,7 +1734,6 @@ export function BrochurePage() {
   const [openFaq, setOpenFaq]         = useState<number | null>(null);
   const [themesTab, setThemesTab]     = useState<'3–5' | '6–8' | '9–12'>('3–5');
   const [heroSlide, setHeroSlide]     = useState(0);
-  const [promoPlaying, setPromoPlaying] = useState(false);
   const price = Number(import.meta.env.VITE_STORYBOOK_PRICE) || 499;
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
@@ -1725,46 +1806,17 @@ export function BrochurePage() {
           {/* Two-panel: animation + video — same height, aligned top-to-bottom */}
           <div className="flex flex-col-reverse sm:flex-row gap-4 sm:gap-6 items-stretch">
 
-            {/* Left on desktop, bottom on mobile — Shreyansh reel + CTA */}
+            {/* Left on desktop, bottom on mobile — multi-theme face swap animation */}
             <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }}
               transition={{ duration: 0.5, delay: 0.1 }}
               className="w-full sm:w-1/2 min-w-0 flex flex-col">
-              {/* YouTube Shorts — load iframe only after user taps play */}
-              <div style={{ position: 'relative', width: '100%', aspectRatio: '9/16', borderRadius: 16, overflow: 'hidden', background: '#000', maxHeight: 480 }}>
-                {promoPlaying ? (
-                  <iframe
-                    src="https://www.youtube.com/embed/o1yTBcrjLaM?autoplay=1&mute=1&loop=1&playlist=o1yTBcrjLaM&controls=1&rel=0&modestbranding=1"
-                    title="Protago preview"
-                    allow="autoplay; encrypted-media"
-                    allowFullScreen
-                    style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', border: 'none' }}
-                  />
-                ) : (
-                  <div onClick={() => setPromoPlaying(true)} style={{ position: 'absolute', inset: 0, cursor: 'pointer' }}>
-                    <img
-                      src="https://img.youtube.com/vi/o1yTBcrjLaM/maxresdefault.jpg"
-                      alt="Watch Protago preview"
-                      style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
-                    />
-                    <div style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.35)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                      <div style={{ width: 64, height: 64, borderRadius: '50%', background: 'rgba(255,255,255,0.92)', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 4px 20px rgba(0,0,0,0.4)' }}>
-                        <svg viewBox="0 0 24 24" width="28" height="28" fill={C.saffron}>
-                          <polygon points="5 3 19 12 5 21 5 3"/>
-                        </svg>
-                      </div>
-                    </div>
-                    <div style={{ position: 'absolute', bottom: 12, left: 0, right: 0, textAlign: 'center' }}>
-                      <span style={{ fontSize: 11, fontWeight: 700, color: '#fff', background: 'rgba(0,0,0,0.5)', borderRadius: 20, padding: '3px 10px' }}>Tap to play</span>
-                    </div>
-                  </div>
-                )}
-              </div>
+              <HeroFaceSwapAnimation />
               {/* Free preview CTA */}
               <motion.button
                 initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.4, delay: 0.6 }}
                 onClick={() => scrollTo('themes')}
-                className="w-full py-4 rounded-2xl font-extrabold text-base mt-2"
+                className="w-full py-4 rounded-2xl font-extrabold text-base mt-3"
                 style={{ background: C.saffron, color: '#fff', border: 'none', cursor: 'pointer', fontFamily: "'Baloo 2', sans-serif", fontSize: 16, boxShadow: '0 4px 20px rgba(255,107,53,0.45)' }}>
                 ✨ Generate Free Preview
               </motion.button>
