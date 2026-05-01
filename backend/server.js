@@ -1399,6 +1399,90 @@ app.post('/api/preview/trigger', async (req, res) => {
   }
 });
 
+// POST /api/preview/retrigger
+// Re-fires Modal for the last N stuck jobs (status != 'done').
+// Body: { secret, limit? }  — secret must match ADMIN_SECRET env var.
+app.post('/api/preview/retrigger', async (req, res) => {
+  try {
+    const { secret, limit = 5, jobIds } = req.body;
+    if (!secret || secret !== process.env.ADMIN_SECRET) {
+      return res.status(401).json({ error: 'Unauthorized' });
+    }
+
+    const SUPABASE_URL = process.env.SUPABASE_URL_STORY || process.env.SUPABASE_URL;
+    const SUPABASE_KEY = process.env.SUPABASE_SERVICE_KEY_STORY || process.env.SUPABASE_SERVICE_KEY;
+
+    // Fetch jobs — either specific IDs or last N non-done
+    let fetchUrl;
+    if (jobIds && Array.isArray(jobIds) && jobIds.length) {
+      fetchUrl = `${SUPABASE_URL}/rest/v1/preview_jobs?id=in.(${jobIds.join(',')})&select=id,story_slug,photo_path,child_name,gender,age_group&order=created_at.desc`;
+    } else {
+      fetchUrl = `${SUPABASE_URL}/rest/v1/preview_jobs?status=neq.done&select=id,story_slug,photo_path,child_name,gender,age_group&order=created_at.desc&limit=${Math.min(Number(limit), 20)}`;
+    }
+
+    const jobsRes = await fetch(fetchUrl, {
+      headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}` },
+    });
+    if (!jobsRes.ok) return res.status(500).json({ error: 'Failed to fetch jobs' });
+    const jobs = await jobsRes.json();
+    if (!jobs.length) return res.json({ triggered: [], message: 'No stuck jobs found' });
+
+    const results = [];
+    for (const job of jobs) {
+      try {
+        let photoUrl = job.photo_path;
+
+        // If photo_path is a raw storage path (not a URL), re-sign it
+        if (photoUrl && !photoUrl.startsWith('http')) {
+          const filename = photoUrl.replace(/^storybook-photos\//, '');
+          const signRes = await fetch(
+            `${process.env.SUPABASE_URL_STORY}/storage/v1/object/sign/storybook-photos/${encodeURIComponent(filename)}`,
+            {
+              method: 'POST',
+              headers: { 'Authorization': `Bearer ${SUPABASE_KEY}`, 'Content-Type': 'application/json' },
+              body: JSON.stringify({ expiresIn: 604800 }),
+            }
+          );
+          if (signRes.ok) {
+            const { signedURL } = await signRes.json();
+            photoUrl = signedURL.startsWith('http') ? signedURL : `${process.env.SUPABASE_URL_STORY}${signedURL}`;
+          }
+        }
+
+        // Reset status to pending
+        await fetch(`${SUPABASE_URL}/rest/v1/preview_jobs?id=eq.${job.id}`, {
+          method: 'PATCH',
+          headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}`, 'Content-Type': 'application/json' },
+          body: JSON.stringify({ status: 'pending' }),
+        });
+
+        const safeGender = VALID_GENDERS.has(job.gender) ? job.gender : undefined;
+        const safeAgeGroup = VALID_AGE_GROUPS.has(job.age_group) ? job.age_group : undefined;
+
+        triggerPreview({
+          jobId: job.id,
+          storySlug: job.story_slug,
+          photoUrl,
+          childName: job.child_name,
+          gender: safeGender,
+          ageGroup: safeAgeGroup,
+        }).catch(err => console.error(`Retrigger job ${job.id} failed:`, err.message));
+
+        console.log(`Retriggered preview job ${job.id} (${job.story_slug})`);
+        results.push({ id: job.id, story_slug: job.story_slug, status: 'retriggered' });
+      } catch (err) {
+        console.error(`Retrigger error for job ${job.id}:`, err.message);
+        results.push({ id: job.id, story_slug: job.story_slug, status: 'error', error: err.message });
+      }
+    }
+
+    return res.json({ triggered: results });
+  } catch (err) {
+    console.error('preview/retrigger error:', err);
+    return res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
 // POST /api/preview/feedback
 // Stores star rating + optional comment for a preview job.
 // Posts to PREVIEW_DISCORD_URL so we see feedback in real time.
