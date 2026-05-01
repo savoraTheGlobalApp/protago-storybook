@@ -26,6 +26,30 @@ const PORT = process.env.PORT || 5001;
 const resend = new Resend(process.env.RESEND_API_KEY);
 const EMAIL_FROM = process.env.RESEND_FROM || 'Protago <hello@protago.in>';
 
+// ── Discord error alerting ────────────────────────────────────────────────────
+async function alertDiscord(title, detail, { jobId, storySlug, email } = {}) {
+  const url = process.env.ALERTS_DISCORD_URL;
+  if (!url) return;
+  const lines = [
+    `🚨 **${title}**`,
+    detail ? `> ${detail.slice(0, 500)}` : null,
+    storySlug ? `📖 Theme: ${storySlug}` : null,
+    email    ? `✉️ Email: ${email}` : null,
+    jobId    ? `🆔 Job: ${jobId}` : null,
+  ].filter(Boolean).join('\n');
+  fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ content: lines }) })
+    .catch(() => {});
+}
+
+// Alert on unhandled rejections / uncaught exceptions so Railway crashes show in Discord
+process.on('unhandledRejection', (reason) => {
+  const msg = reason instanceof Error ? reason.stack || reason.message : String(reason);
+  alertDiscord('Unhandled Rejection', msg);
+});
+process.on('uncaughtException', (err) => {
+  alertDiscord('Uncaught Exception', err.stack || err.message);
+});
+
 // ── Email validation helpers ──────────────────────────────────────────────────
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
 
@@ -1278,7 +1302,7 @@ app.post('/api/preview-job-alert', async (req, res) => {
 
     const { type } = req.body;
     const record = req.body?.record || req.body;
-    const { id: jobId, status, child_name, story_slug, email, phone } = record;
+    const { id: jobId, status, child_name, story_slug, email, phone, error_message } = record;
 
     if (!jobId) return res.status(200).json({ ok: true, skipped: true, reason: 'no job id' });
 
@@ -1302,7 +1326,10 @@ app.post('/api/preview-job-alert', async (req, res) => {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ jobId }),
-      }).catch(err => console.error(`preview-job-alert: send-email failed for ${jobId}:`, err.message));
+      }).catch(err => {
+        console.error(`preview-job-alert: send-email failed for ${jobId}:`, err.message);
+        alertDiscord('Preview Email Send Failed', err.message, { jobId, storySlug: story_slug, email });
+      });
 
       msg = [
         '✅ **Preview Ready!**',
@@ -1312,12 +1339,14 @@ app.post('/api/preview-job-alert', async (req, res) => {
         `🔗 ${previewUrl}`,
       ].filter(Boolean).join('\n');
     } else if (status === 'failed') {
+      alertDiscord('Preview Job Failed', error_message, { jobId, storySlug: story_slug, email });
       msg = [
         '❌ **Preview Failed**',
         `👶 Child: ${child_name || '—'} · Theme: ${themeName || '—'}`,
         `✉️ Email: ${email || '—'}`,
         phoneDisplay,
         `🆔 Job: ${jobId}`,
+        error_message ? `⚠️ ${error_message}` : null,
       ].filter(Boolean).join('\n');
     } else {
       return res.status(200).json({ ok: true, skipped: true, reason: `unhandled status: ${status}` });
@@ -1396,9 +1425,10 @@ app.post('/api/preview/trigger', async (req, res) => {
 
     console.log(`Preview job ${job.id}: photoUrl=${photoUrl} gender=${safeGender || 'none'} ageGroup=${safeAgeGroup || 'none'} email=${email || 'none'}`);
     // Fire Modal async (don't await — client polls for result)
-    triggerPreview({ jobId: job.id, storySlug, photoUrl, childName, gender: safeGender, ageGroup: safeAgeGroup }).catch(err =>
-      console.error(`Preview job ${job.id} trigger failed:`, err.message)
-    );
+    triggerPreview({ jobId: job.id, storySlug, photoUrl, childName, gender: safeGender, ageGroup: safeAgeGroup }).catch(err => {
+      console.error(`Preview job ${job.id} trigger failed:`, err.message);
+      alertDiscord('Modal Trigger Failed', err.message, { jobId: job.id, storySlug, email });
+    });
 
     return res.json({ jobId: job.id, status: 'pending' });
   } catch (err) {
