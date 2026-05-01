@@ -1303,13 +1303,17 @@ app.post('/api/preview-job-alert', async (req, res) => {
     const discordUrl = process.env.PREVIEW_DISCORD_URL;
     if (!discordUrl) return res.status(200).json({ ok: true, skipped: true, reason: 'no PREVIEW_DISCORD_URL set' });
 
-    const { type } = req.body;
+    const { type, old_record } = req.body;
     const record = req.body?.record || req.body;
     const { id: jobId, status, child_name, story_slug, email, phone, error_message } = record;
 
     if (!jobId) return res.status(200).json({ ok: true, skipped: true, reason: 'no job id' });
     if (type === 'UPDATE' && status !== 'done' && status !== 'failed') {
       return res.status(200).json({ ok: true, skipped: true, reason: 'intermediate update' });
+    }
+    // Only act on the status transition — ignore re-fires from email_sent or other field patches
+    if (type === 'UPDATE' && old_record && old_record.status === status) {
+      return res.status(200).json({ ok: true, skipped: true, reason: 'status unchanged' });
     }
 
     const siteUrl = (process.env.SITE_URL || 'https://protago.in').replace(/\/$/, '');
