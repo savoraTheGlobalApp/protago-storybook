@@ -24,6 +24,8 @@ const SCENE_COUNT = {
   'financial-literacy': 5,  // all age groups
   'growth-mindset':     5,  // all age groups
   'professions':        5,  // all age groups
+  'internet-safety':    5,  // all age groups
+  'body-safety':        5,  // all age groups
 };
 
 function getSceneCount(storySlug, ageGroup) {
