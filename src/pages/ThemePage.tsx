@@ -59,14 +59,14 @@ function SampleBookViewer({ slug, onGetPreview }: { slug: string; onGetPreview?:
   const isLast = idx === pages.length - 1;
 
   return (
-    <div style={{ padding: '20px 20px 24px', display: 'flex', flexDirection: 'column', height: '100%', boxSizing: 'border-box' }}>
+    <div style={{ padding: '20px 20px 24px', display: 'flex', flexDirection: 'column', boxSizing: 'border-box' }}>
       <h3 style={{ fontFamily: "'Baloo 2', sans-serif", fontWeight: 800, fontSize: 16, color: C.navy, margin: '0 0 14px' }}>
         📖 Read a few pages
       </h3>
 
       {/* Scene image with text overlay */}
       <div
-        style={{ position: 'relative', borderRadius: 12, overflow: 'hidden', boxShadow: '0 6px 28px rgba(0,0,0,0.18)', touchAction: 'pan-y', cursor: 'pointer', flex: 1 }}
+        style={{ position: 'relative', borderRadius: 12, overflow: 'hidden', boxShadow: '0 6px 28px rgba(0,0,0,0.18)', touchAction: 'pan-y', cursor: 'pointer' }}
         onTouchStart={e => { touchStartX.current = e.touches[0].clientX; }}
         onTouchEnd={e => {
           if (touchStartX.current === null) return;
@@ -113,7 +113,7 @@ function SampleBookViewer({ slug, onGetPreview }: { slug: string; onGetPreview?:
       </div>
 
       {/* Text below image (mobile only) */}
-      <div className="book-page-text-below" style={{ padding: '12px 4px 4px' }}>
+      <div className="book-page-text-below" style={{ padding: '12px 4px 4px', minHeight: 180 }}>
         <div style={{ fontSize: 10, fontWeight: 700, color: C.saffron, textTransform: 'uppercase', letterSpacing: '0.14em', marginBottom: 4 }}>
           {idx === 0 ? 'Cover' : `Page ${idx} of ${pages.length - 1}`}
         </div>
