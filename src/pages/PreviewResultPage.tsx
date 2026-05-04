@@ -921,6 +921,21 @@ export function PreviewResultPage() {
           </p>
         )}
 
+        {/* Preview disclaimer — fades in when done */}
+        <AnimatePresence>
+          {done && (
+            <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, delay: 0.2 }}
+              style={{ width: '100%', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.10)', borderRadius: 14, padding: '16px 20px', marginBottom: 8 }}>
+              <p style={{ fontFamily: "'Baloo 2', sans-serif", fontWeight: 800, fontSize: 15, color: '#fff', margin: '0 0 6px' }}>
+                🎨 This is just a sneak peek
+              </p>
+              <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.6)', margin: 0, lineHeight: 1.65 }}>
+                These previews show your child's face blended into the story scenes. In the <strong style={{ color: 'rgba(255,255,255,0.85)' }}>printed book</strong>, our artists refine every page — perfecting body proportions, skin tone, clothing, and gender — so the illustrations feel truly made for your child. ✨
+              </p>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
         {/* Order CTA — fades in when done */}
         <AnimatePresence>
           {done && (
