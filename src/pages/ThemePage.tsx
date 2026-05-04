@@ -1366,9 +1366,9 @@ export function ThemePage() {
               <a href="mailto:hello@protago.in" style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 13, color: C.gold, marginTop: 10, textDecoration: 'none' }}>
                 <MessageCircle size={14} /> hello@protago.in
               </a>
-              <a href="https://wa.me/919452868857" target="_blank" rel="noopener noreferrer"
+              <a href="https://wa.me/919606037934" target="_blank" rel="noopener noreferrer"
                 style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 13, color: C.gold, marginTop: 8, textDecoration: 'none' }}>
-                <MessageCircle size={14} /> WhatsApp: +91 94528 68857
+                <MessageCircle size={14} /> WhatsApp: +91 96060 37934
               </a>
             </div>
             <div>

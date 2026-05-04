@@ -906,7 +906,7 @@ export function PreviewResultPage() {
         {done && (
           <p style={{ fontSize: 16, color: 'rgba(255,255,255,0.6)', textAlign: 'center', margin: '0 0 8px', width: '100%' }}>
             Not happy with the preview?{' '}
-            <a href="https://wa.me/919452868857" target="_blank" rel="noopener noreferrer"
+            <a href="https://wa.me/919606037934" target="_blank" rel="noopener noreferrer"
               style={{ color: C.saffron, fontWeight: 700, textDecoration: 'none' }}>
               DM us on WhatsApp
             </a>{' '}and we'll sort it out.

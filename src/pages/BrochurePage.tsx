@@ -2432,10 +2432,10 @@ export function BrochurePage() {
                 style={{ color: C.gold }}>
                 <MessageCircle size={14} /> hello@protago.in
               </a>
-              <a href="https://wa.me/919452868857" target="_blank" rel="noopener noreferrer"
+              <a href="https://wa.me/919606037934" target="_blank" rel="noopener noreferrer"
                 className="flex items-center gap-2 text-sm mt-2 hover:opacity-80 transition-opacity"
                 style={{ color: C.gold }}>
-                <MessageCircle size={14} /> WhatsApp: +91 94528 68857
+                <MessageCircle size={14} /> WhatsApp: +91 96060 37934
               </a>
               <a href="https://www.instagram.com/protago.in/" target="_blank" rel="noopener noreferrer"
                 className="flex items-center gap-2 text-sm mt-2 hover:opacity-80 transition-opacity"

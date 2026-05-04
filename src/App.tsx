@@ -20,7 +20,7 @@ function SocialFloats() {
   });
   return (
     <div style={{ position: 'fixed', bottom: 24, right: 24, zIndex: 999, display: 'flex', flexDirection: 'column', gap: 12 }}>
-      <a href="https://wa.me/919452868857" target="_blank" rel="noopener noreferrer"
+      <a href="https://wa.me/919606037934" target="_blank" rel="noopener noreferrer"
         style={btnStyle('#25D366', 'rgba(37,211,102,0.45)')}
         onMouseEnter={e => { (e.currentTarget as HTMLAnchorElement).style.transform = 'scale(1.1)'; }}
         onMouseLeave={e => { (e.currentTarget as HTMLAnchorElement).style.transform = 'scale(1)'; }}
