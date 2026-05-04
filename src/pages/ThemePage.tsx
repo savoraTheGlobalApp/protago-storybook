@@ -750,8 +750,8 @@ export function ThemePage() {
             {/* Price + promo strip */}
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, padding: '10px 16px', background: '#FFF7ED', borderTop: '1px solid #FFE4CC', borderBottom: '1px solid #FFE4CC' }}>
               <span style={{ fontSize: 11, fontWeight: 800, color: '#fff', background: '#22C55E', borderRadius: 50, padding: '2px 8px' }}>15% OFF</span>
-              <span style={{ fontSize: 13, color: '#9CA3AF', textDecoration: 'line-through', fontWeight: 600 }}>₹1,499</span>
-              <span style={{ fontSize: 18, fontWeight: 800, color: C.navy, fontFamily: "'Baloo 2', sans-serif" }}>₹1,274</span>
+              <span style={{ fontSize: 13, color: '#9CA3AF', textDecoration: 'line-through', fontWeight: 600 }}>₹1,649</span>
+              <span style={{ fontSize: 18, fontWeight: 800, color: C.navy, fontFamily: "'Baloo 2', sans-serif" }}>₹1,402</span>
               <span style={{ fontSize: 11, color: C.saffron, fontWeight: 700 }}>· Use code <strong>PROTAGO50</strong></span>
             </div>
 
@@ -1052,8 +1052,8 @@ export function ThemePage() {
               </h2>
               <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 4 }}>
                 <span style={{ fontSize: 11, fontWeight: 700, color: '#22C55E', background: 'rgba(255,255,255,0.15)', borderRadius: 50, padding: '2px 8px', letterSpacing: 0.3 }}>15% OFF</span>
-                <span style={{ fontSize: 13, color: 'rgba(255,255,255,0.55)', textDecoration: 'line-through', fontWeight: 600 }}>₹1,499</span>
-                <span style={{ fontSize: 18, fontWeight: 800, color: '#fff', fontFamily: "'Baloo 2', sans-serif" }}>₹1,274</span>
+                <span style={{ fontSize: 13, color: 'rgba(255,255,255,0.55)', textDecoration: 'line-through', fontWeight: 600 }}>₹1,649</span>
+                <span style={{ fontSize: 18, fontWeight: 800, color: '#fff', fontFamily: "'Baloo 2', sans-serif" }}>₹1,402</span>
               </div>
             </div>
 
