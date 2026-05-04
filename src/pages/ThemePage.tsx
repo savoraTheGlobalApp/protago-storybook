@@ -84,8 +84,8 @@ function SampleBookViewer({ slug, onGetPreview }: { slug: string; onGetPreview?:
           style={{ width: '100%', display: 'block', aspectRatio: '16/9', objectFit: 'cover' }}
         />
 
-        {/* Gradient + text overlay at bottom */}
-        <div style={{
+        {/* Gradient + text overlay at bottom (desktop) */}
+        <div className="book-page-overlay" style={{
           position: 'absolute', bottom: 0, left: 0, right: 0,
           background: 'linear-gradient(to top, rgba(10,10,30,0.93) 0%, rgba(10,10,30,0.72) 55%, transparent 100%)',
           padding: '28px 16px 16px',
@@ -110,6 +110,19 @@ function SampleBookViewer({ slug, onGetPreview }: { slug: string; onGetPreview?:
           <button onClick={() => setIdx(i => i + 1)}
             style={{ position: 'absolute', top: 0, right: 0, width: '20%', height: '100%', background: 'transparent', border: 'none', cursor: 'pointer' }} />
         )}
+      </div>
+
+      {/* Text below image (mobile only) */}
+      <div className="book-page-text-below" style={{ padding: '12px 4px 4px' }}>
+        <div style={{ fontSize: 10, fontWeight: 700, color: C.saffron, textTransform: 'uppercase', letterSpacing: '0.14em', marginBottom: 4 }}>
+          {idx === 0 ? 'Cover' : `Page ${idx} of ${pages.length - 1}`}
+        </div>
+        <div style={{ fontFamily: "'Baloo 2', sans-serif", fontWeight: 800, fontSize: 15, color: C.navy, marginBottom: 6 }}>
+          {page.title}
+        </div>
+        <div style={{ fontSize: 13.5, lineHeight: 1.7, color: '#444', fontFamily: "'Nunito', sans-serif" }}>
+          {page.text}
+        </div>
       </div>
 
       {/* Navigation */}
@@ -190,6 +203,14 @@ export function ThemePage() {
 
   const formRef = useRef<HTMLDivElement>(null);
   const scrollToForm = () => setTimeout(() => formRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 50);
+  const [formVisible, setFormVisible] = useState(false);
+  useEffect(() => {
+    const el = formRef.current;
+    if (!el) return;
+    const obs = new IntersectionObserver(([entry]) => setFormVisible(entry.isIntersecting), { threshold: 0.15 });
+    obs.observe(el);
+    return () => obs.disconnect();
+  }, [theme.slug]);
 
   const hasSamplePages = !!SAMPLE_PAGES[theme?.slug ?? ''];
 
@@ -478,9 +499,13 @@ export function ThemePage() {
       <style>{`
         .book-hook-face-col { display: flex; }
         .book-preview-sticky-cta { display: none; }
+        .book-page-overlay { display: block; }
+        .book-page-text-below { display: none; }
         @media (max-width: 640px) {
           .book-hook-face-col { display: none !important; }
           .book-preview-sticky-cta { display: flex !important; position: fixed; bottom: 0; left: 0; right: 0; z-index: 100; padding: 12px 20px 20px; background: linear-gradient(to top, rgba(255,255,255,1) 60%, rgba(255,255,255,0)); }
+          .book-page-overlay { display: none !important; }
+          .book-page-text-below { display: block !important; }
         }
       `}</style>
 
@@ -546,8 +571,8 @@ export function ThemePage() {
           </div>
         )}
 
-        {/* ── Sticky mobile CTA (only for themes with sample pages) ── */}
-        {hasSamplePages && (
+        {/* ── Sticky mobile CTA (only for themes with sample pages, hidden once form is visible) ── */}
+        {hasSamplePages && !formVisible && (
           <div className="book-preview-sticky-cta">
             <button onClick={scrollToForm}
               style={{ background: `linear-gradient(135deg, ${C.saffron} 0%, #FF8C42 100%)`, color: '#fff', border: 'none', borderRadius: 14, padding: '14px 0', fontSize: 15, fontWeight: 800, cursor: 'pointer', fontFamily: "'Baloo 2', sans-serif", boxShadow: '0 4px 20px rgba(255,107,53,0.45)', width: '100%', textAlign: 'center' }}>
