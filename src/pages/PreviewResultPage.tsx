@@ -43,7 +43,7 @@ function ShimmerCard() {
 const SKIP_COVER_THEMES = new Set([
   'colours-shapes', 'bedtime-routines', 'numbers-maths', 'sharing-sorry', 'first-day-school',
   'managing-emotions', 'indian-festivals', 'phonics-reading', 'history-india',
-  'financial-literacy', 'growth-mindset', 'professions',
+  'financial-literacy', 'growth-mindset', 'professions', 'internet-safety', 'body-safety',
 ]);
 
 // ── Book viewer with 3D page flip ────────────────────────────────────────────
