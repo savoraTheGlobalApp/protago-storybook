@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate, useLocation, useSearchParams } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { MessageCircle } from 'lucide-react';
@@ -15,6 +15,130 @@ const C = {
   gray:    '#555555',
   lgray:   '#999999',
 };
+
+const GCS_SAMPLE = 'https://storage.googleapis.com/protago-story-scenes/sample-pages';
+
+type SamplePage = { imageUrl: string; title: string; text: string };
+
+const SAMPLE_PAGES: Record<string, SamplePage[]> = {
+  'financial-literacy': [
+    {
+      imageUrl: `${GCS_SAMPLE}/financial-literacy/cover.png`,
+      title: 'The Money Magic Mission',
+      text: 'A glowing golden coin appears — and the doors of the Coin Kingdom swing open! Your child steps into a world where every adventure teaches a lesson about money. Earn it, save it, spend it wisely, give a little — and watch your future grow.',
+    },
+    {
+      imageUrl: `${GCS_SAMPLE}/financial-literacy/scene_01.png`,
+      title: 'What Is Money?',
+      text: 'One morning, your child found some coins glittering in the sun. "What can I do with these?" they wondered. Money is something we use to buy things we need and want — it can be earned, saved, spent, or even given away. Every coin holds a tiny bit of possibility!',
+    },
+    {
+      imageUrl: `${GCS_SAMPLE}/financial-literacy/scene_02.png`,
+      title: 'Earning Money',
+      text: 'In the Coin Kingdom, every coin has to be earned. Your child rolled up their sleeves and got to work — because money is earned through effort, skill, and creativity. Your talent + your effort = your earning power!',
+    },
+    {
+      imageUrl: `${GCS_SAMPLE}/financial-literacy/scene_03.png`,
+      title: 'Needs and Wants',
+      text: 'Three glowing choices floated before your child: a school bag (a need), a toy (a want), a book (both!). Needs are things we must have — food, clothes, a home. Wants are things we\'d love but can live without. Smart spenders always take care of needs first.',
+    },
+    {
+      imageUrl: `${GCS_SAMPLE}/financial-literacy/scene_04.png`,
+      title: 'The Saving Jar',
+      text: 'Your child dropped the first coin — clink! — into the jar. The savings bar on the wall glowed a little brighter. Saving means keeping some money instead of spending it all. The more you save, the closer you get to your big dream.',
+    },
+  ],
+};
+
+function SampleBookViewer({ slug, onGetPreview }: { slug: string; onGetPreview?: () => void }) {
+  const pages = SAMPLE_PAGES[slug];
+  if (!pages) return null;
+  const [idx, setIdx] = useState(0);
+  const touchStartX = useRef<number | null>(null);
+  const page = pages[idx];
+  const isLast = idx === pages.length - 1;
+
+  return (
+    <div style={{ padding: '20px 20px 24px', display: 'flex', flexDirection: 'column', height: '100%', boxSizing: 'border-box' }}>
+      <h3 style={{ fontFamily: "'Baloo 2', sans-serif", fontWeight: 800, fontSize: 16, color: C.navy, margin: '0 0 14px' }}>
+        📖 Read a few pages
+      </h3>
+
+      {/* Scene image with text overlay */}
+      <div
+        style={{ position: 'relative', borderRadius: 12, overflow: 'hidden', boxShadow: '0 6px 28px rgba(0,0,0,0.18)', touchAction: 'pan-y', cursor: 'pointer', flex: 1 }}
+        onTouchStart={e => { touchStartX.current = e.touches[0].clientX; }}
+        onTouchEnd={e => {
+          if (touchStartX.current === null) return;
+          const dx = e.changedTouches[0].clientX - touchStartX.current;
+          if (dx < -40 && idx < pages.length - 1) setIdx(i => i + 1);
+          if (dx > 40 && idx > 0) setIdx(i => i - 1);
+          touchStartX.current = null;
+        }}
+      >
+        {/* Full scene image */}
+        <img
+          key={page.imageUrl}
+          src={page.imageUrl}
+          alt={page.title}
+          style={{ width: '100%', display: 'block', aspectRatio: '16/9', objectFit: 'cover' }}
+        />
+
+        {/* Gradient + text overlay at bottom */}
+        <div style={{
+          position: 'absolute', bottom: 0, left: 0, right: 0,
+          background: 'linear-gradient(to top, rgba(10,10,30,0.93) 0%, rgba(10,10,30,0.72) 55%, transparent 100%)',
+          padding: '28px 16px 16px',
+        }}>
+          <div style={{ fontSize: 9, fontWeight: 700, color: C.saffron, textTransform: 'uppercase', letterSpacing: '0.14em', marginBottom: 5 }}>
+            {idx === 0 ? 'Cover' : `Page ${idx} of ${pages.length - 1}`}
+          </div>
+          <div style={{ fontFamily: "'Baloo 2', sans-serif", fontWeight: 800, fontSize: 14, color: '#fff', marginBottom: 6 }}>
+            {page.title}
+          </div>
+          <div style={{ fontSize: 13, lineHeight: 1.7, color: 'rgba(255,255,255,0.88)', fontFamily: "'Nunito', sans-serif" }}>
+            {page.text}
+          </div>
+        </div>
+
+        {/* Side tap zones */}
+        {idx > 0 && (
+          <button onClick={() => setIdx(i => i - 1)}
+            style={{ position: 'absolute', top: 0, left: 0, width: '20%', height: '100%', background: 'transparent', border: 'none', cursor: 'pointer' }} />
+        )}
+        {!isLast && (
+          <button onClick={() => setIdx(i => i + 1)}
+            style={{ position: 'absolute', top: 0, right: 0, width: '20%', height: '100%', background: 'transparent', border: 'none', cursor: 'pointer' }} />
+        )}
+      </div>
+
+      {/* Navigation */}
+      <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 10, marginTop: 14 }}>
+        <button onClick={() => setIdx(i => Math.max(0, i - 1))} disabled={idx === 0}
+          style={{ background: 'none', border: `1.5px solid ${idx === 0 ? '#D1D5DB' : C.saffron}`, borderRadius: '50%', width: 30, height: 30, cursor: idx === 0 ? 'default' : 'pointer', color: idx === 0 ? '#D1D5DB' : C.saffron, fontSize: 17, display: 'flex', alignItems: 'center', justifyContent: 'center', lineHeight: 1 }}>
+          ‹
+        </button>
+        <div style={{ display: 'flex', gap: 5 }}>
+          {pages.map((_, i) => (
+            <button key={i} onClick={() => setIdx(i)}
+              style={{ width: 7, height: 7, borderRadius: '50%', border: 'none', background: i === idx ? C.saffron : '#D1D5DB', cursor: 'pointer', padding: 0, transition: 'background 0.2s' }} />
+          ))}
+        </div>
+        {isLast && onGetPreview ? (
+          <button onClick={onGetPreview}
+            style={{ background: `linear-gradient(135deg, ${C.saffron} 0%, #FF8C42 100%)`, color: '#fff', border: 'none', borderRadius: 20, padding: '6px 14px', fontSize: 12, fontWeight: 800, cursor: 'pointer', fontFamily: "'Baloo 2', sans-serif", boxShadow: '0 3px 10px rgba(255,107,53,0.4)', whiteSpace: 'nowrap' }}>
+            Get Preview →
+          </button>
+        ) : (
+          <button onClick={() => setIdx(i => Math.min(pages.length - 1, i + 1))} disabled={isLast}
+            style={{ background: 'none', border: `1.5px solid ${isLast ? '#D1D5DB' : C.saffron}`, borderRadius: '50%', width: 30, height: 30, cursor: isLast ? 'default' : 'pointer', color: isLast ? '#D1D5DB' : C.saffron, fontSize: 17, display: 'flex', alignItems: 'center', justifyContent: 'center', lineHeight: 1 }}>
+            ›
+          </button>
+        )}
+      </div>
+    </div>
+  );
+}
 
 
 export function ThemePage() {
@@ -63,6 +187,11 @@ export function ThemePage() {
   const [gender, setGender] = useState<'boy' | 'girl' | null>(null);
   const [selectedAgeGroup, setSelectedAgeGroup] = useState<'young' | 'middle' | 'older' | null>(null);
   const [selectedAge, setSelectedAge] = useState<number | null>(null);
+
+  const formRef = useRef<HTMLDivElement>(null);
+  const scrollToForm = () => setTimeout(() => formRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 50);
+
+  const hasSamplePages = !!SAMPLE_PAGES[theme?.slug ?? ''];
 
   const pickAge = (age: number) => {
     setSelectedAge(age);
@@ -346,13 +475,89 @@ export function ThemePage() {
   return (
     <div style={{ minHeight: '100vh', background: '#FAFAFA', fontFamily: "'Nunito', sans-serif" }}>
       <link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@700;800&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet" />
+      <style>{`
+        .book-hook-face-col { display: flex; }
+        .book-preview-sticky-cta { display: none; }
+        @media (max-width: 640px) {
+          .book-hook-face-col { display: none !important; }
+          .book-preview-sticky-cta { display: flex !important; position: fixed; bottom: 0; left: 0; right: 0; z-index: 100; padding: 12px 20px 20px; background: linear-gradient(to top, rgba(255,255,255,1) 60%, rgba(255,255,255,0)); }
+        }
+      `}</style>
 
       <NavBar />
 
       <div style={{ maxWidth: 920, margin: '0 auto', paddingTop: 130, paddingBottom: 0 }}>
 
+        {/* ── Book preview hook (only for themes with sample pages) ── */}
+        {hasSamplePages && (
+          <div style={{ display: 'flex', gap: 0, margin: '0 16px 20px', borderRadius: 20, overflow: 'hidden', boxShadow: '0 4px 32px rgba(0,0,0,0.08)', background: C.white }}>
+            {/* 3/4: Book viewer */}
+            <div style={{ flex: 3, borderRight: '1px solid #F0EEE8', background: '#FAFAFA' }}>
+              <SampleBookViewer slug={theme.slug} onGetPreview={scrollToForm} />
+            </div>
+            {/* 1/4: Face animation + CTA (hidden on mobile) */}
+            <div className="book-hook-face-col" style={{ flex: 1, flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '24px 16px', gap: 16, minWidth: 160 }}>
+              {/* Face animation */}
+              <div style={{ position: 'relative', width: '100%', aspectRatio: '4/3', borderRadius: 12, overflow: 'hidden', background: '#F0EEE8' }}>
+                {getFaceSamples(theme.slug).map((sample, i) => (
+                  <motion.img key={sample.key}
+                    src={`/themes_mockup/${theme.slug}_${sample.key}_mockup.webp`}
+                    alt="" decoding="async"
+                    style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'contain', transform: 'scale(1.3)' }}
+                    animate={{ opacity: i === activeIdx ? 1 : 0 }}
+                    transition={{ duration: 0.5 }}
+                    onError={e => { (e.target as HTMLImageElement).style.display = 'none'; }}
+                  />
+                ))}
+                {(() => { const at = getArrowTarget(theme.slug); return (
+                  <svg viewBox="0 0 160 90" preserveAspectRatio="none"
+                    style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', zIndex: 5, pointerEvents: 'none' }}>
+                    <motion.path d={`M 148 4 Q 148 40 ${at.x} ${at.y}`} fill="none" stroke={C.saffron}
+                      strokeWidth="2" strokeDasharray="5 3" strokeLinecap="round"
+                      initial={{ pathLength: 0, opacity: 0 }} animate={{ pathLength: 1, opacity: 1 }}
+                      transition={{ pathLength: { duration: 1.0, delay: 0.2 }, opacity: { duration: 0.2 } }}
+                      key={activeIdx} />
+                    <motion.path d={`M ${at.x + 8} ${at.y - 5} L ${at.x} ${at.y} L ${at.x + 7} ${at.y + 5}`} fill="none" stroke={C.saffron}
+                      strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
+                      initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 1.0 }}
+                      key={`ah-${activeIdx}`} />
+                  </svg>
+                ); })()}
+                {/* Face bubble */}
+                <div style={{ position: 'absolute', top: 8, right: 10, width: 48, height: 48, zIndex: 10 }}>
+                  {getFaceSamples(theme.slug).map((sample, i) => (
+                    <motion.img key={sample.face} src={sample.face} alt="" decoding="async"
+                      style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover',
+                        borderRadius: '50%', border: `2.5px solid ${C.saffron}`, boxShadow: '0 3px 12px rgba(255,107,53,0.35), 0 0 0 2px #fff' }}
+                      animate={{ opacity: i === activeIdx ? 1 : 0, scale: i === activeIdx ? 1 : 0.9 }}
+                      transition={{ duration: 0.4 }} />
+                  ))}
+                </div>
+              </div>
+              <p style={{ fontFamily: "'Baloo 2', sans-serif", fontWeight: 800, fontSize: 13, color: C.navy, textAlign: 'center', margin: 0, lineHeight: 1.4 }}>
+                See your child<br />in this story
+              </p>
+              <button onClick={scrollToForm}
+                style={{ background: `linear-gradient(135deg, ${C.saffron} 0%, #FF8C42 100%)`, color: '#fff', border: 'none', borderRadius: 12, padding: '11px 14px', fontSize: 13, fontWeight: 800, cursor: 'pointer', fontFamily: "'Baloo 2', sans-serif", boxShadow: '0 4px 14px rgba(255,107,53,0.4)', width: '100%', textAlign: 'center' }}>
+                ✨ Get Preview →
+              </button>
+              <p style={{ fontSize: 10, color: C.lgray, textAlign: 'center', margin: 0 }}>Free · ~2 min · No card required</p>
+            </div>
+          </div>
+        )}
+
+        {/* ── Sticky mobile CTA (only for themes with sample pages) ── */}
+        {hasSamplePages && (
+          <div className="book-preview-sticky-cta">
+            <button onClick={scrollToForm}
+              style={{ background: `linear-gradient(135deg, ${C.saffron} 0%, #FF8C42 100%)`, color: '#fff', border: 'none', borderRadius: 14, padding: '14px 0', fontSize: 15, fontWeight: 800, cursor: 'pointer', fontFamily: "'Baloo 2', sans-serif", boxShadow: '0 4px 20px rgba(255,107,53,0.45)', width: '100%', textAlign: 'center' }}>
+              ✨ Get Free Preview →
+            </button>
+          </div>
+        )}
+
         {/* ── Two-column card ── */}
-        <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'stretch', background: C.white, borderRadius: 20, overflow: 'hidden', boxShadow: '0 4px 32px rgba(0,0,0,0.07)', margin: '0 16px' }}>
+        <div ref={formRef} style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'stretch', background: C.white, borderRadius: 20, overflow: 'hidden', boxShadow: '0 4px 32px rgba(0,0,0,0.07)', margin: '0 16px' }}>
 
           {/* LEFT: animation + info */}
           <div style={{ flex: '1 1 340px', display: 'flex', flexDirection: 'column', borderRight: '1px solid #F5F5F5' }}>
