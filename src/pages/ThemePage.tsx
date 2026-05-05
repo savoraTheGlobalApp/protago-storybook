@@ -563,7 +563,7 @@ export function ThemePage() {
       const res = await fetch(`${API_BASE}/api/preview/trigger`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ storySlug: theme.slug, photoUrl: photo.signedUrl, childName: firstName, email: emailTrimmed, phone: phoneTrimmed, gender: gender ?? undefined, ageGroup: selectedAgeGroup ?? undefined, childAge: selectedAge ?? undefined }),
+        body: JSON.stringify({ storySlug: theme.slug, photoUrl: photo.signedUrl, childName: firstName, email: emailTrimmed, phone: phoneTrimmed, gender: gender ?? undefined, ageGroup: selectedAgeGroup ?? undefined, childAge: selectedAge ?? undefined, fbc: document.cookie.match(/(?:^|;\s*)_fbc=([^;]*)/)?.[1] ?? undefined, fbp: document.cookie.match(/(?:^|;\s*)_fbp=([^;]*)/)?.[1] ?? undefined }),
       });
       const data = await res.json();
       if (!res.ok) {

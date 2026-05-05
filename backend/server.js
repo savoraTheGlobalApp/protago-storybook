@@ -38,7 +38,7 @@ function normalizePhone(phone) {
   return digits.length === 10 ? `91${digits}` : digits;
 }
 
-async function sendMetaCAPIEvent({ eventName, email, phone, firstName, eventSourceUrl, customData = {} }) {
+async function sendMetaCAPIEvent({ eventName, email, phone, firstName, fbc, fbp, eventSourceUrl, customData = {} }) {
   const pixelId = process.env.META_PIXEL_ID;
   const accessToken = process.env.META_ACCESS_TOKEN;
   if (!pixelId || !accessToken) return;
@@ -47,6 +47,8 @@ async function sendMetaCAPIEvent({ eventName, email, phone, firstName, eventSour
   if (email)     userData.em = sha256(email);
   if (phone)     { const p = normalizePhone(phone); if (p) userData.ph = sha256(p); }
   if (firstName) userData.fn = sha256(firstName.split(' ')[0]);
+  if (fbc)       userData.fbc = fbc;   // not hashed — passed as-is per Meta spec
+  if (fbp)       userData.fbp = fbp;   // not hashed — passed as-is per Meta spec
 
   const payload = {
     data: [{
@@ -1375,9 +1377,9 @@ app.post('/api/preview-job-alert', async (req, res) => {
         phoneDisplay,
       ].filter(Boolean).join('\n');
     } else if (status === 'done') {
-      // Fire Meta CAPI CompleteRegistration event (preview generated)
+      // Fire Meta CAPI PreviewGenerated event — enriches the frontend pixel event with server-side user data
       sendMetaCAPIEvent({
-        eventName: 'CompleteRegistration',
+        eventName: 'PreviewGenerated',
         email, phone,
         firstName: child_name,
         eventSourceUrl: `${(process.env.SITE_URL || 'https://protago.in').replace(/\/$/, '')}/preview/${jobId}`,
@@ -1440,7 +1442,7 @@ const VALID_AGE_GROUPS = new Set(['young', 'middle', 'older']);
 
 app.post('/api/preview/trigger', async (req, res) => {
   try {
-    const { storySlug, photoUrl, childName, email, phone, gender, ageGroup, childAge } = req.body;
+    const { storySlug, photoUrl, childName, email, phone, gender, ageGroup, childAge, fbc, fbp } = req.body;
     if (!storySlug || !photoUrl) {
       return res.status(400).json({ error: 'storySlug and photoUrl are required' });
     }
@@ -1489,10 +1491,10 @@ app.post('/api/preview/trigger', async (req, res) => {
 
     console.log(`Preview job ${job.id}: photoUrl=${photoUrl} gender=${safeGender || 'none'} ageGroup=${safeAgeGroup || 'none'} email=${email || 'none'}`);
 
-    // Fire Meta CAPI Lead event (preview requested)
+    // Fire Meta CAPI PreviewStarted event — server-side counterpart to the frontend pixel event
     sendMetaCAPIEvent({
-      eventName: 'Lead',
-      email, phone,
+      eventName: 'PreviewStarted',
+      email, phone, fbc, fbp,
       firstName: childName,
       eventSourceUrl: `${(process.env.SITE_URL || 'https://protago.in').replace(/\/$/, '')}/theme/${storySlug}`,
       customData: { content_name: storySlug, content_category: 'preview' },
