@@ -593,11 +593,13 @@ export function ThemePage() {
         .book-preview-sticky-cta { display: none; }
         .book-page-overlay { display: block; }
         .book-page-text-below { display: none; }
+        .explore-themes-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
         @media (max-width: 640px) {
           .book-hook-face-col { display: none !important; }
           .book-preview-sticky-cta { display: flex !important; position: fixed; bottom: 0; left: 0; right: 0; z-index: 100; padding: 12px 20px 20px; background: linear-gradient(to top, rgba(255,255,255,1) 60%, rgba(255,255,255,0)); }
           .book-page-overlay { display: none !important; }
           .book-page-text-below { display: block !important; }
+          .explore-themes-grid { grid-template-columns: repeat(2, 1fr); gap: 10px; }
         }
       `}</style>
 
@@ -1295,7 +1297,7 @@ export function ThemePage() {
               View all →
             </button>
           </div>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 14 }}>
+          <div className="explore-themes-grid">
             {otherThemes.map(t => (
               <button key={t.slug} onClick={() => handleThemeClick(t.slug)}
                 style={{ background: C.white, border: '1.5px solid #F0EEE8', borderRadius: 12, overflow: 'visible', cursor: 'pointer', textAlign: 'left', padding: 0, boxShadow: '0 2px 8px rgba(0,0,0,0.04)', transition: 'box-shadow 0.2s, transform 0.15s', position: 'relative' }}
@@ -1337,9 +1339,9 @@ export function ThemePage() {
                   ); })()}
                 </div>
 
-                <div style={{ padding: '10px 12px 11px' }}>
-                  <p style={{ fontSize: 17, fontWeight: 700, color: C.navy, margin: 0, lineHeight: 1.3 }}>{t.icon} {t.name}</p>
-                  <p style={{ fontSize: 11, color: C.lgray, margin: '3px 0 0' }}>Ages {Array.isArray(t.ageRange) ? `${t.ageRange[0].split('–')[0]}–${t.ageRange[t.ageRange.length-1].split('–')[1]}` : t.ageRange}</p>
+                <div style={{ padding: '8px 10px 10px' }}>
+                  <p style={{ fontSize: 'clamp(12px, 3.5vw, 15px)', fontWeight: 700, color: C.navy, margin: 0, lineHeight: 1.3 }}>{t.icon} {t.name}</p>
+                  <p style={{ fontSize: 'clamp(10px, 2.5vw, 11px)', color: C.lgray, margin: '3px 0 0' }}>Ages {Array.isArray(t.ageRange) ? `${t.ageRange[0].split('–')[0]}–${t.ageRange[t.ageRange.length-1].split('–')[1]}` : t.ageRange}</p>
                 </div>
               </button>
             ))}
