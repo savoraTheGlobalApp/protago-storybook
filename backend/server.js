@@ -26,6 +26,51 @@ const PORT = process.env.PORT || 5001;
 const resend = new Resend(process.env.RESEND_API_KEY);
 const EMAIL_FROM = process.env.RESEND_FROM || 'Protago <hello@protago.in>';
 
+// ── Meta Conversions API ──────────────────────────────────────────────────────
+function sha256(value) {
+  return crypto.createHash('sha256').update(value.trim().toLowerCase()).digest('hex');
+}
+
+function normalizePhone(phone) {
+  if (!phone) return null;
+  const digits = phone.replace(/\D/g, '');
+  // Add India country code if 10-digit local number
+  return digits.length === 10 ? `91${digits}` : digits;
+}
+
+async function sendMetaCAPIEvent({ eventName, email, phone, firstName, eventSourceUrl, customData = {} }) {
+  const pixelId = process.env.META_PIXEL_ID;
+  const accessToken = process.env.META_ACCESS_TOKEN;
+  if (!pixelId || !accessToken) return;
+
+  const userData = {};
+  if (email)     userData.em = sha256(email);
+  if (phone)     { const p = normalizePhone(phone); if (p) userData.ph = sha256(p); }
+  if (firstName) userData.fn = sha256(firstName.split(' ')[0]);
+
+  const payload = {
+    data: [{
+      event_name:        eventName,
+      event_time:        Math.floor(Date.now() / 1000),
+      action_source:     'website',
+      event_source_url:  eventSourceUrl || 'https://protago.in',
+      user_data:         userData,
+      custom_data:       customData,
+    }],
+  };
+
+  try {
+    const res = await fetch(
+      `https://graph.facebook.com/v19.0/${pixelId}/events?access_token=${accessToken}`,
+      { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) }
+    );
+    const json = await res.json();
+    console.log(`Meta CAPI [${eventName}]:`, json.events_received ?? json.error ?? json);
+  } catch (err) {
+    console.error(`Meta CAPI [${eventName}] error:`, err.message);
+  }
+}
+
 // ── Discord error alerting ────────────────────────────────────────────────────
 async function alertDiscord(title, detail, { jobId, storySlug, email } = {}) {
   const url = process.env.ALERTS_DISCORD_URL;
@@ -1330,6 +1375,15 @@ app.post('/api/preview-job-alert', async (req, res) => {
         phoneDisplay,
       ].filter(Boolean).join('\n');
     } else if (status === 'done') {
+      // Fire Meta CAPI CompleteRegistration event (preview generated)
+      sendMetaCAPIEvent({
+        eventName: 'CompleteRegistration',
+        email, phone,
+        firstName: child_name,
+        eventSourceUrl: `${(process.env.SITE_URL || 'https://protago.in').replace(/\/$/, '')}/preview/${jobId}`,
+        customData: { content_name: story_slug, content_category: 'preview', status: 'done' },
+      });
+
       // Fire send-email in background — handles email_sent dedup internally
       const siteBase = (process.env.SITE_URL || 'https://protago.in').replace(/\/$/, '');
       fetch(`${siteBase}/api/preview/send-email`, {
@@ -1434,6 +1488,16 @@ app.post('/api/preview/trigger', async (req, res) => {
     const [job] = await createRes.json();
 
     console.log(`Preview job ${job.id}: photoUrl=${photoUrl} gender=${safeGender || 'none'} ageGroup=${safeAgeGroup || 'none'} email=${email || 'none'}`);
+
+    // Fire Meta CAPI Lead event (preview requested)
+    sendMetaCAPIEvent({
+      eventName: 'Lead',
+      email, phone,
+      firstName: childName,
+      eventSourceUrl: `${(process.env.SITE_URL || 'https://protago.in').replace(/\/$/, '')}/theme/${storySlug}`,
+      customData: { content_name: storySlug, content_category: 'preview' },
+    });
+
     // Fire Modal async (don't await — client polls for result)
     triggerPreview({ jobId: job.id, storySlug, photoUrl, childName, gender: safeGender, ageGroup: safeAgeGroup }).catch(err => {
       console.error(`Preview job ${job.id} trigger failed:`, err.message);
