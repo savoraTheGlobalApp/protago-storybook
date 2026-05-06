@@ -274,7 +274,7 @@ export function ThemePage() {
   const [emailError, setEmailError] = useState('');
   const [previewPhone, setPreviewPhone] = useState('');
   const [phoneError, setPhoneError] = useState('');
-  const [photo, setPhoto] = useState<{ preview: string; uploading: boolean; signedUrl: string | null } | null>(null);
+  const [photo, setPhoto] = useState<{ preview: string; uploading: boolean; signedUrl: string | null; quality?: { score: number; tip: string | null } | null } | null>(null);
   const [consent, setConsent] = useState(false);
   const [jobStatus, setJobStatus] = useState('');
   const [showOrder, setShowOrder] = useState(false);
@@ -519,7 +519,7 @@ export function ThemePage() {
         try {
           const data = JSON.parse(xhr.responseText);
           if (data.photo_signed_url) {
-            setPhoto(p => p ? { ...p, uploading: false, signedUrl: data.photo_signed_url } : null);
+            setPhoto(p => p ? { ...p, uploading: false, signedUrl: data.photo_signed_url, quality: data.photo_quality ?? null } : null);
           } else {
             setPhoto(p => p ? { ...p, uploading: false } : null);
             setJobStatus('Error: Upload failed. Please try a different photo.');
@@ -530,7 +530,7 @@ export function ThemePage() {
         setPhoto(p => p ? { ...p, uploading: false } : null);
         setJobStatus('Error: Could not upload photo. Please check your connection and try again.');
       };
-      xhr.send(JSON.stringify({ photo: base64 }));
+      xhr.send(JSON.stringify({ photo: base64, originalSize: file.size }));
       URL.revokeObjectURL(preview);
     };
     img.onerror = () => {
@@ -563,7 +563,7 @@ export function ThemePage() {
       const res = await fetch(`${API_BASE}/api/preview/trigger`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ storySlug: theme.slug, photoUrl: photo.signedUrl, childName: firstName, email: emailTrimmed, phone: phoneTrimmed, gender: gender ?? undefined, ageGroup: selectedAgeGroup ?? undefined, childAge: selectedAge ?? undefined, fbc: document.cookie.match(/(?:^|;\s*)_fbc=([^;]*)/)?.[1] ?? undefined, fbp: document.cookie.match(/(?:^|;\s*)_fbp=([^;]*)/)?.[1] ?? undefined }),
+        body: JSON.stringify({ storySlug: theme.slug, photoUrl: photo.signedUrl, childName: firstName, email: emailTrimmed, phone: phoneTrimmed, gender: gender ?? undefined, ageGroup: selectedAgeGroup ?? undefined, childAge: selectedAge ?? undefined, photoQualityScore: photo.quality?.score ?? undefined, fbc: document.cookie.match(/(?:^|;\s*)_fbc=([^;]*)/)?.[1] ?? undefined, fbp: document.cookie.match(/(?:^|;\s*)_fbp=([^;]*)/)?.[1] ?? undefined }),
       });
       const data = await res.json();
       if (!res.ok) {
@@ -1000,15 +1000,41 @@ export function ThemePage() {
                           onChange={e => { const f = e.target.files?.[0]; if (f) handlePhotoAdd(f); }} />
                       </label>
                     ) : (
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '10px 12px', background: '#F0FDF4', borderRadius: 10, border: '1.5px solid #BBF7D0' }}>
-                        <img src={photo.preview} style={{ width: 48, height: 48, borderRadius: 8, objectFit: 'cover', flexShrink: 0 }} alt="" />
-                        <div style={{ flex: 1, minWidth: 0 }}>
-                          <div style={{ fontWeight: 700, fontSize: 13, color: '#166534' }}>{photo.uploading ? '⏳ Uploading…' : '✓ Photo ready'}</div>
-                          {photo.uploading && <div style={{ fontSize: 11, color: '#166534', opacity: 0.7 }}>Please wait…</div>}
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '10px 12px', background: '#F0FDF4', borderRadius: 10, border: '1.5px solid #BBF7D0' }}>
+                          <img src={photo.preview} style={{ width: 48, height: 48, borderRadius: 8, objectFit: 'cover', flexShrink: 0 }} alt="" />
+                          <div style={{ flex: 1, minWidth: 0 }}>
+                            <div style={{ fontWeight: 700, fontSize: 13, color: '#166534' }}>{photo.uploading ? '⏳ Uploading…' : '✓ Photo ready'}</div>
+                            {photo.uploading && <div style={{ fontSize: 11, color: '#166534', opacity: 0.7 }}>Please wait…</div>}
+                          </div>
+                          {!photo.uploading && (
+                            <button onClick={() => setPhoto(null)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: C.lgray, fontSize: 20, lineHeight: 1, flexShrink: 0 }}>×</button>
+                          )}
                         </div>
-                        {!photo.uploading && (
-                          <button onClick={() => setPhoto(null)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: C.lgray, fontSize: 20, lineHeight: 1, flexShrink: 0 }}>×</button>
-                        )}
+
+                        {/* Photo quality score */}
+                        {!photo.uploading && photo.quality && (() => {
+                          const { score, tip } = photo.quality!;
+                          const color = score >= 75 ? '#16a34a' : score >= 50 ? '#d97706' : '#dc2626';
+                          const bg    = score >= 75 ? '#f0fdf4' : score >= 50 ? '#fffbeb' : '#fef2f2';
+                          const border = score >= 75 ? '#bbf7d0' : score >= 50 ? '#fde68a' : '#fecaca';
+                          const label = score >= 75 ? 'Great photo!' : score >= 50 ? 'Decent photo' : 'Low image quality';
+                          return (
+                            <div style={{ padding: '10px 12px', background: bg, borderRadius: 10, border: `1.5px solid ${border}` }}>
+                              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: tip ? 6 : 0 }}>
+                                <span style={{ fontSize: 12, fontWeight: 700, color }}>{label}</span>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                                  {/* Progress bar */}
+                                  <div style={{ width: 80, height: 6, background: '#e5e7eb', borderRadius: 99, overflow: 'hidden' }}>
+                                    <div style={{ width: `${score}%`, height: '100%', background: color, borderRadius: 99, transition: 'width 0.6s ease' }} />
+                                  </div>
+                                  <span style={{ fontSize: 13, fontWeight: 800, color, minWidth: 36, textAlign: 'right' }}>{score}%</span>
+                                </div>
+                              </div>
+                              {tip && <p style={{ margin: 0, fontSize: 11, color, lineHeight: 1.5 }}>{tip}</p>}
+                            </div>
+                          );
+                        })()}
                       </div>
                     )}
                   </div>

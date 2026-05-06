@@ -777,7 +777,8 @@ app.post('/api/create-order', async (req, res) => {
 // Upload photo endpoint: upload image (base64 data URL) to Supabase and return storage path + short-lived signed URL
 app.post('/api/upload-photo', async (req, res) => {
     try {
-        const { photo } = req.body;
+        const { photo, originalSize } = req.body;
+        console.log(`[upload-photo] received: originalSize=${originalSize ?? 'none'} photoLen=${photo?.length ?? 0}`);
         if (!photo) return res.status(400).json({ error: 'Missing photo' });
 
         const matches = photo.match(/^data:([A-Za-z-+/]+);base64,(.+)$/);
@@ -797,6 +798,144 @@ app.post('/api/upload-photo', async (req, res) => {
 
         // Process image (re-encode, strip EXIF) so stored object is normalized
         const { outBuffer, outMime, ext } = await processImageBuffer(buffer, contentType.toLowerCase());
+
+        // ── Google Vision photo quality score ─────────────────────────────────
+        // Non-blocking — always proceeds with upload regardless of score.
+        // Set GOOGLE_VISION_API_KEY in backend/.env to enable; absent = skipped.
+        let photoQuality = null;
+        const VISION_KEY = process.env.GOOGLE_VISION_API_KEY;
+        if (!VISION_KEY) {
+            console.log(`[upload-photo] GOOGLE_VISION_API_KEY not set — skipping quality score`);
+        }
+        if (VISION_KEY) {
+            try {
+                const visionRes = await fetch(
+                    `https://vision.googleapis.com/v1/images:annotate?key=${VISION_KEY}`,
+                    {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            requests: [{
+                                image: { content: outBuffer.toString('base64') },
+                                features: [
+                                    { type: 'FACE_DETECTION', maxResults: 5 },
+                                    { type: 'IMAGE_PROPERTIES' },
+                                ],
+                            }],
+                        }),
+                    }
+                );
+                if (visionRes.ok) {
+                    const visionJson = await visionRes.json();
+                    const faces = visionJson.responses?.[0]?.faceAnnotations ?? [];
+
+                    // Compute image dims + compression for all branches
+                    const imgMeta = await sharp(outBuffer).metadata();
+                    const imgW = imgMeta.width || 1;
+                    const imgH = imgMeta.height || 1;
+                    const imgArea = imgW * imgH;
+                    const effectiveSize = originalSize ?? buffer.length;
+                    const bpp = effectiveSize / imgArea;
+                    const compressionScore = bpp >= 0.05 ? 10
+                                           : bpp >= 0.01 ? 7
+                                           : bpp >= 0.005 ? 3
+                                           : 0;
+
+                    if (faces.length === 0) {
+                        photoQuality = { score: 10, tip: "We couldn't detect a face. Please use a clear front-facing photo of your child." };
+                        console.log(`Vision quality: score=10 (no face) compression=${compressionScore}(bpp=${bpp.toFixed(4)} original=${Math.round(effectiveSize/1024)}KB canvas=${Math.round(buffer.length/1024)}KB ${imgW}×${imgH})`);
+                    } else if (faces.length > 1) {
+                        // Multiple people — very poor, not usable for personalisation
+                        photoQuality = { score: 15, tip: "Multiple people detected. Please upload a solo photo of your child only." };
+                        console.log(`Vision quality: score=15 (${faces.length} faces) compression=${compressionScore}(bpp=${bpp.toFixed(4)} original=${Math.round(effectiveSize/1024)}KB canvas=${Math.round(buffer.length/1024)}KB ${imgW}×${imgH})`);
+                    } else {
+                        const face = faces[0];
+                        const confidence = face.detectionConfidence ?? 1;
+
+                        // ── Face size (0–55 pts) — dominant signal ────────────────
+                        // Uses fdBoundingPoly (tight around facial features) for accuracy.
+                        // Score = fraction-based score × pixel multiplier so both
+                        // relative size AND absolute resolution must be good to score high.
+                        const fdVerts = face.fdBoundingPoly?.vertices ?? face.boundingPoly?.vertices ?? [];
+                        const faceW = fdVerts.length >= 2 ? Math.abs((fdVerts[1]?.x ?? 0) - (fdVerts[0]?.x ?? 0)) : 0;
+                        const faceH = fdVerts.length >= 4 ? Math.abs((fdVerts[3]?.y ?? 0) - (fdVerts[0]?.y ?? 0)) : faceW * 1.3;
+                        const faceAreaFrac = (faceW * faceH) / imgArea;
+
+                        // Fraction-based score (relative size)
+                        const fracScore = faceAreaFrac >= 0.25 ? 55
+                                        : faceAreaFrac >= 0.12 ? 42
+                                        : faceAreaFrac >= 0.05 ? 25
+                                        : faceAreaFrac >= 0.02 ? 12
+                                        : 4;
+
+                        // Pixel multiplier — use min(faceW, faceH) so both dimensions must be adequate
+                        const faceMinDim = Math.min(faceW, faceH);
+                        const pixelMult = faceMinDim >= 300 ? 1.0
+                                        : faceMinDim >= 200 ? 0.8
+                                        : faceMinDim >= 150 ? 0.55
+                                        : faceMinDim >= 100 ? 0.3
+                                        : 0.1;
+
+                        const sizeScore = Math.round(fracScore * pixelMult);
+
+                        // ── Detection confidence (0–8 pts) ───────────────────────
+                        const confScore = Math.round(confidence * 8);
+
+                        // ── Blur (0–12 pts) ───────────────────────────────────────
+                        const blurScore = {
+                            VERY_UNLIKELY: 12, UNLIKELY: 9, POSSIBLE: 5, LIKELY: 2, VERY_LIKELY: 0,
+                        }[face.blurredLikelihood] ?? 12;
+
+                        // ── Underexposure (0–5 pts) ───────────────────────────────
+                        const exposureScore = {
+                            VERY_UNLIKELY: 5, UNLIKELY: 4, POSSIBLE: 2, LIKELY: 1, VERY_LIKELY: 0,
+                        }[face.underExposedLikelihood] ?? 5;
+
+                        // ── Background uniformity (0–5 pts) ──────────────────────
+                        const colors = visionJson.responses?.[0]?.imagePropertiesAnnotation?.dominantColors?.colors ?? [];
+                        const topFrac = colors.length > 0 ? (colors[0].pixelFraction ?? 0) : 0;
+                        const bgScore = topFrac >= 0.35 ? 5 : topFrac >= 0.20 ? 3 : topFrac >= 0.10 ? 1 : 0;
+
+                        // ── Single face bonus (10 pts) ────────────────────────────
+                        // Compression caps the total — a badly compressed photo can't score Great
+                        const compressionCap = compressionScore === 0 ? 40 : compressionScore <= 3 ? 60 : 100;
+                        const total = Math.min(compressionCap, sizeScore + compressionScore + confScore + blurScore + exposureScore + bgScore + 10);
+
+                        // Tip — compression checked first as it has utmost importance
+                        let tip = null;
+                        if (compressionScore === 0) {
+                            tip = "Image is too compressed or too small — please use the original photo from your camera roll.";
+                        } else if (compressionScore <= 3) {
+                            tip = "Image quality is low — try using the original photo rather than a forwarded or screenshot version.";
+                        } else if (faceMinDim < 100) {
+                            tip = "Image resolution is too low — please use a higher quality photo.";
+                        } else if (faceMinDim < 150) {
+                            tip = "Photo resolution is low — try a higher quality image for better results.";
+                        } else if (sizeScore <= 12) {
+                            tip = "Your child's face is too small — move the camera much closer for best results.";
+                        } else if (sizeScore <= 25) {
+                            tip = "Try a closer shot — the face should fill most of the frame.";
+                        } else if (blurScore <= 5) {
+                            tip = "Photo looks blurry — try a steadier shot in good lighting.";
+                        } else if (exposureScore <= 2) {
+                            tip = "Photo looks too dark — try again in a brighter, well-lit space.";
+                        } else if (bgScore === 0) {
+                            tip = "Busy background detected — a plain wall behind your child would help.";
+                        } else if (total < 75) {
+                            tip = "A closer, well-lit front-facing shot would improve personalisation.";
+                        }
+
+                        photoQuality = { score: total, tip };
+                        console.log(`Vision quality: score=${total} | size=${sizeScore}(area=${faceAreaFrac.toFixed(3)} face=${Math.round(faceW)}×${Math.round(faceH)}px minDim=${Math.round(faceMinDim)}px pixMult=${pixelMult}) | compression=${compressionScore}(bpp=${bpp.toFixed(4)} original=${Math.round(effectiveSize/1024)}KB canvas=${Math.round(buffer.length/1024)}KB ${imgW}×${imgH}) | conf=${confScore}(${confidence.toFixed(2)}) | blur=${blurScore}(${face.blurredLikelihood}) | exposure=${exposureScore}(${face.underExposedLikelihood}) | bg=${bgScore}(topFrac=${topFrac.toFixed(2)}) | cap=${compressionCap}`);
+                    }
+                } else {
+                    console.warn('Vision API HTTP error:', visionRes.status);
+                }
+            } catch (visionErr) {
+                console.warn('Vision API unreachable (non-blocking):', visionErr.message);
+            }
+        }
+
         const filename = `upload_${Date.now()}.${ext}`;
 
         const uploadRes = await fetch(
@@ -862,7 +1001,7 @@ app.post('/api/upload-photo', async (req, res) => {
             console.error('Failed to read image metadata:', err);
         }
 
-        return res.status(200).json({ photo_url: photoPath, photo_signed_url: photoSignedUrl, ...meta });
+        return res.status(200).json({ photo_url: photoPath, photo_signed_url: photoSignedUrl, ...meta, photo_quality: photoQuality });
     } catch (err) {
         console.error('Upload photo error:', err);
         return res.status(500).json({ error: 'Internal Server Error' });
@@ -1442,7 +1581,7 @@ const VALID_AGE_GROUPS = new Set(['young', 'middle', 'older']);
 
 app.post('/api/preview/trigger', async (req, res) => {
   try {
-    const { storySlug, photoUrl, childName, email, phone, gender, ageGroup, childAge, fbc, fbp } = req.body;
+    const { storySlug, photoUrl, childName, email, phone, gender, ageGroup, childAge, photoQualityScore, fbc, fbp } = req.body;
     if (!storySlug || !photoUrl) {
       return res.status(400).json({ error: 'storySlug and photoUrl are required' });
     }
@@ -1478,6 +1617,7 @@ app.post('/api/preview/trigger', async (req, res) => {
         gender: safeGender || null,
         age_group: safeAgeGroup || null,
         child_age: childAge ? parseInt(childAge, 10) : null,
+        photo_quality_score: photoQualityScore != null ? parseInt(photoQualityScore, 10) : null,
       }),
     });
 
