@@ -15,7 +15,10 @@ const NEW_FACE_SAMPLES: FaceSample[] = [
 export const THEME_FACE_SAMPLES: Record<string, FaceSample[]> = {
   'bedtime-routines':  NEW_FACE_SAMPLES,
   'colours-shapes':    NEW_FACE_SAMPLES,
-  'financial-literacy':NEW_FACE_SAMPLES,
+  'financial-literacy': [
+    { key: 'boy_1',  face: '/faces/face_boy_1.webp' },
+    { key: 'girl_1', face: '/faces/face_girl_1.webp' },
+  ],
   'first-day-school':  NEW_FACE_SAMPLES,
   // growth-mindset and history-india added once retitled images are copied
 };
