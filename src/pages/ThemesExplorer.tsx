@@ -375,9 +375,13 @@ function ThemeCard({ theme, onClick }: { theme: Theme; groupColor: string; onCli
 }
 
 export function ThemesExplorer() {
-  const [activeGroup, setActiveGroup] = useState('3–5');
+  const [activeGroup, setActiveGroup] = useState('All');
   const [selectedTheme, setSelectedTheme] = useState<Theme | null>(null);
-  const group = AGE_GROUPS.find(g => g.range === activeGroup)!;
+  const group = AGE_GROUPS.find(g => g.range === activeGroup);
+  const activeThemes = activeGroup === 'All'
+    ? AGE_GROUPS.flatMap(g => g.themes).filter((t, i, arr) => arr.findIndex(x => x.slug === t.slug) === i)
+    : (group?.themes ?? []);
+  const activeColor = group?.color ?? C.saffron;
 
   return (
     <div style={{ minHeight: '100vh', background: '#F9FAFB', fontFamily: "'Nunito', sans-serif" }}>
@@ -395,6 +399,19 @@ export function ThemesExplorer() {
 
       {/* Age group tabs */}
       <div className="flex justify-center gap-2 px-4 py-5">
+        <button onClick={() => setActiveGroup('All')}
+          className="flex-1 py-2.5 rounded-2xl font-extrabold transition-all text-center"
+          style={{
+            background: activeGroup === 'All' ? C.navy : C.white,
+            color: activeGroup === 'All' ? C.white : C.lgray,
+            border: `2px solid ${activeGroup === 'All' ? C.navy : '#E5E7EB'}`,
+            fontFamily: "'Baloo 2', sans-serif",
+            fontSize: 13,
+            whiteSpace: 'nowrap',
+          }}>
+          All
+          <span className="block opacity-80" style={{ fontSize: 10, fontWeight: 600 }}>All ages</span>
+        </button>
         {AGE_GROUPS.map(g => (
           <button key={g.range} onClick={() => setActiveGroup(g.range)}
             className="flex-1 py-2.5 rounded-2xl font-extrabold transition-all text-center"
@@ -419,8 +436,8 @@ export function ThemesExplorer() {
             exit={{ opacity: 0, y: -12 }} transition={{ duration: 0.2 }}
             className="grid gap-4"
             style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))' }}>
-            {group.themes.map(theme => (
-              <ThemeCard key={theme.name} theme={theme} groupColor={group.color} onClick={() => setSelectedTheme(theme)} />
+            {activeThemes.map(theme => (
+              <ThemeCard key={theme.name} theme={theme} groupColor={activeColor} onClick={() => setSelectedTheme(theme)} />
             ))}
           </motion.div>
         </AnimatePresence>
@@ -428,7 +445,7 @@ export function ThemesExplorer() {
 
       <AnimatePresence>
         {selectedTheme && (
-          <ThemeModal theme={selectedTheme} groupColor={group.color} onClose={() => setSelectedTheme(null)} />
+          <ThemeModal theme={selectedTheme} groupColor={activeColor} onClose={() => setSelectedTheme(null)} />
         )}
       </AnimatePresence>
     </div>

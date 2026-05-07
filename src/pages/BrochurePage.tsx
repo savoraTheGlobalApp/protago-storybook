@@ -1732,7 +1732,7 @@ function CustomStorySection() {
 
 export function BrochurePage() {
   const [openFaq, setOpenFaq]         = useState<number | null>(null);
-  const [themesTab, setThemesTab]     = useState<'3–5' | '6–8' | '9–12'>('3–5');
+  const [themesTab, setThemesTab]     = useState<'All' | '3–5' | '6–8' | '9–12'>('All');
   const [heroSlide, setHeroSlide]     = useState(0);
   const price = Number(import.meta.env.VITE_STORYBOOK_PRICE) || 499;
   const [searchParams] = useSearchParams();
@@ -1854,11 +1854,26 @@ export function BrochurePage() {
               { range: '6–8'  as const, label: 'Early School',  color: '#F7B731' },
               { range: '9–12' as const, label: 'Upper Primary', color: '#1A1A2E' },
             ];
-            const tabThemes = THEMES.filter(t => !t.category && (Array.isArray(t.ageRange) ? t.ageRange.includes(themesTab) : t.ageRange === themesTab));
+            const allNonMythThemes = THEMES.filter(t => !t.category);
+            const tabThemes = themesTab === 'All'
+              ? allNonMythThemes.filter((t, i, arr) => arr.findIndex(x => x.slug === t.slug) === i)
+              : allNonMythThemes.filter(t => Array.isArray(t.ageRange) ? t.ageRange.includes(themesTab) : t.ageRange === themesTab);
             const mythologyThemes = THEMES.filter(t => t.category === 'mythology');
             return (
               <>
                 <div className="flex gap-2 mb-6">
+                  <button onClick={() => setThemesTab('All')}
+                    className="flex-1 py-2.5 rounded-2xl font-extrabold transition-all text-center"
+                    style={{
+                      background: themesTab === 'All' ? C.navy : C.white,
+                      color: themesTab === 'All' ? '#fff' : C.lgray,
+                      border: `2px solid ${themesTab === 'All' ? C.navy : '#E5E7EB'}`,
+                      fontFamily: "'Baloo 2', sans-serif",
+                      fontSize: 13, whiteSpace: 'nowrap', cursor: 'pointer',
+                    }}>
+                    All
+                    <span className="block opacity-80" style={{ fontSize: 10, fontWeight: 600 }}>All ages</span>
+                  </button>
                   {AGE_TABS.map(g => (
                     <button key={g.range} onClick={() => setThemesTab(g.range)}
                       className="flex-1 py-2.5 rounded-2xl font-extrabold transition-all text-center"
@@ -1879,11 +1894,11 @@ export function BrochurePage() {
                   <motion.div key={themesTab} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
                     exit={{ opacity: 0, y: -10 }} transition={{ duration: 0.2 }}
                     style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: 20 }}>
-                    {tabThemes.slice(0, 6).map(t => (
+                    {tabThemes.map(t => (
                       <BrochureThemeCard key={t.slug} slug={t.slug} icon={t.icon} name={t.name} description={t.description} ageRange={Array.isArray(t.ageRange) ? t.ageRange.join(', ') : t.ageRange} badge={['colours-shapes', 'bedtime-routines', 'numbers-maths', 'sharing-sorry', 'first-day-school', 'managing-emotions', 'indian-festivals', 'phonics-reading', 'history-india', 'financial-literacy', 'growth-mindset', 'professions', 'internet-safety', 'body-safety'].includes(t.slug) ? '✨ 9-Page Preview' : undefined} onClick={() => navigate(`/theme/${t.slug}`)} />
                     ))}
 
-                    {/* ── Custom story card — 7th slot ── */}
+                    {/* ── Custom story card — last slot ── */}
                     <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.15 }}
                       onClick={() => document.getElementById('custom-story')?.scrollIntoView({ behavior: 'smooth', block: 'start' })}
                       style={{ borderRadius: 20, border: `2px dashed ${C.saffron}`, background: 'linear-gradient(135deg, #FFF3EE 0%, #FFF8F0 100%)', cursor: 'pointer', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 12, padding: '32px 24px', textAlign: 'center', minHeight: 200 }}
@@ -1897,10 +1912,6 @@ export function BrochurePage() {
                         Request Custom Story →
                       </span>
                     </motion.div>
-
-                    {tabThemes.slice(6).map(t => (
-                      <BrochureThemeCard key={t.slug} slug={t.slug} icon={t.icon} name={t.name} description={t.description} ageRange={Array.isArray(t.ageRange) ? t.ageRange.join(', ') : t.ageRange} badge={['colours-shapes', 'bedtime-routines', 'numbers-maths', 'sharing-sorry', 'first-day-school', 'managing-emotions', 'indian-festivals', 'phonics-reading', 'history-india', 'financial-literacy', 'growth-mindset', 'professions', 'internet-safety', 'body-safety'].includes(t.slug) ? '✨ 9-Page Preview' : undefined} onClick={() => navigate(`/theme/${t.slug}`)} />
-                    ))}
                   </motion.div>
                 </AnimatePresence>
 
