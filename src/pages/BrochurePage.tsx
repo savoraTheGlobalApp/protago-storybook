@@ -440,10 +440,10 @@ function BrochureThemeCard({ slug, icon, name, badge, description, ageRange, onC
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
           <div>
             <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-              <span style={{ fontSize: 22, fontWeight: 800, color: C.navy, fontFamily: "'Baloo 2', sans-serif" }}>₹1,402</span>
+              <span style={{ fontSize: 22, fontWeight: 800, color: C.navy, fontFamily: "'Baloo 2', sans-serif" }}>₹1,274</span>
               <span style={{ fontSize: 11, fontWeight: 700, color: '#92400E', background: '#FEF3C7', borderRadius: 20, padding: '2px 8px' }}>15% off</span>
             </div>
-            <span style={{ fontSize: 13, color: '#9CA3AF', textDecoration: 'line-through', fontWeight: 500 }}>₹1,649</span>
+            <span style={{ fontSize: 13, color: '#9CA3AF', textDecoration: 'line-through', fontWeight: 500 }}>₹1,499</span>
           </div>
           <button
             onClick={onClick}
