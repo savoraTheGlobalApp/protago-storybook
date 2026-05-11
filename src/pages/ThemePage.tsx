@@ -774,7 +774,7 @@ export function ThemePage() {
                 {[
                   `Perfect for children aged ${ageLabel}`,
                   'Add your child\'s name & photo',
-                  'Preview for free in ~2 minutes',
+                  'Preview for free in ~2 min',
                   'Order a printed book anytime',
                 ].map((label, i) => (
                   <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 10 }}>

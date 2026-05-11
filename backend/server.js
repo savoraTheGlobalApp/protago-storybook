@@ -842,11 +842,11 @@ app.post('/api/upload-photo', async (req, res) => {
                                            : 0;
 
                     if (faces.length === 0) {
-                        photoQuality = { score: 10, tip: "We couldn't detect a face. Please use a clear front-facing photo of your child." };
+                        photoQuality = { score: 10, tip: "We'll do our best with this photo! For an even better result, try a clear front-facing photo of your child." };
                         console.log(`Vision quality: score=10 (no face) compression=${compressionScore}(bpp=${bpp.toFixed(4)} original=${Math.round(effectiveSize/1024)}KB canvas=${Math.round(buffer.length/1024)}KB ${imgW}×${imgH})`);
                     } else if (faces.length > 1) {
                         // Multiple people — very poor, not usable for personalisation
-                        photoQuality = { score: 15, tip: "Multiple people detected. Please upload a solo photo of your child only." };
+                        photoQuality = { score: 15, tip: "Your story is on its way! For the best personalisation, a solo photo of your child works best." };
                         console.log(`Vision quality: score=15 (${faces.length} faces) compression=${compressionScore}(bpp=${bpp.toFixed(4)} original=${Math.round(effectiveSize/1024)}KB canvas=${Math.round(buffer.length/1024)}KB ${imgW}×${imgH})`);
                     } else {
                         const face = faces[0];
@@ -904,25 +904,25 @@ app.post('/api/upload-photo', async (req, res) => {
                         // Tip — compression checked first as it has utmost importance
                         let tip = null;
                         if (compressionScore === 0) {
-                            tip = "Image is too compressed or too small — please use the original photo from your camera roll.";
+                            tip = "Your story will still be generated! For sharper illustrations, try using the original photo from your camera roll.";
                         } else if (compressionScore <= 3) {
-                            tip = "Image quality is low — try using the original photo rather than a forwarded or screenshot version.";
+                            tip = "We're on it! You'll get even better results with the original photo rather than a forwarded or screenshot version.";
                         } else if (faceMinDim < 100) {
-                            tip = "Image resolution is too low — please use a higher quality photo.";
+                            tip = "Your story is being created! A higher resolution photo would make the illustrations look even more like your child.";
                         } else if (faceMinDim < 150) {
-                            tip = "Photo resolution is low — try a higher quality image for better results.";
+                            tip = "Great — your preview is on its way! A higher quality photo will make the face look even more vivid.";
                         } else if (sizeScore <= 12) {
-                            tip = "Your child's face is too small — move the camera much closer for best results.";
+                            tip = "Your story will be generated! Next time, a closer shot of your child's face will make the personalisation shine even more.";
                         } else if (sizeScore <= 25) {
-                            tip = "Try a closer shot — the face should fill most of the frame.";
+                            tip = "Looking good! A slightly closer shot next time will make your child's face fill the frame beautifully.";
                         } else if (blurScore <= 5) {
-                            tip = "Photo looks blurry — try a steadier shot in good lighting.";
+                            tip = "We've got it! A sharper, well-lit photo next time will make the illustrations look even more stunning.";
                         } else if (exposureScore <= 2) {
-                            tip = "Photo looks too dark — try again in a brighter, well-lit space.";
+                            tip = "Your story is on its way! A brighter, well-lit photo next time will bring out even more detail.";
                         } else if (bgScore === 0) {
-                            tip = "Busy background detected — a plain wall behind your child would help.";
+                            tip = "All set! A plain background behind your child next time will make the personalisation pop even more.";
                         } else if (total < 75) {
-                            tip = "A closer, well-lit front-facing shot would improve personalisation.";
+                            tip = "Your preview will be ready soon! A closer, well-lit front-facing shot will make future stories look even better.";
                         }
 
                         photoQuality = { score: total, tip };
