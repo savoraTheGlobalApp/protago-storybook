@@ -1174,24 +1174,34 @@ export function ThemePage() {
 
                 {/* Binding type */}
                 <div>
-                  <label style={{ fontSize: 10, fontWeight: 700, color: '#9CA3AF', display: 'block', marginBottom: 8, textTransform: 'uppercase', letterSpacing: '0.07em' }}>Binding type *</label>
+                  <label style={{ fontSize: 10, fontWeight: 700, color: '#9CA3AF', display: 'block', marginBottom: 8, textTransform: 'uppercase', letterSpacing: '0.07em' }}>Binding type</label>
                   <div style={{ display: 'flex', gap: 10 }}>
                     {[
-                      { value: 'perfect', label: 'Perfect Binding', desc: 'Flat spine · Paperback', available: true },
-                      { value: 'hardcover', label: 'Hardcover', desc: 'Coming soon', available: false },
-                    ].map(({ value, label, desc, available }) => (
-                      <button key={value} type="button" disabled={!available}
-                        onClick={() => available && setOf('bindingType', value)}
-                        style={{
-                          flex: 1, padding: '10px 12px', borderRadius: 10, cursor: available ? 'pointer' : 'default',
-                          border: `1.5px solid ${!available ? '#E5E7EB' : orderForm.bindingType === value ? C.saffron : '#E5E7EB'}`,
-                          background: !available ? '#F9FAFB' : orderForm.bindingType === value ? '#FFF3EE' : '#fff',
-                          textAlign: 'left', opacity: available ? 1 : 0.6,
-                        }}>
-                        <div style={{ fontSize: 13, fontWeight: 700, color: !available ? '#9CA3AF' : orderForm.bindingType === value ? C.saffron : C.navy }}>{label}</div>
-                        <div style={{ fontSize: 11, color: '#9CA3AF', marginTop: 2, fontWeight: 600 }}>{desc}</div>
-                      </button>
-                    ))}
+                      { value: 'perfect', icon: '📖', label: 'Perfect Binding', desc: 'Flat spine · Paperback', price: 'Included', available: true },
+                      { value: 'hardcover', icon: '📚', label: 'Hardcover', desc: 'Premium boards · Durable', price: 'Coming soon', available: false },
+                    ].map(({ value, icon, label, desc, price, available }) => {
+                      const selected = orderForm.bindingType === value;
+                      return (
+                        <button key={value} type="button" disabled={!available}
+                          onClick={() => available && setOf('bindingType', value)}
+                          style={{
+                            flex: 1, padding: '12px 14px', borderRadius: 12, cursor: available ? 'pointer' : 'default',
+                            border: `2px solid ${selected ? C.saffron : available ? '#E5E7EB' : '#F0F0F0'}`,
+                            background: selected ? 'linear-gradient(135deg, #FFF3EE 0%, #FFF8F4 100%)' : available ? '#fff' : '#FAFAFA',
+                            textAlign: 'left', transition: 'all 0.15s',
+                            boxShadow: selected ? `0 0 0 3px ${C.saffron}22` : 'none',
+                          }}>
+                          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 }}>
+                            <span style={{ fontSize: 22 }}>{icon}</span>
+                            {selected && <span style={{ width: 18, height: 18, borderRadius: '50%', background: C.saffron, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 10, color: '#fff', fontWeight: 800, flexShrink: 0 }}>✓</span>}
+                            {!available && <span style={{ fontSize: 9, fontWeight: 800, background: '#7C3AED', color: '#fff', borderRadius: 20, padding: '2px 7px', letterSpacing: 0.3 }}>SOON</span>}
+                          </div>
+                          <div style={{ fontSize: 13, fontWeight: 800, color: available ? (selected ? C.saffron : C.navy) : '#BDBDBD', lineHeight: 1.2 }}>{label}</div>
+                          <div style={{ fontSize: 11, color: '#9CA3AF', marginTop: 3, lineHeight: 1.4 }}>{desc}</div>
+                          <div style={{ fontSize: 11, fontWeight: 700, color: selected ? C.saffron : available ? '#22C55E' : '#BDBDBD', marginTop: 5 }}>{price}</div>
+                        </button>
+                      );
+                    })}
                   </div>
                 </div>
 
