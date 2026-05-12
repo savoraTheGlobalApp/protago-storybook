@@ -277,9 +277,9 @@ export function ThemePage() {
   const [photo, setPhoto] = useState<{ preview: string; uploading: boolean; signedUrl: string | null; quality?: { score: number; tip: string | null } | null } | null>(null);
   const [consent, setConsent] = useState(false);
   const [jobStatus, setJobStatus] = useState('');
-  const [showOrder, setShowOrder] = useState(false);
+  const [showOrder, setShowOrder] = useState(!!theme?.comingSoon);
   const [orderForm, setOrderForm] = useState({ parentName: '', email: '', phone: '', childName: '', childAge: '', childGender: '', addressLine1: '', addressLine2: '', city: '', state: '', pincode: '', notes: '', dedicationMessage: '' });
-  const [orderPhoto, setOrderPhoto] = useState<{ preview: string; uploading: boolean; uploadedPath: string | null; signedUrl: string | null } | null>(null);
+  const [orderPhoto, setOrderPhoto] = useState<{ preview: string; uploading: boolean; uploadedPath: string | null; signedUrl: string | null; uploadFailed?: boolean } | null>(null);
   const [orderConsent, setOrderConsent] = useState(false);
   const [orderSubmitting, setOrderSubmitting] = useState(false);
   const [orderSubmitted, setOrderSubmitted] = useState(false);
@@ -352,7 +352,7 @@ export function ThemePage() {
     return null;
   }
 
-  const AGE_COLOR: Record<string, string> = { '3–5': C.saffron, '6–8': C.gold, '9–12': C.navy };
+  const AGE_COLOR: Record<string, string> = { '0–3': '#7C3AED', '3–5': C.saffron, '6–8': C.gold, '9–12': C.navy };
   const color = AGE_COLOR[Array.isArray(theme.ageRange) ? theme.ageRange[0] : theme.ageRange] || C.saffron;
   const ageLabel = Array.isArray(theme.ageRange)
     ? `${theme.ageRange[0].split('–')[0]}–${theme.ageRange[theme.ageRange.length - 1].split('–')[1]}`
@@ -384,9 +384,9 @@ export function ThemePage() {
         try {
           const data = JSON.parse(xhr.responseText);
           setOrderPhoto(p => p ? { ...p, uploading: false, uploadedPath: data.photo_url || null, signedUrl: data.photo_signed_url || null } : null);
-        } catch { setOrderPhoto(p => p ? { ...p, uploading: false } : null); }
+        } catch { setOrderPhoto(p => p ? { ...p, uploading: false, uploadFailed: true } : null); }
       };
-      xhr.onerror = () => setOrderPhoto(p => p ? { ...p, uploading: false } : null);
+      xhr.onerror = () => setOrderPhoto(p => p ? { ...p, uploading: false, uploadFailed: true } : null);
       xhr.send(JSON.stringify({ photo: reader.result }));
     };
     reader.readAsDataURL(file);
@@ -703,9 +703,20 @@ export function ThemePage() {
                   </div>
                 </div>
               ) : (
-                /* ── Default face-swap animation ── */
+                /* ── Default face-swap animation (or raw scenes for comingSoon) ── */
                 <div style={{ aspectRatio: '4/3', background: '#F0EEE8', position: 'relative', overflow: 'hidden' }}>
-                  {getFaceSamples(theme.slug).map((sample, i) => (
+                  {theme.comingSoon ? (
+                    [1, 2, 3].map((n, i) => (
+                      <motion.img key={n}
+                        src={`/themes_mockup/${theme.slug}_${['boy_young','boy_older','girl'][i]}_mockup.webp`}
+                        alt="" decoding="async"
+                        style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }}
+                        animate={{ opacity: i === activeIdx % 3 ? 1 : 0 }}
+                        transition={{ duration: 0.5 }}
+                        onError={e => { (e.target as HTMLImageElement).style.display = 'none'; }}
+                      />
+                    ))
+                  ) : getFaceSamples(theme.slug).map((sample, i) => (
                     <motion.img key={sample.key}
                       src={`/themes_mockup/${theme.slug}_${sample.key}_mockup.webp`}
                       alt="" decoding="async"
@@ -736,7 +747,7 @@ export function ThemePage() {
                   </div>
                 </div>
               )}
-              {!locationState?.previewUrls?.some(u => u) && (
+              {!locationState?.previewUrls?.some(u => u) && !theme.comingSoon && (
                 <div style={{ position: 'absolute', top: 12, right: 16, width: 72, height: 72, zIndex: 10 }}>
                   {getFaceSamples(theme.slug).map((sample, i) => (
                     <motion.img key={sample.face} src={sample.face} alt="" decoding="async"
@@ -1050,18 +1061,25 @@ export function ThemePage() {
                   </label>
 
                   {/* Generate button */}
-                  <button disabled={!canGenerate} onClick={handleGenerate}
-                    style={{
-                      background: canGenerate ? `linear-gradient(135deg, ${C.saffron} 0%, #FF8C42 100%)` : '#E5E7EB',
-                      color: canGenerate ? '#fff' : '#9CA3AF',
-                      border: 'none', borderRadius: 12, padding: '15px 18px',
-                      fontWeight: 800, fontSize: 16, cursor: canGenerate ? 'pointer' : 'default',
-                      fontFamily: "'Baloo 2', sans-serif", transition: 'all 0.2s',
-                      boxShadow: canGenerate ? '0 4px 16px rgba(255,107,53,0.4)' : 'none',
-                    }}>
-                    ✨ Generate Free {previewPageCount}-Page Preview
-                  </button>
-                  <p style={{ fontSize: 11, color: C.lgray, textAlign: 'center', margin: '10px 0 0' }}>Free · ~2 min · No card required</p>
+                  {theme.comingSoon ? (
+                    <div style={{ background: '#F5F3FF', border: '1.5px solid #DDD6FE', borderRadius: 12, padding: '14px 18px', textAlign: 'center' }}>
+                      <p style={{ fontWeight: 800, fontSize: 15, color: '#7C3AED', margin: '0 0 4px', fontFamily: "'Baloo 2', sans-serif" }}>🚀 Preview Coming Soon</p>
+                      <p style={{ fontSize: 12, color: '#6B7280', margin: 0 }}>We're still generating sample scenes — check back soon!</p>
+                    </div>
+                  ) : (
+                    <button disabled={!canGenerate} onClick={handleGenerate}
+                      style={{
+                        background: canGenerate ? `linear-gradient(135deg, ${C.saffron} 0%, #FF8C42 100%)` : '#E5E7EB',
+                        color: canGenerate ? '#fff' : '#9CA3AF',
+                        border: 'none', borderRadius: 12, padding: '15px 18px',
+                        fontWeight: 800, fontSize: 16, cursor: canGenerate ? 'pointer' : 'default',
+                        fontFamily: "'Baloo 2', sans-serif", transition: 'all 0.2s',
+                        boxShadow: canGenerate ? '0 4px 16px rgba(255,107,53,0.4)' : 'none',
+                      }}>
+                      ✨ Generate Free {previewPageCount}-Page Preview
+                    </button>
+                  )}
+                  {!theme.comingSoon && <p style={{ fontSize: 11, color: C.lgray, textAlign: 'center', margin: '10px 0 0' }}>Free · ~2 min · No card required</p>}
 
                 </motion.div>
               )}
@@ -1132,7 +1150,7 @@ export function ThemePage() {
                     <select required value={orderForm.childAge} onChange={e => setOf('childAge', e.target.value)}
                       style={{ width: '100%', border: '1.5px solid #E5E7EB', borderRadius: 9, padding: '10px 12px', fontSize: 14, outline: 'none', boxSizing: 'border-box', fontFamily: 'inherit', background: '#fff' }}>
                       <option value="">Select age</option>
-                      {Array.from({ length: 10 }, (_, i) => i + 3).map(a => <option key={a} value={a}>{a} years old</option>)}
+                      {Array.from({ length: 13 }, (_, i) => i).map(a => <option key={a} value={a}>{a === 0 ? 'Under 1 year' : a === 1 ? '1 year old' : `${a} years old`}</option>)}
                     </select>
                   </div>
                   <div>
@@ -1185,9 +1203,19 @@ export function ThemePage() {
                         </p>
                       </>
                     ) : (
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 12px', background: '#F0FDF4', borderRadius: 10, border: '1.5px solid #BBF7D0' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 12px', background: orderPhoto.uploadFailed ? '#FFF7ED' : '#F0FDF4', borderRadius: 10, border: `1.5px solid ${orderPhoto.uploadFailed ? '#FED7AA' : '#BBF7D0'}` }}>
                         <img src={orderPhoto.preview} style={{ width: 44, height: 44, borderRadius: 8, objectFit: 'cover', flexShrink: 0 }} alt="" />
-                        <div style={{ flex: 1, fontSize: 12, fontWeight: 700, color: '#166534' }}>{orderPhoto.uploading ? '⏳ Uploading…' : '✓ Ready'}</div>
+                        <div style={{ flex: 1 }}>
+                          <div style={{ fontSize: 12, fontWeight: 700, color: orderPhoto.uploading ? '#166534' : orderPhoto.uploadFailed ? '#C2410C' : '#166534' }}>
+                            {orderPhoto.uploading ? '⏳ Uploading…' : orderPhoto.uploadFailed ? '⚠ Upload failed' : '✓ Ready'}
+                          </div>
+                          {orderPhoto.uploadFailed && (
+                            <label style={{ fontSize: 11, color: C.saffron, fontWeight: 700, cursor: 'pointer', textDecoration: 'underline' }}>
+                              Tap to retry
+                              <input type="file" accept="image/*" style={{ display: 'none' }} onChange={e => { const f = e.target.files?.[0]; if (f) handleOrderPhotoAdd(f); }} />
+                            </label>
+                          )}
+                        </div>
                         {!orderPhoto.uploading && <button type="button" onClick={() => setOrderPhoto(null)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#9CA3AF', fontSize: 20, lineHeight: 1, padding: 0 }}>×</button>}
                       </div>
                     )}
@@ -1301,6 +1329,11 @@ export function ThemePage() {
                   </span>
                 </label>
 
+                {orderPhoto?.uploadFailed && !orderPhoto.uploading && (
+                  <p style={{ fontSize: 12, color: '#C2410C', fontWeight: 600, textAlign: 'center', margin: '0 0 -4px' }}>
+                    Photo upload failed — please tap "Tap to retry" above before placing your order.
+                  </p>
+                )}
                 <button type="submit" disabled={orderSubmitting || !orderConsent || !orderPhoto?.uploadedPath}
                   style={{ background: (!orderConsent || orderSubmitting || !orderPhoto?.uploadedPath) ? '#E5E7EB' : `linear-gradient(135deg, ${C.saffron} 0%, #FF8C42 100%)`, color: (!orderConsent || orderSubmitting || !orderPhoto?.uploadedPath) ? '#9CA3AF' : '#fff', border: 'none', borderRadius: 12, padding: '14px 20px', fontWeight: 800, fontSize: 16, cursor: (!orderConsent || orderSubmitting || !orderPhoto?.uploadedPath) ? 'default' : 'pointer', fontFamily: "'Baloo 2', sans-serif", boxShadow: (!orderConsent || orderSubmitting || !orderPhoto?.uploadedPath) ? 'none' : '0 4px 16px rgba(255,107,53,0.4)' }}>
                   {orderSubmitting ? 'Processing…' : `Pay ₹${couponApplied ? couponApplied.finalPrice : (Number(import.meta.env.VITE_STORYBOOK_PRICE) || 499)} & Order →`}

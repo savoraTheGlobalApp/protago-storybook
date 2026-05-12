@@ -1,4 +1,4 @@
-export type AgeRange = '3–5' | '6–8' | '9–12';
+export type AgeRange = '0–3' | '3–5' | '6–8' | '9–12';
 
 export type ThemeEntry = {
   slug: string;
@@ -7,9 +7,15 @@ export type ThemeEntry = {
   ageRange: AgeRange | AgeRange[];
   category?: 'mythology';
   description: string;
+  comingSoon?: boolean;
 };
 
 export const THEMES: ThemeEntry[] = [
+  // Ages 0–3
+  {
+    slug: 'abc', name: 'ABC Adventure', icon: '🔤', ageRange: '0–3', comingSoon: true,
+    description: 'Child goes on a magical journey through the alphabet — meeting animals and objects for every letter.',
+  },
   // Ages 3–5
   {
     slug: 'colours-shapes', name: 'Colours & Shapes', icon: '🎨', ageRange: '3–5',
@@ -88,7 +94,8 @@ export const THEMES: ThemeEntry[] = [
   },
 ];
 
-export function ageToRange(age: number): '3–5' | '6–8' | '9–12' | null {
+export function ageToRange(age: number): '0–3' | '3–5' | '6–8' | '9–12' | null {
+  if (age >= 0 && age <= 2) return '0–3';
   if (age >= 3 && age <= 5) return '3–5';
   if (age >= 6 && age <= 8) return '6–8';
   if (age >= 9 && age <= 12) return '9–12';

@@ -320,7 +320,7 @@ function FaceToSceneAnimation() {
 
 const FACE_SIZE_BROCHURE = 72;
 
-function BrochureThemeCard({ slug, icon, name, badge, description, ageRange, onClick }: { slug: string; icon: string; name: string; badge?: string; description?: string; ageRange?: string; onClick: () => void }) {
+function BrochureThemeCard({ slug, icon, name, badge, description, ageRange, comingSoon, onClick }: { slug: string; icon: string; name: string; badge?: string; description?: string; ageRange?: string; comingSoon?: boolean; onClick: () => void }) {
   const faceSamples = getFaceSamples(slug);
   const arrowTarget = getArrowTarget(slug);
   const [activeIdx, setActiveIdx] = useState(0);
@@ -354,7 +354,7 @@ function BrochureThemeCard({ slug, icon, name, badge, description, ageRange, onC
       onClick={onClick}>
 
       {/* Mockup image + face circle */}
-      <div style={{ paddingTop: FACE_SIZE_BROCHURE / 2, position: 'relative' }}>
+      <div style={{ paddingTop: comingSoon ? 0 : FACE_SIZE_BROCHURE / 2, position: 'relative' }}>
         <div style={{ aspectRatio: '4/3', background: '#F7F5F0', position: 'relative', overflow: 'hidden' }}>
           {!hasLoaded ? (
             <img
@@ -403,19 +403,21 @@ function BrochureThemeCard({ slug, icon, name, badge, description, ageRange, onC
           )}
         </div>
         {/* Face circle */}
-        <div style={{ position: 'absolute', top: 0, right: 12, width: FACE_SIZE_BROCHURE, height: FACE_SIZE_BROCHURE, zIndex: 10 }}>
-          {!hasLoaded ? (
-            <img src={faceSamples[0].face} alt="" loading="lazy" decoding="async" className="rounded-full"
-              style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover',
-                border: `2.5px solid ${C.saffron}`, boxShadow: '0 2px 10px rgba(255,107,53,0.3), 0 0 0 2px #fff' }} />
-          ) : faceSamples.map((sample, i) => (
-            <motion.img key={sample.face} src={sample.face} alt="" loading="lazy" decoding="async" className="rounded-full"
-              style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover',
-                border: `2.5px solid ${C.saffron}`, boxShadow: '0 2px 10px rgba(255,107,53,0.3), 0 0 0 2px #fff' }}
-              animate={{ opacity: i === activeIdx ? 1 : 0, scale: i === activeIdx ? 1 : 0.9 }}
-              transition={{ duration: 0.4, ease: 'easeInOut' }} />
-          ))}
-        </div>
+        {!comingSoon && (
+          <div style={{ position: 'absolute', top: 0, right: 12, width: FACE_SIZE_BROCHURE, height: FACE_SIZE_BROCHURE, zIndex: 10 }}>
+            {!hasLoaded ? (
+              <img src={faceSamples[0].face} alt="" loading="lazy" decoding="async" className="rounded-full"
+                style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover',
+                  border: `2.5px solid ${C.saffron}`, boxShadow: '0 2px 10px rgba(255,107,53,0.3), 0 0 0 2px #fff' }} />
+            ) : faceSamples.map((sample, i) => (
+              <motion.img key={sample.face} src={sample.face} alt="" loading="lazy" decoding="async" className="rounded-full"
+                style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover',
+                  border: `2.5px solid ${C.saffron}`, boxShadow: '0 2px 10px rgba(255,107,53,0.3), 0 0 0 2px #fff' }}
+                animate={{ opacity: i === activeIdx ? 1 : 0, scale: i === activeIdx ? 1 : 0.9 }}
+                transition={{ duration: 0.4, ease: 'easeInOut' }} />
+            ))}
+          </div>
+        )}
       </div>
 
       {/* Card body */}
@@ -423,6 +425,7 @@ function BrochureThemeCard({ slug, icon, name, badge, description, ageRange, onC
         {/* Tags row */}
         <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 8, flexWrap: 'wrap' }}>
           {badge && <span style={{ fontSize: 11, fontWeight: 700, background: 'rgba(255,107,53,0.12)', color: C.saffron, borderRadius: 20, padding: '2px 9px' }}>{badge}</span>}
+          {comingSoon && <span style={{ fontSize: 11, fontWeight: 700, background: '#EDE9FE', color: '#7C3AED', borderRadius: 20, padding: '2px 9px' }}>🚀 Preview soon</span>}
           <span style={{ fontSize: 11, fontWeight: 600, background: '#F3F4F6', color: '#555', borderRadius: 20, padding: '2px 9px' }}>26 Pages</span>
           {ageRange && <span style={{ fontSize: 11, fontWeight: 600, color: '#9CA3AF', marginLeft: 'auto' }}>Ages {ageRange}</span>}
         </div>
@@ -879,8 +882,8 @@ function OrderForm({ price }: { price: number; scrollTo: (id: string) => void })
                   <label style={labelStyle}>Age *</label>
                   <select required style={inputStyle} value={form.childAge} onChange={e => set('childAge', e.target.value)}>
                     <option value="">Select age</option>
-                    {Array.from({ length: 10 }, (_, i) => i + 3).map(a => (
-                      <option key={a} value={a}>{a} years old</option>
+                    {Array.from({ length: 13 }, (_, i) => i).map(a => (
+                      <option key={a} value={a}>{a === 0 ? 'Under 1 year' : a === 1 ? '1 year old' : `${a} years old`}</option>
                     ))}
                   </select>
                 </div>
@@ -1732,7 +1735,7 @@ function CustomStorySection() {
 
 export function BrochurePage() {
   const [openFaq, setOpenFaq]         = useState<number | null>(null);
-  const [themesTab, setThemesTab]     = useState<'All' | '3–5' | '6–8' | '9–12'>('All');
+  const [themesTab, setThemesTab]     = useState<'All' | '0–3' | '3–5' | '6–8' | '9–12'>('All');
   const [heroSlide, setHeroSlide]     = useState(0);
   const price = Number(import.meta.env.VITE_STORYBOOK_PRICE) || 499;
   const [searchParams] = useSearchParams();
@@ -1850,6 +1853,7 @@ export function BrochurePage() {
 
           {(() => {
             const AGE_TABS = [
+              { range: '0–3'  as const, label: 'Toddler',       color: '#7C3AED' },
               { range: '3–5'  as const, label: 'Pre-school',    color: '#FF6B35' },
               { range: '6–8'  as const, label: 'Early School',  color: '#F7B731' },
               { range: '9–12' as const, label: 'Upper Primary', color: '#1A1A2E' },
@@ -1895,7 +1899,7 @@ export function BrochurePage() {
                     exit={{ opacity: 0, y: -10 }} transition={{ duration: 0.2 }}
                     style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: 20 }}>
                     {tabThemes.map(t => (
-                      <BrochureThemeCard key={t.slug} slug={t.slug} icon={t.icon} name={t.name} description={t.description} ageRange={Array.isArray(t.ageRange) ? t.ageRange.join(', ') : t.ageRange} badge={['colours-shapes', 'bedtime-routines', 'numbers-maths', 'sharing-sorry', 'first-day-school', 'managing-emotions', 'indian-festivals', 'phonics-reading', 'history-india', 'financial-literacy', 'growth-mindset', 'professions', 'internet-safety', 'body-safety'].includes(t.slug) ? '✨ 9-Page Preview' : undefined} onClick={() => navigate(`/theme/${t.slug}`)} />
+                      <BrochureThemeCard key={t.slug} slug={t.slug} icon={t.icon} name={t.name} description={t.description} ageRange={Array.isArray(t.ageRange) ? t.ageRange.join(', ') : t.ageRange} badge={['colours-shapes', 'bedtime-routines', 'numbers-maths', 'sharing-sorry', 'first-day-school', 'managing-emotions', 'indian-festivals', 'phonics-reading', 'history-india', 'financial-literacy', 'growth-mindset', 'professions', 'internet-safety', 'body-safety'].includes(t.slug) ? '✨ 9-Page Preview' : undefined} comingSoon={t.comingSoon} onClick={() => navigate(`/theme/${t.slug}`)} />
                     ))}
 
                     {/* ── Custom story card — last slot ── */}
