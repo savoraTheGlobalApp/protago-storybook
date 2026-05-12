@@ -1177,8 +1177,8 @@ export function ThemePage() {
                   <label style={{ fontSize: 10, fontWeight: 700, color: '#9CA3AF', display: 'block', marginBottom: 8, textTransform: 'uppercase', letterSpacing: '0.07em' }}>Binding type</label>
                   <div style={{ display: 'flex', gap: 10 }}>
                     {[
-                      { value: 'perfect', icon: '📖', label: 'Perfect Binding', desc: 'Flat spine · Paperback', price: 'Included', available: true },
-                      { value: 'hardcover', icon: '📚', label: 'Hardcover', desc: 'Premium boards · Durable', price: 'Coming soon', available: false },
+                      { value: 'perfect', icon: '📖', label: 'Perfect Binding', desc: 'Premium 200GSM · Lay-flat pages · Vivid print', price: 'Included', available: true },
+                      { value: 'hardcover', icon: '📚', label: 'Hardcover', desc: 'Rigid boards · Extra durable', price: 'Coming soon', available: false },
                     ].map(({ value, icon, label, desc, price, available }) => {
                       const selected = orderForm.bindingType === value;
                       return (
