@@ -2054,50 +2054,6 @@ export function BrochurePage() {
         </div>
       </section>}
 
-      {/* ══════════════════════════════════════════
-          § 1.5  TESTIMONIAL VIDEO — soft bg
-      ══════════════════════════════════════════ */}
-      <section style={{ background: '#FFFAF5' }} className="py-14 sm:py-16">
-        <div className="max-w-5xl mx-auto px-5 sm:px-8">
-          <motion.div initial={{ opacity: 0, y: 16 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}
-            className="flex flex-col items-center text-center">
-            {eyebrow('Real parents, real reactions')}
-            {heading('See what parents are saying')}
-            <p className="text-sm mt-3 mb-8 leading-relaxed max-w-md" style={{ color: C.gray }}>
-              Nothing we say matters more than what they say.
-            </p>
-            <motion.div initial={{ opacity: 0, scale: 0.95 }} whileInView={{ opacity: 1, scale: 1 }}
-              viewport={{ once: true }} transition={{ delay: 0.1 }}
-              className="rounded-2xl overflow-hidden shadow-lg"
-              style={{ width: '100%', maxWidth: 360, aspectRatio: '9 / 16' }}>
-              <iframe
-                src="https://www.youtube.com/embed/OsUGHz9LILY"
-                title="Parent testimonial"
-                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                allowFullScreen
-                className="w-full h-full border-0"
-              />
-            </motion.div>
-          </motion.div>
-        </div>
-      </section>
-
-      {/* ══════════════════════════════════════════
-          § 2  ONE PHOTO — white
-      ══════════════════════════════════════════ */}
-      <section style={{ background: C.white }} className="py-16 sm:py-20">
-        <div className="max-w-5xl mx-auto px-5 sm:px-8">
-          <motion.div initial={{ opacity: 0, y: 16 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} className="mb-10">
-            {eyebrow('Your child, the hero')}
-            {heading('One photo. Every scene, their face.')}
-            <p className="text-sm mt-3 leading-relaxed max-w-lg" style={{ color: C.gray }}>
-              Our AI preserves their likeness in your chosen art style — keeping everything that makes them recognisably them.
-            </p>
-          </motion.div>
-
-          <FaceToSceneAnimation />
-        </div>
-      </section>
 
       {/* ══════════════════════════════════════════
           § 3  ART STYLES — navy
@@ -2168,51 +2124,6 @@ export function BrochurePage() {
         </div>
       </section>}
 
-      {/* ══════════════════════════════════════════
-          § 5  AGE INTELLIGENCE — warm tint
-      ══════════════════════════════════════════ */}
-      <section style={{ background: C.warmTint }} className="py-16 sm:py-20">
-        <div className="max-w-3xl mx-auto px-5 sm:px-8">
-          <motion.div initial={{ opacity: 0, y: 16 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} className="mb-10">
-            {eyebrow('Age intelligence')}
-            {heading('Written for their exact age.')}
-            <p className="text-sm mt-3 leading-relaxed" style={{ color: C.gray }}>
-              Our AI calibrates every sentence — length, vocabulary, tone — precisely to your child's age.
-            </p>
-          </motion.div>
-
-          <div className="flex flex-col gap-4">
-            {ageTiers.map((tier, i) => (
-              <motion.div key={tier.range} initial={{ opacity: 0, y: 16 }} whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }} transition={{ delay: i * 0.08 }}
-                className="rounded-2xl p-5 sm:p-6"
-                style={{ background: C.white, borderLeft: `5px solid ${tier.borderColor}`, boxShadow: '0 2px 12px rgba(0,0,0,0.06)' }}>
-
-                {/* Top row: emoji + range + tone + stat pills */}
-                <div className="flex items-center gap-3 mb-3">
-                  <span className="text-2xl flex-none">{tier.emoji}</span>
-                  <div className="flex-1 min-w-0">
-                    <p className="font-extrabold leading-tight" style={{ fontFamily: "'Baloo 2', sans-serif", color: C.navy, fontSize: '1rem' }}>{tier.range}</p>
-                    <p className="text-xs italic" style={{ color: C.lgray }}>{tier.tone}</p>
-                  </div>
-                  <div className="flex gap-2 flex-none">
-                    {[['words/pg', tier.words], ['scenes', tier.scenes]].map(([lbl, val]) => (
-                      <div key={lbl} className="text-center rounded-xl px-2.5 py-1.5" style={{ background: C.warmTint }}>
-                        <p className="text-lg font-extrabold leading-none" style={{ fontFamily: "'Baloo 2', sans-serif", color: tier.borderColor }}>{val}</p>
-                        <p className="text-[9px] uppercase tracking-wide mt-0.5" style={{ color: C.lgray }}>{lbl}</p>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-
-                {/* Description below */}
-                <p className="text-sm leading-relaxed" style={{ color: C.gray, paddingLeft: '2.25rem' }}>{tier.desc}</p>
-
-              </motion.div>
-            ))}
-          </div>
-        </div>
-      </section>
 
       {/* ══════════════════════════════════════════
           § 6  QUALITY & TRUST — hidden
@@ -2289,48 +2200,6 @@ export function BrochurePage() {
         </div>
       </section>}
 
-      {/* ══════════════════════════════════════════
-          § 8  HOW IT WORKS — warm gradient
-      ══════════════════════════════════════════ */}
-      <section id="how-it-works" style={{ background: C.gradient }} className="py-16 sm:py-20">
-        <div className="max-w-5xl mx-auto px-5 sm:px-8">
-          <motion.div initial={{ opacity: 0, y: 16 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} className="mb-10">
-            <p className="text-xs font-bold uppercase tracking-widest mb-3" style={{ color: 'rgba(255,255,255,0.75)', letterSpacing: '0.15em' }}>Simple process</p>
-            <h2 style={{ fontFamily: "'Baloo 2', sans-serif", fontWeight: 800, color: C.white, fontSize: 'clamp(1.7rem,3.5vw,2.4rem)', lineHeight: 1.05 }}>
-              From name to printed book.
-            </h2>
-            <p className="text-sm font-semibold mt-2" style={{ color: 'rgba(255,255,255,0.85)' }}>Minutes on your side. Magic behind the scenes.</p>
-          </motion.div>
-
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-8">
-            {[
-              { emoji: '📝', n: '01', title: 'Tell us about\nyour child',   desc: 'Name, age, photo, theme and art style.' },
-              { emoji: '✍️', n: '02', title: 'AI writes\nthe story',        desc: 'Unique, personalised, quality-checked.' },
-              { emoji: '🎨', n: '03', title: 'AI creates\nevery scene',     desc: 'Full-page illustrations, your child in each.' },
-              { emoji: '📦', n: '04', title: 'Your book\nships',            desc: 'Hardcopy delivered to your door in 5–7 business days.' },
-            ].map((step, i) => (
-              <motion.div key={step.n} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }} transition={{ delay: i * 0.1 }}
-                className="rounded-2xl p-5 text-center"
-                style={{ background: 'rgba(255,255,255,0.22)', border: '2px solid rgba(255,255,255,0.35)' }}>
-                <span className="text-3xl block mb-3">{step.emoji}</span>
-                <p className="text-[9px] font-bold uppercase tracking-widest mb-1.5" style={{ color: 'rgba(255,255,255,0.6)' }}>Step {step.n}</p>
-                <p className="font-extrabold text-sm mb-2 whitespace-pre-line leading-snug"
-                  style={{ fontFamily: "'Baloo 2', sans-serif", color: C.white }}>{step.title}</p>
-                <p className="text-xs leading-relaxed" style={{ color: 'rgba(255,255,255,0.85)' }}>{step.desc}</p>
-              </motion.div>
-            ))}
-          </div>
-
-          <motion.div initial={{ opacity: 0, y: 10 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}
-            className="text-center rounded-2xl py-4 px-8" style={{ background: 'rgba(255,255,255,0.92)' }}>
-            <p className="font-extrabold" style={{ fontFamily: "'Baloo 2', sans-serif", color: C.navy, fontSize: '1.1rem' }}>
-              Starting at ₹{price} · protago.in
-            </p>
-            <p className="text-xs mt-0.5" style={{ color: C.gray }}>Hardcopy delivered in 5–7 business days</p>
-          </motion.div>
-        </div>
-      </section>
 
       {/* ══════════════════════════════════════════
           § 9  ORDER FORM — warm tint
