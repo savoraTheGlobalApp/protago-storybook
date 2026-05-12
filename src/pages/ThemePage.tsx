@@ -284,7 +284,7 @@ export function ThemePage() {
   const [consent, setConsent] = useState(false);
   const [jobStatus, setJobStatus] = useState('');
   const [showOrder, setShowOrder] = useState(false);
-  const [orderForm, setOrderForm] = useState({ parentName: '', email: '', phone: '', childName: '', childAge: '', childGender: '', addressLine1: '', addressLine2: '', city: '', state: '', pincode: '', notes: '', dedicationMessage: '' });
+  const [orderForm, setOrderForm] = useState({ parentName: '', email: '', phone: '', childName: '', childAge: '', childGender: '', bindingType: 'perfect', addressLine1: '', addressLine2: '', city: '', state: '', pincode: '', notes: '', dedicationMessage: '' });
   const [orderPhoto, setOrderPhoto] = useState<{ preview: string; uploading: boolean; uploadedPath: string | null; signedUrl: string | null; uploadFailed?: boolean } | null>(null);
   const [orderConsent, setOrderConsent] = useState(false);
   const [orderSubmitting, setOrderSubmitting] = useState(false);
@@ -1169,6 +1169,29 @@ export function ThemePage() {
                         </button>
                       ))}
                     </div>
+                  </div>
+                </div>
+
+                {/* Binding type */}
+                <div>
+                  <label style={{ fontSize: 10, fontWeight: 700, color: '#9CA3AF', display: 'block', marginBottom: 8, textTransform: 'uppercase', letterSpacing: '0.07em' }}>Binding type *</label>
+                  <div style={{ display: 'flex', gap: 10 }}>
+                    {[
+                      { value: 'perfect', label: 'Perfect Binding', desc: 'Flat spine · Paperback', available: true },
+                      { value: 'hardcover', label: 'Hardcover', desc: 'Coming soon', available: false },
+                    ].map(({ value, label, desc, available }) => (
+                      <button key={value} type="button" disabled={!available}
+                        onClick={() => available && setOf('bindingType', value)}
+                        style={{
+                          flex: 1, padding: '10px 12px', borderRadius: 10, cursor: available ? 'pointer' : 'default',
+                          border: `1.5px solid ${!available ? '#E5E7EB' : orderForm.bindingType === value ? C.saffron : '#E5E7EB'}`,
+                          background: !available ? '#F9FAFB' : orderForm.bindingType === value ? '#FFF3EE' : '#fff',
+                          textAlign: 'left', opacity: available ? 1 : 0.6,
+                        }}>
+                        <div style={{ fontSize: 13, fontWeight: 700, color: !available ? '#9CA3AF' : orderForm.bindingType === value ? C.saffron : C.navy }}>{label}</div>
+                        <div style={{ fontSize: 11, color: '#9CA3AF', marginTop: 2, fontWeight: 600 }}>{desc}</div>
+                      </button>
+                    ))}
                   </div>
                 </div>
 
