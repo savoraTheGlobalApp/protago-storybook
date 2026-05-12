@@ -22,6 +22,12 @@ const GCS_SCENES = 'https://storage.googleapis.com/protago-story-scenes';
 type SamplePage = { imageUrl: string; title: string; text: string };
 
 const SAMPLE_PAGES: Record<string, SamplePage[]> = {
+  'abc': [
+    { imageUrl: '/scenes/abc/scene_01.webp', title: 'A for Apple, B for Butterfly', text: 'The adventure begins! Your child reaches up to pick a bright red Apple from the tallest branch — "A!" A cheerful Butterfly lands right on their nose — "B!" Every letter is a new friend waiting to be discovered.' },
+    { imageUrl: '/scenes/abc/scene_02.webp', title: 'C for Cat, D for Dragon', text: 'Under a glowing crescent moon, your child cuddles a purring Cat — "C!" Then — WHOOSH — a friendly Dragon appears, breathing tiny golden sparks — "D!" Learning letters feels like pure magic tonight.' },
+    { imageUrl: '/scenes/abc/scene_03.webp', title: 'E for Elephant, F for Fish', text: 'A gentle Elephant squirts a fountain of water into the golden air — "E!" Beneath the surface, a flash of colour darts by — "F for Fish!" The world is full of letters hiding in the most wonderful places.' },
+    { imageUrl: '/scenes/abc/scene_04.webp', title: 'G for Giraffe, H for Horse', text: 'On the wide open savanna, a tall Giraffe munches treetops — "G!" A magnificent white Horse rears up against the sunset — "H!" Your child is halfway through the alphabet — and the adventure is only getting bigger!' },
+  ],
   'financial-literacy': [
     {
       imageUrl: `${GCS_SAMPLE}/financial-literacy/cover.png`,
