@@ -18,7 +18,7 @@ export const THEMES: ThemeEntry[] = [
   },
   // Ages 3–5
   {
-    slug: 'colours-shapes', name: 'Colours & Shapes', icon: '🎨', ageRange: '3–5',
+    slug: 'colours-shapes', name: 'The Rainbow Kingdom Quest', icon: '🎨', ageRange: '3–5',
     description: 'Child learns colours and shapes through a fun adventure in a world built from them.',
   },
   {
