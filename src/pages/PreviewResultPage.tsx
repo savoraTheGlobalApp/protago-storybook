@@ -804,7 +804,7 @@ export function PreviewResultPage() {
 
   const [shareCopied, setShareCopied] = useState(false);
   const handleShare = async () => {
-    const imageUrl = resultUrls.find(Boolean);
+    const imageUrl = resultUrls[1] || resultUrls.find(Boolean);
     if (!imageUrl) return;
     try {
       const blob = await fetch(imageUrl, { mode: 'cors' }).then(r => r.blob());
