@@ -1886,6 +1886,13 @@ app.post('/api/preview/send-email', async (req, res) => {
             Order this Book →
           </a>
           <p style="font-size:12px;color:#999;margin:16px 0 0">Premium 200GSM glossy paper · Starting at ₹499</p>
+          <p style="font-size:13px;color:#555;margin:20px 0 0;line-height:1.7">
+            📸 Share this to your Instagram story &amp; tag <strong>@protago.in</strong><br>
+            Send us a screenshot on
+            <a href="https://wa.me/919606037934?text=Hi!%20I%20shared%20my%20Protago%20preview%20on%20Instagram.%20Here's%20my%20screenshot%20for%20the%2020%25%20discount!"
+              style="color:#FF6B35;font-weight:700;text-decoration:none">WhatsApp</a>
+            to claim <strong style="color:#FF6B35">20% off</strong> your order!
+          </p>
         </td></tr>
 
         <!-- Footer -->
