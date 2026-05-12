@@ -929,6 +929,32 @@ export function PreviewResultPage() {
           </div>
         )}
 
+        {/* Buttons — shown as soon as done, above the scenes */}
+        <AnimatePresence>
+          {done && (
+            <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4 }}
+              style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 10, width: '100%', marginBottom: 24 }}>
+              <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', justifyContent: 'center', width: '100%' }}>
+                <button onClick={handleOrder}
+                  style={{ background: C.saffron, color: '#fff', border: 'none', borderRadius: 50, padding: '15px 32px', fontWeight: 800, fontSize: 17, cursor: 'pointer', fontFamily: "'Baloo 2', sans-serif", boxShadow: '0 6px 24px rgba(255,107,53,0.45)' }}>
+                  Order this Book →
+                </button>
+                <button onClick={handleShare}
+                  style={{ display: 'flex', alignItems: 'center', gap: 8, background: 'rgba(255,255,255,0.12)', color: '#fff', border: '1.5px solid rgba(255,255,255,0.25)', borderRadius: 50, padding: '15px 24px', fontWeight: 700, fontSize: 15, cursor: 'pointer', fontFamily: "'Baloo 2', sans-serif", backdropFilter: 'blur(8px)' }}>
+                  <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                    <circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/>
+                    <line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/>
+                  </svg>
+                  {shareCopied ? 'Link copied!' : 'Share'}
+                </button>
+              </div>
+              <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.35)', margin: 0 }}>
+                Delivered in 5–7 business days · Premium 200GSM glossy paper
+              </p>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
         {/* Book viewer */}
         {done && (
           <p style={{ fontSize: 16, color: 'rgba(255,255,255,0.6)', textAlign: 'center', margin: '0 0 8px', width: '100%' }}>
@@ -968,30 +994,6 @@ export function PreviewResultPage() {
           {done && (
             <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, delay: 0.3 }}
               style={{ textAlign: 'center', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12, width: '100%' }}>
-              <p style={{ color: 'rgba(255,255,255,0.7)', fontSize: 14, fontWeight: 600, margin: 0 }}>
-                Loved it? Make it real — printed and shipped to your door.
-              </p>
-
-              {/* Primary CTA row */}
-              <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', justifyContent: 'center', width: '100%' }}>
-                <button onClick={handleOrder}
-                  style={{ background: C.saffron, color: '#fff', border: 'none', borderRadius: 50, padding: '15px 32px', fontWeight: 800, fontSize: 17, cursor: 'pointer', fontFamily: "'Baloo 2', sans-serif", boxShadow: '0 6px 24px rgba(255,107,53,0.45)' }}>
-                  Order this Book →
-                </button>
-                <button onClick={handleShare}
-                  style={{ display: 'flex', alignItems: 'center', gap: 8, background: 'rgba(255,255,255,0.12)', color: '#fff', border: '1.5px solid rgba(255,255,255,0.25)', borderRadius: 50, padding: '15px 24px', fontWeight: 700, fontSize: 15, cursor: 'pointer', fontFamily: "'Baloo 2', sans-serif", backdropFilter: 'blur(8px)' }}>
-                  <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                    <circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/>
-                    <line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/>
-                  </svg>
-                  {shareCopied ? 'Link copied!' : 'Share'}
-                </button>
-              </div>
-
-              <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.35)', margin: 0 }}>
-                Delivered in 5–7 business days · Premium 200GSM glossy paper
-              </p>
-
               {/* Divider */}
               <div style={{ width: '100%', maxWidth: 400, height: 1, background: 'rgba(255,255,255,0.08)', margin: '4px 0' }} />
 
