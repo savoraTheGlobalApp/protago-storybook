@@ -270,7 +270,7 @@ export function ThemePage() {
   const API_BASE = import.meta.env.VITE_API_BASE_URL || '';
 
   const theme = THEMES.find(t => t.slug === slug);
-  const NINE_PAGE_THEMES = new Set(['colours-shapes', 'bedtime-routines', 'numbers-maths', 'sharing-sorry', 'first-day-school', 'managing-emotions', 'indian-festivals', 'phonics-reading', 'history-india', 'financial-literacy', 'growth-mindset', 'professions']);
+  const NINE_PAGE_THEMES = new Set(['abc', 'colours-shapes', 'bedtime-routines', 'numbers-maths', 'sharing-sorry', 'first-day-school', 'managing-emotions', 'indian-festivals', 'phonics-reading', 'history-india', 'financial-literacy', 'growth-mindset', 'professions']);
   const previewPageCount = theme && NINE_PAGE_THEMES.has(theme.slug) ? 9 : 4;
 
   const [activeIdx, setActiveIdx] = useState(0);
