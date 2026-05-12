@@ -13,7 +13,7 @@ export type ThemeEntry = {
 export const THEMES: ThemeEntry[] = [
   // Ages 0–3
   {
-    slug: 'abc', name: 'ABC Adventure', icon: '🔤', ageRange: '0–3', comingSoon: true,
+    slug: 'abc', name: 'ABC Adventure', icon: '🔤', ageRange: '0–3',
     description: 'Child goes on a magical journey through the alphabet — meeting animals and objects for every letter.',
   },
   // Ages 3–5

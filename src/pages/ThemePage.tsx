@@ -283,7 +283,7 @@ export function ThemePage() {
   const [photo, setPhoto] = useState<{ preview: string; uploading: boolean; signedUrl: string | null; quality?: { score: number; tip: string | null } | null } | null>(null);
   const [consent, setConsent] = useState(false);
   const [jobStatus, setJobStatus] = useState('');
-  const [showOrder, setShowOrder] = useState(!!theme?.comingSoon);
+  const [showOrder, setShowOrder] = useState(false);
   const [orderForm, setOrderForm] = useState({ parentName: '', email: '', phone: '', childName: '', childAge: '', childGender: '', addressLine1: '', addressLine2: '', city: '', state: '', pincode: '', notes: '', dedicationMessage: '' });
   const [orderPhoto, setOrderPhoto] = useState<{ preview: string; uploading: boolean; uploadedPath: string | null; signedUrl: string | null; uploadFailed?: boolean } | null>(null);
   const [orderConsent, setOrderConsent] = useState(false);
