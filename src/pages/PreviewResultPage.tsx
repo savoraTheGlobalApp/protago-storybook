@@ -802,6 +802,23 @@ export function PreviewResultPage() {
     return () => clearInterval(intervalRef.current!);
   }, [jobId, API_BASE]);
 
+  const handleShare = async () => {
+    const imageUrl = resultUrls.find(Boolean);
+    if (!imageUrl) return;
+    try {
+      const blob = await fetch(imageUrl).then(r => r.blob());
+      const file = new File([blob], `${childName}-story-preview.jpg`, { type: blob.type });
+      if (navigator.canShare?.({ files: [file] })) {
+        await navigator.share({ files: [file], title: `${childName}'s personalised storybook preview`, text: 'Check out this personalised storybook by Protago! 📖✨' });
+      } else {
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+        a.download = `${childName}-story-preview.jpg`;
+        a.click();
+      }
+    } catch { /* user cancelled share */ }
+  };
+
   const handleOrder = () => {
     const params = new URLSearchParams({
       fromPreview: 'true',
@@ -954,6 +971,19 @@ export function PreviewResultPage() {
 
               {/* Divider */}
               <div style={{ width: '100%', maxWidth: 400, height: 1, background: 'rgba(255,255,255,0.08)', margin: '8px 0' }} />
+
+              {/* Share preview */}
+              <button onClick={handleShare}
+                style={{ display: 'flex', alignItems: 'center', gap: 10, background: 'rgba(255,255,255,0.12)', color: '#fff', border: '1.5px solid rgba(255,255,255,0.25)', borderRadius: 50, padding: '13px 28px', fontWeight: 700, fontSize: 15, cursor: 'pointer', fontFamily: "'Baloo 2', sans-serif", backdropFilter: 'blur(8px)' }}>
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                  <circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/>
+                  <line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/>
+                </svg>
+                Share this preview
+              </button>
+
+              {/* Divider */}
+              <div style={{ width: '100%', maxWidth: 400, height: 1, background: 'rgba(255,255,255,0.08)', margin: '4px 0' }} />
 
               {/* Feedback */}
               {jobId && <FeedbackWidget jobId={jobId} API_BASE={API_BASE} />}
