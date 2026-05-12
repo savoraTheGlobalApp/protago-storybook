@@ -802,21 +802,31 @@ export function PreviewResultPage() {
     return () => clearInterval(intervalRef.current!);
   }, [jobId, API_BASE]);
 
+  const [shareCopied, setShareCopied] = useState(false);
   const handleShare = async () => {
     const imageUrl = resultUrls.find(Boolean);
     if (!imageUrl) return;
     try {
-      const blob = await fetch(imageUrl).then(r => r.blob());
-      const file = new File([blob], `${childName}-story-preview.jpg`, { type: blob.type });
+      const blob = await fetch(imageUrl, { mode: 'cors' }).then(r => r.blob());
+      const file = new File([blob], `${childName}-storybook-preview.jpg`, { type: blob.type });
       if (navigator.canShare?.({ files: [file] })) {
-        await navigator.share({ files: [file], title: `${childName}'s personalised storybook preview`, text: 'Check out this personalised storybook by Protago! 📖✨' });
+        await navigator.share({ files: [file], title: `${childName}'s personalised storybook`, text: `Look how ${childName} looks as the hero of their own storybook! 📖✨` });
       } else {
+        // fallback: download the image
         const a = document.createElement('a');
         a.href = URL.createObjectURL(blob);
-        a.download = `${childName}-story-preview.jpg`;
+        a.download = `${childName}-storybook-preview.jpg`;
         a.click();
+        URL.revokeObjectURL(a.href);
       }
-    } catch { /* user cancelled share */ }
+    } catch {
+      // last resort: copy page URL
+      try {
+        await navigator.clipboard.writeText(window.location.href);
+        setShareCopied(true);
+        setTimeout(() => setShareCopied(false), 3000);
+      } catch { /* silent */ }
+    }
   };
 
   const handleOrder = () => {
@@ -961,26 +971,26 @@ export function PreviewResultPage() {
               <p style={{ color: 'rgba(255,255,255,0.7)', fontSize: 14, fontWeight: 600, margin: 0 }}>
                 Loved it? Make it real — printed and shipped to your door.
               </p>
-              <button onClick={handleOrder}
-                style={{ background: C.saffron, color: '#fff', border: 'none', borderRadius: 50, padding: '16px 40px', fontWeight: 800, fontSize: 18, cursor: 'pointer', fontFamily: "'Baloo 2', sans-serif", boxShadow: '0 6px 24px rgba(255,107,53,0.45)' }}>
-                Order this Book →
-              </button>
+
+              {/* Primary CTA row */}
+              <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', justifyContent: 'center', width: '100%' }}>
+                <button onClick={handleOrder}
+                  style={{ background: C.saffron, color: '#fff', border: 'none', borderRadius: 50, padding: '15px 32px', fontWeight: 800, fontSize: 17, cursor: 'pointer', fontFamily: "'Baloo 2', sans-serif", boxShadow: '0 6px 24px rgba(255,107,53,0.45)' }}>
+                  Order this Book →
+                </button>
+                <button onClick={handleShare}
+                  style={{ display: 'flex', alignItems: 'center', gap: 8, background: 'rgba(255,255,255,0.12)', color: '#fff', border: '1.5px solid rgba(255,255,255,0.25)', borderRadius: 50, padding: '15px 24px', fontWeight: 700, fontSize: 15, cursor: 'pointer', fontFamily: "'Baloo 2', sans-serif", backdropFilter: 'blur(8px)' }}>
+                  <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                    <circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/>
+                    <line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/>
+                  </svg>
+                  {shareCopied ? 'Link copied!' : 'Share'}
+                </button>
+              </div>
+
               <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.35)', margin: 0 }}>
                 Delivered in 5–7 business days · Premium 200GSM glossy paper
               </p>
-
-              {/* Divider */}
-              <div style={{ width: '100%', maxWidth: 400, height: 1, background: 'rgba(255,255,255,0.08)', margin: '8px 0' }} />
-
-              {/* Share preview */}
-              <button onClick={handleShare}
-                style={{ display: 'flex', alignItems: 'center', gap: 10, background: 'rgba(255,255,255,0.12)', color: '#fff', border: '1.5px solid rgba(255,255,255,0.25)', borderRadius: 50, padding: '13px 28px', fontWeight: 700, fontSize: 15, cursor: 'pointer', fontFamily: "'Baloo 2', sans-serif", backdropFilter: 'blur(8px)' }}>
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                  <circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/>
-                  <line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/>
-                </svg>
-                Share this preview
-              </button>
 
               {/* Divider */}
               <div style={{ width: '100%', maxWidth: 400, height: 1, background: 'rgba(255,255,255,0.08)', margin: '4px 0' }} />
