@@ -1951,10 +1951,6 @@ export function BrochurePage() {
             );
           })()}
 
-          {/* Custom story — below all themes */}
-          <div className="mt-10">
-            <CustomStorySection />
-          </div>
         </div>
       </section>
 
@@ -2300,6 +2296,15 @@ export function BrochurePage() {
             </a>
           </div>
 
+        </div>
+      </section>
+
+      {/* ══════════════════════════════════════════
+          § CUSTOM STORY — white
+      ══════════════════════════════════════════ */}
+      <section style={{ background: C.white }} className="py-16 sm:py-20">
+        <div className="max-w-5xl mx-auto px-5 sm:px-8">
+          <CustomStorySection />
         </div>
       </section>
 
