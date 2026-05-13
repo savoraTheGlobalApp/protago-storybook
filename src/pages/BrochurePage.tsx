@@ -2207,6 +2207,103 @@ export function BrochurePage() {
       {false && <OrderForm price={price} scrollTo={scrollTo} />}
 
       {/* ══════════════════════════════════════════
+          § REVIEWS — warm tint
+      ══════════════════════════════════════════ */}
+      <section style={{ background: C.warmTint }} className="py-16 sm:py-20">
+        <div className="max-w-5xl mx-auto px-5 sm:px-8">
+
+          {/* Header */}
+          <motion.div initial={{ opacity: 0, y: 16 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} className="text-center mb-12">
+            {/* Google logo + "Reviews" */}
+            <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 10, marginBottom: 14 }}>
+              {/* Google coloured G */}
+              <svg width="28" height="28" viewBox="0 0 48 48">
+                <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.08 17.74 9.5 24 9.5z"/>
+                <path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/>
+                <path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/>
+                <path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.18 1.48-4.97 2.31-8.16 2.31-6.26 0-11.57-3.59-13.46-8.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/>
+                <path fill="none" d="M0 0h48v48H0z"/>
+              </svg>
+              <span style={{ fontSize: 18, fontWeight: 800, color: C.navy, fontFamily: "'Baloo 2', sans-serif", letterSpacing: '-0.3px' }}>Google Reviews</span>
+            </div>
+            {/* Rating */}
+            <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 8, marginBottom: 6 }}>
+              <span style={{ fontSize: 42, fontWeight: 900, color: C.navy, fontFamily: "'Baloo 2', sans-serif", lineHeight: 1 }}>5.0</span>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                <div style={{ display: 'flex', gap: 3 }}>
+                  {[...Array(5)].map((_, i) => (
+                    <svg key={i} width="18" height="18" viewBox="0 0 24 24" fill="#F7B731"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+                  ))}
+                </div>
+                <span style={{ fontSize: 12, color: C.lgray }}>6 reviews</span>
+              </div>
+            </div>
+            <p style={{ fontSize: 14, color: C.gray, margin: 0 }}>What parents are saying about us</p>
+          </motion.div>
+
+          {/* Cards */}
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(270px, 1fr))', gap: 16 }}>
+            {[
+              { name: 'Suraj Shetty', initial: 'S', text: 'Their custom kids book was loved by my 2 girls. They customized the book to include both sisters flying a plane together and visiting places. They will cherish these memories and share common experiences. Parents must have these books — an excellent gift for young ones.' },
+              { name: 'A Learning Theme', initial: 'A', text: 'Such a beautiful and thoughtful gift for kids 🥹📚✨ Seeing her own name, photos & story inside the book made her genuinely so happy 💖 The quality, illustrations and little details are absolutely lovely. A truly special keepsake for little ones.' },
+              { name: 'Jayam Chandra', initial: 'J', text: 'My kid loves the book. He is so excited watching his version of images and is able to relate with the story better as it gives a tinge of personalization.' },
+              { name: 'Tanya Bhardwaj', initial: 'T', text: 'The book and the detailing was so amazing — it even captured my pimple patch and the story was wonderful. Best book ever.' },
+            ].map(({ name, initial, text }, i) => (
+              <motion.div key={i}
+                initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }} transition={{ delay: i * 0.07 }}
+                style={{ background: '#fff', border: '1px solid #F0EBE4', borderRadius: 18, padding: '20px 22px', display: 'flex', flexDirection: 'column', gap: 14, boxShadow: '0 2px 12px rgba(0,0,0,0.05)' }}>
+                {/* Header row */}
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                    {/* Avatar initial */}
+                    <div style={{ width: 36, height: 36, borderRadius: '50%', background: C.gradient, display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 800, fontSize: 15, color: '#fff', fontFamily: "'Baloo 2', sans-serif", flexShrink: 0 }}>
+                      {initial}
+                    </div>
+                    <div>
+                      <p style={{ margin: 0, fontWeight: 700, fontSize: 14, color: C.navy }}>{name}</p>
+                      <div style={{ display: 'flex', gap: 2, marginTop: 2 }}>
+                        {[...Array(5)].map((_, s) => (
+                          <svg key={s} width="12" height="12" viewBox="0 0 24 24" fill="#F7B731"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                  {/* Google G badge */}
+                  <svg width="20" height="20" viewBox="0 0 48 48" style={{ flexShrink: 0 }}>
+                    <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.08 17.74 9.5 24 9.5z"/>
+                    <path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/>
+                    <path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/>
+                    <path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.18 1.48-4.97 2.31-8.16 2.31-6.26 0-11.57-3.59-13.46-8.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/>
+                    <path fill="none" d="M0 0h48v48H0z"/>
+                  </svg>
+                </div>
+                <p style={{ fontSize: 14, color: C.gray, lineHeight: 1.7, margin: 0, flex: 1 }}>"{text}"</p>
+              </motion.div>
+            ))}
+          </div>
+
+          {/* CTA */}
+          <div className="text-center mt-10">
+            <a
+              href="https://g.page/r/CfdDQ8f3DVI-EBM/review"
+              target="_blank" rel="noopener noreferrer"
+              style={{ display: 'inline-flex', alignItems: 'center', gap: 8, background: '#fff', border: '1.5px solid #E5DDD5', borderRadius: 50, padding: '12px 26px', color: C.navy, fontWeight: 700, fontSize: 14, textDecoration: 'none', fontFamily: "'Baloo 2', sans-serif", boxShadow: '0 2px 8px rgba(0,0,0,0.07)' }}>
+              <svg width="16" height="16" viewBox="0 0 48 48">
+                <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.08 17.74 9.5 24 9.5z"/>
+                <path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/>
+                <path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/>
+                <path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.18 1.48-4.97 2.31-8.16 2.31-6.26 0-11.57-3.59-13.46-8.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/>
+                <path fill="none" d="M0 0h48v48H0z"/>
+              </svg>
+              Leave us a review on Google
+            </a>
+          </div>
+
+        </div>
+      </section>
+
+      {/* ══════════════════════════════════════════
           § 10  FAQ — white
       ══════════════════════════════════════════ */}
       <section id="faq" style={{ background: C.white }} className="py-16 sm:py-20">
