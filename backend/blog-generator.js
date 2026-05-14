@@ -140,7 +140,7 @@ Do not include any markdown, backticks, or text outside the JSON.`;
       headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
       body: JSON.stringify({
         contents: [{ role: 'user', parts: [{ text: prompt }] }],
-        generationConfig: { temperature: 0.85, maxOutputTokens: 8192, responseMimeType: 'application/json' },
+        generationConfig: { temperature: 0.85, maxOutputTokens: 8192 },
       }),
     }
   );
@@ -148,7 +148,9 @@ Do not include any markdown, backticks, or text outside the JSON.`;
   const data = await res.json();
   const raw = data.candidates?.[0]?.content?.parts?.[0]?.text;
   if (!raw) throw new Error('Gemini returned empty response');
-  return JSON.parse(raw);
+  // Strip markdown code fences if present (Vertex AI doesn't honour responseMimeType)
+  const cleaned = raw.replace(/^```(?:json)?\s*/i, '').replace(/\s*```\s*$/i, '').trim();
+  return JSON.parse(cleaned);
 }
 
 // ── Imagen 3 cover image ──────────────────────────────────────────────────────
