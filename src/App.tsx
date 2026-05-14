@@ -10,6 +10,9 @@ import { PrivacyPage } from './pages/PrivacyPage';
 import { RefundPage } from './pages/RefundPage';
 import { ContactPage } from './pages/ContactPage';
 import { OrderConfirmedPage } from './pages/OrderConfirmedPage';
+import { BlogListPage } from './pages/BlogListPage';
+import { BlogPostPage } from './pages/BlogPostPage';
+import { BlogAdminPage } from './pages/BlogAdminPage';
 
 function SocialFloats() {
   const btnStyle = (bg: string, shadow: string): React.CSSProperties => ({
@@ -61,6 +64,9 @@ export default function App() {
         <Route path="/refund" element={<RefundPage />} />
         <Route path="/contact" element={<ContactPage />} />
         <Route path="/order-confirmed" element={<OrderConfirmedPage />} />
+        <Route path="/blog" element={<BlogListPage />} />
+        <Route path="/blog/:slug" element={<BlogPostPage />} />
+        <Route path="/admin/blog" element={<BlogAdminPage />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </Router>

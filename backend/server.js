@@ -2058,6 +2058,106 @@ app.get('/api/reviews', async (req, res) => {
     }
 });
 
+// ── Blog endpoints ────────────────────────────────────────────────────────────
+import { generateBlogPost, TOPICS } from './blog-generator.js';
+
+const BLOG_SB_URL = process.env.SUPABASE_URL_STORY;
+const BLOG_SB_KEY = process.env.SUPABASE_SERVICE_KEY_STORY;
+const BLOG_SECRET = process.env.BLOG_GEN_SECRET;
+
+async function blogFetch(method, path, body) {
+  const res = await fetch(`${BLOG_SB_URL}/rest/v1/${path}`, {
+    method,
+    headers: {
+      apikey: BLOG_SB_KEY, Authorization: `Bearer ${BLOG_SB_KEY}`,
+      'Content-Type': 'application/json',
+      Prefer: method === 'POST' ? 'return=representation' : '',
+    },
+    body: body ? JSON.stringify(body) : undefined,
+  });
+  const text = await res.text();
+  return res.ok ? JSON.parse(text || '[]') : (() => { throw new Error(text); })();
+}
+
+// List available topics
+app.get('/api/blog/topics', (req, res) => {
+  if (req.query.secret !== BLOG_SECRET) return res.status(401).json({ error: 'Unauthorized' });
+  res.json(TOPICS.map((t, i) => ({ index: i, title: t.title, category: t.category })));
+});
+
+// Generate a new draft post
+app.post('/api/blog/generate', async (req, res) => {
+  if (req.query.secret !== BLOG_SECRET) return res.status(401).json({ error: 'Unauthorized' });
+  try {
+    const topicParam = req.body?.topicIndex != null ? TOPICS[req.body.topicIndex] : null;
+    const post = await generateBlogPost(topicParam);
+    res.json({ ok: true, post });
+  } catch (err) {
+    console.error('blog/generate error:', err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// List all posts (admin: all; public: published only)
+app.get('/api/blog', async (req, res) => {
+  try {
+    const isAdmin = req.query.secret === BLOG_SECRET;
+    const page  = Math.max(1, parseInt(req.query.page) || 1);
+    const limit = Math.min(50, parseInt(req.query.limit) || 12);
+    const offset = (page - 1) * limit;
+    const filter = isAdmin ? '' : '&published=eq.true';
+    const posts = await blogFetch('GET',
+      `blog_posts?select=id,slug,title,excerpt,category,tags,cover_image_url,published,published_at,created_at&order=created_at.desc&limit=${limit}&offset=${offset}${filter}`,
+      null
+    );
+    res.json({ posts, page, limit });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Get single post by slug
+app.get('/api/blog/:slug', async (req, res) => {
+  try {
+    const isAdmin = req.query.secret === BLOG_SECRET;
+    const filter = isAdmin ? '' : '&published=eq.true';
+    const rows = await blogFetch('GET',
+      `blog_posts?slug=eq.${encodeURIComponent(req.params.slug)}${filter}&limit=1`,
+      null
+    );
+    if (!rows.length) return res.status(404).json({ error: 'Not found' });
+    res.json(rows[0]);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Publish / unpublish a post
+app.patch('/api/blog/:id', async (req, res) => {
+  if (req.query.secret !== BLOG_SECRET) return res.status(401).json({ error: 'Unauthorized' });
+  try {
+    const { published } = req.body;
+    await blogFetch('PATCH',
+      `blog_posts?id=eq.${req.params.id}`,
+      { published, published_at: published ? new Date().toISOString() : null }
+    );
+    res.json({ ok: true });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Delete a draft post
+app.delete('/api/blog/:id', async (req, res) => {
+  if (req.query.secret !== BLOG_SECRET) return res.status(401).json({ error: 'Unauthorized' });
+  try {
+    await blogFetch('DELETE', `blog_posts?id=eq.${req.params.id}`, null);
+    res.json({ ok: true });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // Serve static files from the React app
 app.use(express.static(path.join(__dirname, '../build')));
 

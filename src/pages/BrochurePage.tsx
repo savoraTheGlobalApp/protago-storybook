@@ -2439,6 +2439,7 @@ export function BrochurePage() {
                       style={{ color: 'rgba(255,255,255,0.45)' }}>{label}</button>
                   </li>
                 ))}
+                <li><a href="/blog" className="text-sm hover:text-white transition-colors" style={{ color: 'rgba(255,255,255,0.45)', textDecoration: 'none' }}>Blog</a></li>
                 <li><button onClick={() => scrollTo('footer-contact')} className="text-sm hover:text-white transition-colors"
                   style={{ color: 'rgba(255,255,255,0.45)' }}>Contact Us</button></li>
               </ul>
