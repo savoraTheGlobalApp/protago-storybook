@@ -74,15 +74,6 @@ const AGE_GROUPS: AgeGroup[] = [
         samplePrompt: 'Every night [Sia] brushes her teeth, hugs [Biscuit the bear], and flies off to [the jungle].',
         score: 4,
       },
-      {
-        slug: 'new-sibling',
-        name: 'New Sibling',
-        icon: '👶',
-        description: 'Helps older child embrace and bond with a new baby through a relatable story.',
-        personalizationLevers: ['Sibling name', 'Child\'s feelings (jealous/excited)', 'Family setting', 'Child name & photo'],
-        samplePrompt: '[Arjun] wasn\'t sure about baby [Ananya at first. Then he discovered something special only big brothers can do.',
-        score: 5,
-      },
     ],
   },
   {
@@ -125,15 +116,6 @@ const AGE_GROUPS: AgeGroup[] = [
         personalizationLevers: ['Target emotion', 'Trigger situation (sibling/school/sport)', 'Coping strategy', 'Child name & photo'],
         samplePrompt: 'When [Rohan] loses the cricket match, the anger dragon grows. Here\'s how he shrinks it.',
         score: 5,
-      },
-      {
-        slug: 'phonics-reading',
-        name: 'Phonics & Reading',
-        icon: '📖',
-        description: 'Story written with target letter sounds, rhyming patterns — tied to their school curriculum.',
-        personalizationLevers: ['Target phonics level', 'Favourite words', 'School curriculum (CBSE/ICSE)', 'Child name & photo'],
-        samplePrompt: '[Aisha] follows the sound of [S] through a silly, slimy, shimmery world.',
-        score: 3,
       },
       {
         slug: 'professions',

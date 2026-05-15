@@ -209,7 +209,7 @@ function PostRow({ post, secret, busy, onToggle, onDelete }: {
         <p style={{ margin: 0, fontSize: 13, color: 'rgba(255,255,255,0.45)', overflow: 'hidden', display: '-webkit-box', WebkitLineClamp: 1, WebkitBoxOrient: 'vertical' }}>{post.excerpt}</p>
       </div>
       <div style={{ display: 'flex', gap: 8, flexShrink: 0, flexWrap: 'wrap', justifyContent: 'flex-end' }}>
-        <a href={`/blog/${post.slug}`} target="_blank" rel="noopener noreferrer"
+        <a href={`/blog/${post.slug}${!post.published ? `?secret=${secret}` : ''}`} target="_blank" rel="noopener noreferrer"
           style={{ fontSize: 13, color: 'rgba(255,255,255,0.5)', border: '1px solid rgba(255,255,255,0.15)', borderRadius: 8, padding: '6px 12px', textDecoration: 'none' }}>
           Preview ↗
         </a>

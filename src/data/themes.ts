@@ -43,10 +43,6 @@ export const THEMES: ThemeEntry[] = [
     slug: 'first-day-school', name: 'First Day at School', icon: '🏫', ageRange: '3–5',
     description: 'Helps anxious children prepare for school by seeing themselves navigate it confidently.',
   },
-  {
-    slug: 'new-sibling', name: 'New Sibling', icon: '👶', ageRange: '3–5',
-    description: 'Helps older child embrace and bond with a new baby through a relatable story.',
-  },
   // Ages 5–8
   {
     slug: 'numbers-maths', name: 'Numbers & Maths Adventure', icon: '🔢', ageRange: '6–8',
@@ -63,10 +59,6 @@ export const THEMES: ThemeEntry[] = [
   {
     slug: 'managing-emotions', name: 'Managing Emotions', icon: '😤', ageRange: '6–8',
     description: 'Story built around a specific emotion the child struggles with — anger, fear, or jealousy.',
-  },
-  {
-    slug: 'phonics-reading', name: 'Phonics & Reading', icon: '📖', ageRange: '6–8',
-    description: 'Story written with target letter sounds, rhyming patterns — tied to their school curriculum.',
   },
   // Ages 8–12
   {

@@ -1826,7 +1826,7 @@ app.post('/api/preview/send-email', async (req, res) => {
 
     const SKIP_COVER_THEMES = new Set([
       'colours-shapes', 'bedtime-routines', 'numbers-maths', 'sharing-sorry', 'first-day-school',
-      'managing-emotions', 'indian-festivals', 'phonics-reading', 'history-india',
+      'managing-emotions', 'indian-festivals', 'history-india',
       'financial-literacy', 'growth-mindset', 'professions',
     ]);
     const skipCover = SKIP_COVER_THEMES.has(job.story_slug);

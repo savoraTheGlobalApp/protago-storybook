@@ -104,13 +104,6 @@ const SAMPLE_PAGES: Record<string, SamplePage[]> = {
     { imageUrl: `${GCS_SCENES}/indian-festivals/young_girl/scene_04_spread.png`, title: 'Dance and Celebrate', text: 'Your child danced and twirled — and the whole street joined in! Drums, music, laughter, and the scent of sweet festival food everywhere. India\'s festivals teach us that joy is always better when it is shared.' },
     { imageUrl: `${GCS_SCENES}/indian-festivals/young_girl/scene_05_spread.png`, title: 'This Is Home', text: 'Your child spun under the lights, heart full: "This is who I am. This is home." Every festival your child celebrates is a thread connecting them to a culture thousands of years old. Carry these stories forward, always.' },
   ],
-  'phonics-reading': [
-    { imageUrl: `${GCS_SCENES}/phonics-reading/young_girl/scene_01_spread.png`, title: 'The Reading Quest', text: 'Your child found a mysterious glowing book on the library shelf. When they touched it, the letters began to shimmer and hum. Reading is the greatest superpower a person can ever possess. Every book is a door — and only the reader holds the key.' },
-    { imageUrl: `${GCS_SCENES}/phonics-reading/young_girl/scene_02_spread.png`, title: 'Letters Come Alive', text: 'The letters came alive! They leapt off the page and danced! A, B, C twirled in the air — each making its own special sound. Phonics — learning the sounds of letters — is the first key to reading. Your child reached out and touched a dancing letter. It sang back!' },
-    { imageUrl: `${GCS_SCENES}/phonics-reading/young_girl/scene_03_spread.png`, title: 'I Can Read It!', text: '"I can read it!" your child shouted — and the words lit up like stars! Sound by sound, letter by letter, the message unlocked itself. The moment a child cracks the reading code — the world changes forever.' },
-    { imageUrl: `${GCS_SCENES}/phonics-reading/young_girl/scene_04_spread.png`, title: 'The Whole Story', text: 'Your child read the last word — and the whole magical story appeared. Mountains, dragons, heroes, and oceans burst from the glowing pages. Every book you read makes the next one easier, richer, and more wonderful. Readers can become anything.' },
-    { imageUrl: `${GCS_SCENES}/phonics-reading/young_girl/scene_05_spread.png`, title: 'Every Single One', text: 'Your child closed the book, eyes bright: "I want to read every single one." The greatest gift a child can receive is a love of reading. It is the key to every door, the ticket to every world, and the foundation of every dream.' },
-  ],
   'history-india': [
     { imageUrl: `${GCS_SCENES}/history-india/young_girl/scene_01_spread.png`, title: 'India\'s Greatest Adventure', text: 'Your child opened an ancient map in the museum — and it began to glow. The seal of a great empire shimmered beneath their fingertips. India is one of the oldest civilisations in the history of the world. From the Indus Valley to the Mughal courts — thousands of years of story.' },
     { imageUrl: `${GCS_SCENES}/history-india/young_girl/scene_02_spread.png`, title: 'Chosen by History', text: '"You are chosen," the map declared, glowing bright and golden. India gave the world mathematics, chess, surgery, and the number zero. Our history is not just dates and kings — it is the story of human genius. Your child stepped forward: "Show me everything."' },
@@ -298,7 +291,7 @@ export function ThemePage() {
   const API_BASE = import.meta.env.VITE_API_BASE_URL || '';
 
   const theme = THEMES.find(t => t.slug === slug);
-  const NINE_PAGE_THEMES = new Set(['abc', 'colours-shapes', 'bedtime-routines', 'numbers-maths', 'sharing-sorry', 'first-day-school', 'managing-emotions', 'indian-festivals', 'phonics-reading', 'history-india', 'financial-literacy', 'growth-mindset', 'professions']);
+  const NINE_PAGE_THEMES = new Set(['abc', 'colours-shapes', 'bedtime-routines', 'numbers-maths', 'sharing-sorry', 'first-day-school', 'managing-emotions', 'indian-festivals', 'history-india', 'financial-literacy', 'growth-mindset', 'professions']);
   const previewPageCount = theme && NINE_PAGE_THEMES.has(theme.slug) ? 9 : 4;
   const useScenes = !!(theme?.comingSoon || theme?.slug === 'abc');
   const sceneFiles = theme?.slug === 'abc'

@@ -42,7 +42,7 @@ function ShimmerCard() {
 // treats index 0 as a cover and overlays a title, so we drop it from display.
 const SKIP_COVER_THEMES = new Set([
   'colours-shapes', 'bedtime-routines', 'numbers-maths', 'sharing-sorry', 'first-day-school',
-  'managing-emotions', 'indian-festivals', 'phonics-reading', 'history-india',
+  'managing-emotions', 'indian-festivals', 'history-india',
   'financial-literacy', 'growth-mindset', 'professions', 'internet-safety', 'body-safety',
 ]);
 

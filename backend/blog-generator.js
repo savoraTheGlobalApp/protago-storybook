@@ -148,9 +148,12 @@ Do not include any markdown, backticks, or text outside the JSON.`;
   const data = await res.json();
   const raw = data.candidates?.[0]?.content?.parts?.[0]?.text;
   if (!raw) throw new Error('Gemini returned empty response');
-  // Strip markdown code fences if present (Vertex AI doesn't honour responseMimeType)
-  const cleaned = raw.replace(/^```(?:json)?\s*/i, '').replace(/\s*```\s*$/i, '').trim();
-  return JSON.parse(cleaned);
+  // Strip BOM, code fences, and any leading/trailing non-JSON text
+  const stripped = raw.replace(/^﻿/, '').replace(/^```(?:json)?\s*/i, '').replace(/\s*```\s*$/i, '').trim();
+  // Extract the JSON object in case Gemini prepended/appended prose
+  const match = stripped.match(/\{[\s\S]*\}/);
+  if (!match) throw new Error(`Gemini response has no JSON object. Raw: ${stripped.slice(0, 200)}`);
+  return JSON.parse(match[0]);
 }
 
 // ── Imagen 3 cover image ──────────────────────────────────────────────────────
