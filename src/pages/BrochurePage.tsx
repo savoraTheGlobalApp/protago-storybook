@@ -611,17 +611,36 @@ function OrderForm({ price }: { price: number; scrollTo: (id: string) => void })
   const [submitError, setSubmitError] = useState('');
   const [showConfirm, setShowConfirm] = useState(false);
 
-  const [couponInput, setCouponInput] = useState('');
+  const [couponInput, setCouponInput] = useState('PROTAGO50');
   const [couponApplied, setCouponApplied] = useState<{ code: string; discountAmount: number; finalPrice: number; discountType: string; discountValue: number } | null>(null);
   const [couponError, setCouponError] = useState('');
   const [couponLoading, setCouponLoading] = useState(false);
+
+  const API_BASE = import.meta.env.VITE_API_BASE_URL || '';
+
+  useEffect(() => {
+    const autoApply = async () => {
+      const code = 'PROTAGO50';
+      setCouponLoading(true);
+      try {
+        const res = await fetch(`${API_BASE}/api/validate-coupon`, {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ code }),
+        });
+        const data = await res.json();
+        if (res.ok && data.valid) {
+          setCouponApplied({ code, discountAmount: data.discountAmount, finalPrice: data.finalPrice, discountType: data.discountType, discountValue: data.discountValue });
+        }
+      } catch { /* ignore */ }
+      setCouponLoading(false);
+    };
+    autoApply();
+  }, []);
 
   const selectedStyle = STYLES.find(s => s.label === form.artStyle);
   const stylePrice = selectedStyle?.price ?? null;
   const styleOriginalPrice = selectedStyle?.originalPrice ?? null;
   const effectivePrice = stylePrice ?? price;
-
-  const API_BASE = import.meta.env.VITE_API_BASE_URL || '';
   const set = (k: string, v: string) => setForm(f => {
     const next = { ...f, [k]: v };
     try { localStorage.setItem(FORM_STORAGE_KEY, JSON.stringify(next)); } catch { /* non-fatal */ }
@@ -994,7 +1013,7 @@ function OrderForm({ price }: { price: number; scrollTo: (id: string) => void })
                         <p className="text-xs font-bold mb-2" style={{ color: isRelevant ? C.saffron : C.lgray }}>
                           Ages {range} {isRelevant && form.childAge ? '✓ recommended' : ''}
                         </p>
-                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 8 }}>
+                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(88px, 1fr))', gap: 8 }}>
                           {rangeThemes.map(t => {
                             const selected = form.storyTheme === t.slug;
                             return (
@@ -1034,7 +1053,7 @@ function OrderForm({ price }: { price: number; scrollTo: (id: string) => void })
                     return (
                       <div className="mb-3">
                         <p className="text-xs font-bold mb-2" style={{ color: C.gold }}>🪬 Mythology</p>
-                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 8 }}>
+                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(88px, 1fr))', gap: 8 }}>
                           {mythThemes.map(t => {
                             const selected = form.storyTheme === t.slug;
                             return (
@@ -1283,7 +1302,7 @@ function OrderForm({ price }: { price: number; scrollTo: (id: string) => void })
               {submitting ? 'Processing…' : anyUploading ? `Uploading photos…` : <>Pay ₹{couponApplied ? couponApplied.finalPrice : effectivePrice} & Order <ArrowRight size={16} /></>}
             </button>
             <p className="text-center text-xs" style={{ color: C.lgray }}>
-              We'll confirm your order via WhatsApp/email within 24 hours.
+              📦 Delivered in 5–7 business days · Secure payment via Razorpay
             </p>
           </motion.form>
         )}

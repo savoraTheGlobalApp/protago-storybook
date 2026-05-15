@@ -346,6 +346,155 @@ function BookViewer({ urls, firstIsCover = false, isComplete = false, onOrder }:
   );
 }
 
+// ── Paired page viewer for ABC theme ─────────────────────────────────────────
+// Shows left-half of scene[2i] and left-half of scene[2i+1] side by side.
+// Flip moves between spreads with a fade transition.
+function PairedPageViewer({ urls, isComplete = false, onOrder }: {
+  urls: (string | null)[]; isComplete?: boolean; onOrder?: () => void;
+}) {
+  const [spread, setSpread] = useState(0);
+  const [fading, setFading] = useState(false);
+
+  // Pair consecutive URLs into spreads; include spread if either URL is set
+  const spreads: [string | null, string | null][] = [];
+  for (let i = 0; i + 1 < urls.length; i += 2) {
+    if (urls[i] || urls[i + 1]) spreads.push([urls[i] ?? null, urls[i + 1] ?? null]);
+  }
+  const total = spreads.length;
+
+  const go = (target: number) => {
+    if (target < 0 || target >= total || fading) return;
+    setFading(true);
+    setTimeout(() => {
+      setSpread(target);
+      setFading(false);
+    }, 300);
+  };
+
+  const [left, right] = spreads[spread] ?? [null, null];
+
+  const leftNum  = spread * 2 + 1;
+  const rightNum = spread * 2 + 2;
+
+  return (
+    <div style={{ width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 20, marginBottom: 32 }}>
+      <style>{`@keyframes pageHint{0%,100%{transform:translateX(0);opacity:.6}50%{transform:translateX(7px);opacity:1}}`}</style>
+
+      <div style={{ position: 'relative', width: '100%', maxWidth: 860 }}>
+        {/* Ground shadow */}
+        <div style={{
+          position: 'absolute', bottom: -22, left: '5%', right: '5%', height: 30,
+          background: 'radial-gradient(ellipse, rgba(0,0,0,0.52) 0%, transparent 75%)',
+          filter: 'blur(12px)', zIndex: 0,
+        }} />
+
+        {/* Book body */}
+        <div style={{
+          position: 'relative', width: '100%', aspectRatio: '16/9', borderRadius: 3,
+          boxShadow: '0 22px 60px rgba(0,0,0,0.7), inset 0 0 0 1px rgba(255,255,255,0.06)',
+          background: '#0d0a04', zIndex: 1, overflow: 'hidden',
+        }}>
+          {/* Left page — left-half crop of scene[2i] */}
+          <div style={{
+            position: 'absolute', top: 0, left: 0, bottom: 0, width: '50%', overflow: 'hidden',
+            opacity: fading ? 0 : 1, transition: 'opacity 0.25s ease',
+          }}>
+            {left
+              ? <img src={left} style={{ position: 'absolute', top: 0, left: 0, height: '100%', width: '200%', objectFit: 'cover', objectPosition: 'left', display: 'block' }} />
+              : <ShimmerCard />}
+          </div>
+
+          {/* Right page — left-half crop of scene[2i+1] */}
+          <div style={{
+            position: 'absolute', top: 0, right: 0, bottom: 0, width: '50%', overflow: 'hidden',
+            opacity: fading ? 0 : 1, transition: 'opacity 0.25s ease',
+          }}>
+            {right
+              ? <img src={right} style={{ position: 'absolute', top: 0, left: 0, height: '100%', width: '200%', objectFit: 'cover', objectPosition: 'left', display: 'block' }} />
+              : <ShimmerCard />}
+          </div>
+
+          {/* Spine */}
+          <div style={{
+            position: 'absolute', top: 0, bottom: 0, left: '50%',
+            width: 24, transform: 'translateX(-50%)', zIndex: 10, pointerEvents: 'none',
+            background: 'linear-gradient(to right, rgba(0,0,0,0.32) 0%, rgba(0,0,0,0.05) 40%, rgba(0,0,0,0.05) 60%, rgba(0,0,0,0.26) 100%)',
+          }} />
+
+          {/* Page numbers */}
+          <span style={{ position: 'absolute', bottom: 10, left: 18, zIndex: 9, pointerEvents: 'none', fontSize: 11, fontWeight: 700, color: 'rgba(255,255,255,0.35)', fontFamily: "'Nunito', sans-serif", letterSpacing: '0.05em' }}>{leftNum}</span>
+          <span style={{ position: 'absolute', bottom: 10, right: 18, zIndex: 9, pointerEvents: 'none', fontSize: 11, fontWeight: 700, color: 'rgba(255,255,255,0.35)', fontFamily: "'Nunito', sans-serif", letterSpacing: '0.05em' }}>{rightNum}</span>
+
+          {/* Click zones */}
+          {!fading && spread > 0 && (
+            <button onClick={() => go(spread - 1)} aria-label="Previous"
+              style={{ position: 'absolute', left: 0, top: 0, bottom: 0, width: '30%', background: 'transparent', border: 'none', cursor: 'pointer', zIndex: 11 }} />
+          )}
+          {!fading && spread < total - 1 && (
+            <button onClick={() => go(spread + 1)} aria-label="Next"
+              style={{ position: 'absolute', right: 0, top: 0, bottom: 0, width: '30%', background: 'transparent', border: 'none', cursor: 'pointer', zIndex: 11 }} />
+          )}
+
+          {/* Hint arrow */}
+          {!fading && spread === 0 && total > 1 && (
+            <div style={{ position: 'absolute', right: 16, top: '50%', transform: 'translateY(-50%)', fontSize: 22, color: 'rgba(255,255,255,0.4)', zIndex: 11, pointerEvents: 'none', animation: 'pageHint 1.7s ease-in-out infinite' }}>›</div>
+          )}
+        </div>
+
+        {/* Side arrow buttons */}
+        <button onClick={() => go(spread - 1)} disabled={spread === 0 || fading} style={{
+          position: 'absolute', left: -24, top: '50%', transform: 'translateY(-50%)',
+          width: 44, height: 44, borderRadius: '50%', border: 'none', zIndex: 12,
+          background: spread === 0 ? 'rgba(255,255,255,0.04)' : 'rgba(255,255,255,0.13)',
+          color: spread === 0 ? 'rgba(255,255,255,0.12)' : '#fff',
+          cursor: spread === 0 ? 'default' : 'pointer', fontSize: 22,
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          backdropFilter: 'blur(8px)', transition: 'all 0.2s',
+        }}>‹</button>
+
+        {spread >= total - 1 && isComplete ? (
+          <button onClick={onOrder} style={{
+            position: 'absolute', right: -52, top: '50%', transform: 'translateY(-50%)',
+            height: 44, padding: '0 14px', borderRadius: 22, border: 'none', zIndex: 12,
+            background: 'rgba(255,107,53,0.95)', color: '#fff',
+            cursor: 'pointer', fontSize: 12, fontWeight: 800,
+            fontFamily: "'Nunito', sans-serif", letterSpacing: '0.04em', whiteSpace: 'nowrap',
+            display: 'flex', alignItems: 'center', gap: 6,
+            boxShadow: '0 4px 20px rgba(255,107,53,0.6)',
+          }}>Order Now ›</button>
+        ) : (
+          <button onClick={() => go(spread + 1)} disabled={spread >= total - 1 || fading} style={{
+            position: 'absolute', right: -24, top: '50%', transform: 'translateY(-50%)',
+            width: 44, height: 44, borderRadius: '50%', border: 'none', zIndex: 12,
+            background: spread >= total - 1 ? 'rgba(255,255,255,0.04)' : 'rgba(255,107,53,0.9)',
+            color: spread >= total - 1 ? 'rgba(255,255,255,0.12)' : '#fff',
+            cursor: spread >= total - 1 ? 'default' : 'pointer', fontSize: 22,
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            backdropFilter: 'blur(8px)', transition: 'all 0.2s',
+            boxShadow: spread < total - 1 ? '0 4px 20px rgba(255,107,53,0.5)' : 'none',
+          }}>›</button>
+        )}
+      </div>
+
+      {/* Dots */}
+      <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+        {spreads.map((_, i) => (
+          <button key={i} onClick={() => !fading && go(i)}
+            style={{
+              width: i === spread ? 22 : 7, height: 7, borderRadius: 99, padding: 0,
+              background: i === spread ? C.saffron : 'rgba(255,255,255,0.2)',
+              border: 'none', cursor: 'pointer', transition: 'all 0.3s ease',
+            }} />
+        ))}
+      </div>
+
+      <p style={{ fontSize: 11, fontWeight: 700, color: 'rgba(255,255,255,0.28)', letterSpacing: '0.12em', textTransform: 'uppercase', margin: 0 }}>
+        Pages {leftNum}–{rightNum} · {spread < total - 1 ? 'Tap right to turn page' : 'End of preview'}
+      </p>
+    </div>
+  );
+}
+
 function FeedbackWidget({ jobId, API_BASE }: { jobId: string; API_BASE: string }) {
   const [rating, setRating] = useState(0);
   const [hovered, setHovered] = useState(0);
@@ -974,7 +1123,10 @@ export function PreviewResultPage() {
             </a>{' '}and we'll sort it out.
           </p>
         )}
-        {resultUrls.some(Boolean) && <BookViewer urls={SKIP_COVER_THEMES.has(themeSlug ?? '') ? resultUrls.slice(1) : resultUrls} firstIsCover={false} isComplete={done} onOrder={handleOrder} />}
+        {resultUrls.some(Boolean) && (themeSlug === 'abc'
+          ? <PairedPageViewer urls={resultUrls} isComplete={done} onOrder={handleOrder} />
+          : <BookViewer urls={SKIP_COVER_THEMES.has(themeSlug ?? '') ? resultUrls.slice(1) : resultUrls} firstIsCover={false} isComplete={done} onOrder={handleOrder} />
+        )}
 
         {/* Error */}
         {status === 'failed' && (

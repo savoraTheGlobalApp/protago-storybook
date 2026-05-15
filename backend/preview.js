@@ -12,7 +12,7 @@ const BACKEND = process.env.PREVIEW_BACKEND || 'modal';
 // Key format: `${storySlug}/${ageGroup}` or just `${storySlug}` as fallback.
 // All themes default to 2 (cover + first story scene).
 const SCENE_COUNT = {
-  'abc':               5,  // cover + 4 letter scenes (no text overlay, baked in)
+  'abc':               4,  // 4 face-swapped scenes shown as 2 paired spreads
   'colours-shapes':    5,  // all age groups
   'bedtime-routines':  5,  // all age groups
   'numbers-maths':     5,  // all age groups

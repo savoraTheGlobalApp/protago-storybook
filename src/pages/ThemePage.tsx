@@ -290,10 +290,30 @@ export function ThemePage() {
   const [orderSubmitting, setOrderSubmitting] = useState(false);
   const [orderSubmitted, setOrderSubmitted] = useState(false);
   const [orderError, setOrderError] = useState('');
-  const [couponInput, setCouponInput] = useState('');
+  const [couponInput, setCouponInput] = useState('PROTAGO50');
   const [couponApplied, setCouponApplied] = useState<{ code: string; discountAmount: number; finalPrice: number; discountType: string; discountValue: number } | null>(null);
   const [couponError, setCouponError] = useState('');
   const [couponLoading, setCouponLoading] = useState(false);
+
+  useEffect(() => {
+    const autoApply = async () => {
+      const code = 'PROTAGO50';
+      setCouponLoading(true);
+      try {
+        const res = await fetch(`${API_BASE}/api/validate-coupon`, {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ code }),
+        });
+        const data = await res.json();
+        if (res.ok && data.valid) {
+          setCouponApplied({ code, discountAmount: data.discountAmount, finalPrice: data.finalPrice, discountType: data.discountType, discountValue: data.discountValue });
+        }
+      } catch { /* ignore */ }
+      setCouponLoading(false);
+    };
+    autoApply();
+  }, []);
+
   const [generating, setGenerating] = useState(false);
   const [gender, setGender] = useState<'boy' | 'girl' | null>(null);
   const [selectedAgeGroup, setSelectedAgeGroup] = useState<'young' | 'middle' | 'older' | null>(null);
@@ -1109,14 +1129,22 @@ export function ThemePage() {
               </div>
             </div>
 
+            <style>{`
+              @media (max-width: 600px) {
+                .of-row1 { grid-template-columns: 1fr !important; }
+                .of-photo-addr { grid-template-columns: 1fr !important; }
+                .of-form { padding: 16px !important; }
+              }
+            `}</style>
+
             {orderSubmitted ? (
               <div style={{ padding: '60px 36px', textAlign: 'center' }}>
                 <div style={{ fontSize: 56, marginBottom: 16 }}>🎉</div>
                 <h3 style={{ fontFamily: "'Baloo 2', sans-serif", fontWeight: 800, color: C.navy, fontSize: 22, margin: '0 0 8px' }}>Order received!</h3>
-                <p style={{ fontSize: 14, color: C.gray, margin: 0, lineHeight: 1.7 }}>We'll reach out to <strong>{orderForm.email}</strong> within 24 hours to confirm your order.</p>
+                <p style={{ fontSize: 14, color: C.gray, margin: 0, lineHeight: 1.7 }}>Your order is confirmed! We'll keep you updated on <strong>{orderForm.email}</strong>.</p>
               </div>
             ) : (
-              <form onSubmit={handleOrderSubmit} style={{ padding: '24px 28px', display: 'flex', flexDirection: 'column', gap: 14 }}>
+              <form onSubmit={handleOrderSubmit} className="of-form" style={{ padding: '24px 28px', display: 'flex', flexDirection: 'column', gap: 14 }}>
 
                 {orderError && (
                   <div style={{ padding: '12px 14px', background: '#FFF0F0', borderRadius: 8, border: '1px solid #FFCDD2' }}>
@@ -1125,7 +1153,7 @@ export function ThemePage() {
                 )}
 
                 {/* Row 1: name + email + phone */}
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: 10 }}>
+                <div className="of-row1" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: 10 }}>
                   {[
                     { label: 'Your name *', key: 'parentName', placeholder: 'Priya Sharma', type: 'text' },
                     { label: 'Email *', key: 'email', placeholder: 'you@email.com', type: 'email' },
@@ -1206,7 +1234,7 @@ export function ThemePage() {
                 </div>
 
                 {/* Row 3: photo (with tips) + address */}
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 2fr', gap: 10 }}>
+                <div className="of-photo-addr" style={{ display: 'grid', gridTemplateColumns: '1fr 2fr', gap: 10 }}>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                     <label style={{ fontSize: 10, fontWeight: 700, color: '#9CA3AF', display: 'block', textTransform: 'uppercase', letterSpacing: '0.07em' }}>Child's photo *</label>
                     {/* Photo tips 2×2 */}
@@ -1377,7 +1405,7 @@ export function ThemePage() {
                   style={{ background: (!orderConsent || orderSubmitting || !orderPhoto?.uploadedPath) ? '#E5E7EB' : `linear-gradient(135deg, ${C.saffron} 0%, #FF8C42 100%)`, color: (!orderConsent || orderSubmitting || !orderPhoto?.uploadedPath) ? '#9CA3AF' : '#fff', border: 'none', borderRadius: 12, padding: '14px 20px', fontWeight: 800, fontSize: 16, cursor: (!orderConsent || orderSubmitting || !orderPhoto?.uploadedPath) ? 'default' : 'pointer', fontFamily: "'Baloo 2', sans-serif", boxShadow: (!orderConsent || orderSubmitting || !orderPhoto?.uploadedPath) ? 'none' : '0 4px 16px rgba(255,107,53,0.4)' }}>
                   {orderSubmitting ? 'Processing…' : `Pay ₹${couponApplied ? couponApplied.finalPrice : (Number(import.meta.env.VITE_STORYBOOK_PRICE) || 499)} & Order →`}
                 </button>
-                <p style={{ fontSize: 11, color: C.lgray, textAlign: 'center', margin: '-4px 0 0' }}>We'll confirm within 24 hours · Delivered in 5–7 business days</p>
+                <p style={{ fontSize: 11, color: C.lgray, textAlign: 'center', margin: '-4px 0 0' }}>Delivered in 5–7 business days</p>
 
               </form>
             )}
