@@ -55,6 +55,11 @@ export function NavBar() {
               {label}
             </button>
           ))}
+          <button onClick={() => { setMobileOpen(false); navigate('/blog'); }}
+            className="text-sm font-semibold transition-colors hover:opacity-70"
+            style={{ color: C.gray, background: 'none', border: 'none', cursor: 'pointer' }}>
+            Blog
+          </button>
           <button onClick={() => goTo('themes')}
             className="px-5 py-2 rounded-full text-sm font-bold text-white transition-opacity hover:opacity-90"
             style={{ background: C.gradient, border: 'none', cursor: 'pointer' }}>
@@ -97,8 +102,16 @@ export function NavBar() {
                 </motion.button>
               ))}
               <motion.button
-                initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}
+                initial={{ opacity: 0, x: -12 }} animate={{ opacity: 1, x: 0 }}
                 transition={{ delay: NAV_LINKS.length * 0.04 }}
+                onClick={() => { setMobileOpen(false); navigate('/blog'); }}
+                className="py-4 font-semibold text-center w-full"
+                style={{ color: C.navy, background: 'none', border: 'none', borderBottom: '1px solid #F5F5F5', cursor: 'pointer', fontSize: 18 }}>
+                Blog
+              </motion.button>
+              <motion.button
+                initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: (NAV_LINKS.length + 1) * 0.04 }}
                 onClick={() => goTo('themes')}
                 className="mt-3 mb-1 py-3 rounded-2xl font-bold text-white text-center"
                 style={{ background: C.gradient, border: 'none', cursor: 'pointer', fontSize: 18 }}>
