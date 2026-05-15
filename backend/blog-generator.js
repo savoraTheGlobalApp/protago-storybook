@@ -69,14 +69,13 @@ import { readFileSync } from 'fs';
 
 function getServiceAccount() {
   if (process.env.GCS_SERVICE_ACCOUNT_JSON) {
-    const b64 = process.env.GCS_SERVICE_ACCOUNT_JSON.trim();
-    const raw = Buffer.from(b64, 'base64').toString('utf-8').replace(/^﻿/, '').trim();
-    console.log('[blog] SA decode preview:', raw.slice(0, 60));
-    try {
-      return JSON.parse(raw);
-    } catch (e) {
-      throw new Error(`GCS_SERVICE_ACCOUNT_JSON decode failed: ${e.message}. First 60 chars: ${raw.slice(0, 60)}`);
+    const val = process.env.GCS_SERVICE_ACCOUNT_JSON.trim().replace(/^﻿/, '');
+    // Accept either raw JSON or base64-encoded JSON
+    if (val.startsWith('{')) {
+      return JSON.parse(val);
     }
+    const raw = Buffer.from(val, 'base64').toString('utf-8').trim();
+    return JSON.parse(raw);
   }
   if (process.env.GCS_SERVICE_ACCOUNT_PATH) {
     return JSON.parse(readFileSync(process.env.GCS_SERVICE_ACCOUNT_PATH, 'utf-8'));
