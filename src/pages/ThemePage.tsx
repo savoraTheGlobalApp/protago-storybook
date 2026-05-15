@@ -210,7 +210,7 @@ function SampleBookViewer({ slug, onGetPreview }: { slug: string; onGetPreview?:
           padding: '28px 16px 16px',
         }}>
           <div style={{ fontSize: 9, fontWeight: 700, color: C.saffron, textTransform: 'uppercase', letterSpacing: '0.14em', marginBottom: 5 }}>
-            {idx === 0 ? 'Cover' : `Scene ${idx} of 12`}
+            {idx === 0 ? 'Cover' : `Scene ${idx + 1} of ${pages.length}`}
           </div>
           <div style={{ fontFamily: "'Baloo 2', sans-serif", fontWeight: 800, fontSize: 14, color: '#fff', marginBottom: 6 }}>
             {page.title}
@@ -234,7 +234,7 @@ function SampleBookViewer({ slug, onGetPreview }: { slug: string; onGetPreview?:
       {/* Text below image (mobile only) */}
       <div className="book-page-text-below" style={{ padding: '12px 4px 4px', minHeight: 180 }}>
         <div style={{ fontSize: 10, fontWeight: 700, color: C.saffron, textTransform: 'uppercase', letterSpacing: '0.14em', marginBottom: 4 }}>
-          {idx === 0 ? 'Cover' : `Scene ${idx} of 12`}
+          {idx === 0 ? 'Cover' : `Scene ${idx + 1} of ${pages.length}`}
         </div>
         <div style={{ fontFamily: "'Baloo 2', sans-serif", fontWeight: 800, fontSize: 15, color: C.navy, marginBottom: 6 }}>
           {page.title}
