@@ -146,15 +146,43 @@ const SAMPLE_PAGES: Record<string, SamplePage[]> = {
     { imageUrl: `${GCS_SCENES}/body-safety/older_girl/scene_04_spread.png`, title: 'The Power of NO', text: '"NO" is one of the most powerful words you know. You can say it to anyone — even a grown-up, even someone you love — if something about your body doesn\'t feel right. You never have to hug, kiss, or be touched if you don\'t want to. NO is a complete sentence.' },
     { imageUrl: `${GCS_SCENES}/body-safety/older_girl/scene_05_spread.png`, title: 'You Are Strong', text: 'Your child now knows that their body belongs to them — and that speaking up is always the right thing to do. Body safety is not just a lesson. It is a shield. A child who knows their rights is a child who is protected. You are strong, brave, and loved.' },
   ],
+  'potty-training': [
+    { imageUrl: '/themes_scenes/potty-training/scene_01.webp', title: 'The Big Milestone!', text: 'Something exciting is happening — your child is growing up! Big kids use the potty, and today the adventure begins. Every hero has a first step. This is yours.' },
+    { imageUrl: '/themes_scenes/potty-training/scene_03.webp', title: 'I Did It!', text: 'Your child sat down, took a deep breath — and the magic happened! A happy dance, a huge smile, and the proudest feeling in the world. "I did it!" is one of the most powerful things a child can say.' },
+    { imageUrl: '/themes_scenes/potty-training/scene_05.webp', title: 'Wash Those Hands!', text: 'Splash, splash, scrub, scrub — clean hands are superhero hands! Washing hands after the potty keeps germs away and bodies healthy. Your child is learning one of the most important habits of their life.' },
+    { imageUrl: '/themes_scenes/potty-training/scene_07.webp', title: 'Getting Braver', text: 'Every day your child gets a little braver, a little more confident. Accidents happen — and that is perfectly okay. What matters is trying. The potty knows your child is on the way to becoming a pro!' },
+    { imageUrl: '/themes_scenes/potty-training/scene_09.webp', title: 'Potty Hero!', text: 'Your child stands tall — a true Potty Hero! This milestone means independence, growth, and pride. The whole family is cheering. Growing up is the greatest adventure of all.' },
+  ],
+  'hindi-alphabet': [
+    { imageUrl: '/themes_scenes/hindi-alphabet/scene_01.webp', title: 'अ से आम — A for Aam', text: 'Your child reaches for a golden mango hanging from the tallest branch — "अ!" The Hindi alphabet begins with the sweetest letter of all. Every language is a treasure, and Hindi is one of the oldest in the world.' },
+    { imageUrl: '/themes_scenes/hindi-alphabet/scene_03.webp', title: 'इ से इमली — I for Imli', text: 'A twisty tamarind tree sways gently in the warm breeze — "इ!" Your child traces the letter in the air. Each Hindi akshar is a little piece of art — curved, flowing, and full of life.' },
+    { imageUrl: '/themes_scenes/hindi-alphabet/scene_05.webp', title: 'उ से उल्लू — U for Ullu', text: 'A wise owl blinks from its perch under the moon — "उ!" In Hindi, every vowel has its own unique sound that unlocks hundreds of beautiful words. Your child is discovering a whole new world.' },
+    { imageUrl: '/themes_scenes/hindi-alphabet/scene_07.webp', title: 'क से कमल — Ka for Kamal', text: 'A lotus blooms perfectly still on a shimmering pond — "क!" The consonants of Hindi are bold and bright. The lotus is India\'s national flower — and now your child can write its first letter!' },
+    { imageUrl: '/themes_scenes/hindi-alphabet/scene_09.webp', title: 'ग से गाय — Ga for Gaay', text: 'A gentle cow with a golden bell wanders through a sunny field — "ग!" Hindi letters are not just sounds — they are stories. Every akshar your child learns is a new key to the language of home.' },
+  ],
 };
 
 function SampleBookViewer({ slug, onGetPreview }: { slug: string; onGetPreview?: () => void }) {
   const pages = SAMPLE_PAGES[slug];
   if (!pages) return null;
   const [idx, setIdx] = useState(0);
+  const [paused, setPaused] = useState(false);
   const touchStartX = useRef<number | null>(null);
   const page = pages[idx];
   const isLast = idx === pages.length - 1;
+
+  // Auto-rotate every 3.5 s; pause briefly after manual nav
+  useEffect(() => {
+    if (paused) return;
+    const id = setInterval(() => setIdx(i => (i + 1) % pages.length), 3500);
+    return () => clearInterval(id);
+  }, [paused, pages.length]);
+
+  const go = (next: number) => {
+    setIdx(next);
+    setPaused(true);
+    setTimeout(() => setPaused(false), 6000);
+  };
 
   return (
     <div style={{ padding: '20px 20px 24px', display: 'flex', flexDirection: 'column', boxSizing: 'border-box' }}>
@@ -169,8 +197,8 @@ function SampleBookViewer({ slug, onGetPreview }: { slug: string; onGetPreview?:
         onTouchEnd={e => {
           if (touchStartX.current === null) return;
           const dx = e.changedTouches[0].clientX - touchStartX.current;
-          if (dx < -40 && idx < pages.length - 1) setIdx(i => i + 1);
-          if (dx > 40 && idx > 0) setIdx(i => i - 1);
+          if (dx < -40 && idx < pages.length - 1) go(idx + 1);
+          if (dx > 40 && idx > 0) go(idx - 1);
           touchStartX.current = null;
         }}
       >
@@ -201,11 +229,11 @@ function SampleBookViewer({ slug, onGetPreview }: { slug: string; onGetPreview?:
 
         {/* Side tap zones */}
         {idx > 0 && (
-          <button onClick={() => setIdx(i => i - 1)}
+          <button onClick={() => go(idx - 1)}
             style={{ position: 'absolute', top: 0, left: 0, width: '20%', height: '100%', background: 'transparent', border: 'none', cursor: 'pointer' }} />
         )}
         {!isLast && (
-          <button onClick={() => setIdx(i => i + 1)}
+          <button onClick={() => go(idx + 1)}
             style={{ position: 'absolute', top: 0, right: 0, width: '20%', height: '100%', background: 'transparent', border: 'none', cursor: 'pointer' }} />
         )}
       </div>
@@ -225,13 +253,13 @@ function SampleBookViewer({ slug, onGetPreview }: { slug: string; onGetPreview?:
 
       {/* Navigation */}
       <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 10, marginTop: 14 }}>
-        <button onClick={() => setIdx(i => Math.max(0, i - 1))} disabled={idx === 0}
+        <button onClick={() => go(Math.max(0, idx - 1))} disabled={idx === 0}
           style={{ background: 'none', border: `1.5px solid ${idx === 0 ? '#D1D5DB' : C.saffron}`, borderRadius: '50%', width: 30, height: 30, cursor: idx === 0 ? 'default' : 'pointer', color: idx === 0 ? '#D1D5DB' : C.saffron, fontSize: 17, display: 'flex', alignItems: 'center', justifyContent: 'center', lineHeight: 1 }}>
           ‹
         </button>
         <div style={{ display: 'flex', gap: 5 }}>
           {pages.map((_, i) => (
-            <button key={i} onClick={() => setIdx(i)}
+            <button key={i} onClick={() => go(i)}
               style={{ width: 7, height: 7, borderRadius: '50%', border: 'none', background: i === idx ? C.saffron : '#D1D5DB', cursor: 'pointer', padding: 0, transition: 'background 0.2s' }} />
           ))}
         </div>
@@ -241,7 +269,7 @@ function SampleBookViewer({ slug, onGetPreview }: { slug: string; onGetPreview?:
             Get Preview →
           </button>
         ) : (
-          <button onClick={() => setIdx(i => Math.min(pages.length - 1, i + 1))} disabled={isLast}
+          <button onClick={() => go(Math.min(pages.length - 1, idx + 1))} disabled={isLast}
             style={{ background: 'none', border: `1.5px solid ${isLast ? '#D1D5DB' : C.saffron}`, borderRadius: '50%', width: 30, height: 30, cursor: isLast ? 'default' : 'pointer', color: isLast ? '#D1D5DB' : C.saffron, fontSize: 17, display: 'flex', alignItems: 'center', justifyContent: 'center', lineHeight: 1 }}>
             ›
           </button>
@@ -272,6 +300,10 @@ export function ThemePage() {
   const theme = THEMES.find(t => t.slug === slug);
   const NINE_PAGE_THEMES = new Set(['abc', 'colours-shapes', 'bedtime-routines', 'numbers-maths', 'sharing-sorry', 'first-day-school', 'managing-emotions', 'indian-festivals', 'phonics-reading', 'history-india', 'financial-literacy', 'growth-mindset', 'professions']);
   const previewPageCount = theme && NINE_PAGE_THEMES.has(theme.slug) ? 9 : 4;
+  const useScenes = !!(theme?.comingSoon || theme?.slug === 'abc');
+  const sceneFiles = theme?.slug === 'abc'
+    ? ['scene_01', 'scene_02', 'scene_03', 'scene_04', 'scene_05']
+    : ['scene_01', 'scene_03', 'scene_05', 'scene_07', 'scene_09'];
 
   const [activeIdx, setActiveIdx] = useState(0);
   const [childName, setChildName] = useState('');
@@ -642,42 +674,56 @@ export function ThemePage() {
             </div>
             {/* 1/4: Face animation + CTA (hidden on mobile) */}
             <div className="book-hook-face-col" style={{ flex: 1, flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '24px 16px', gap: 16, minWidth: 160 }}>
-              {/* Face animation */}
+              {/* Scene preview or face animation */}
               <div style={{ position: 'relative', width: '100%', aspectRatio: '4/3', borderRadius: 12, overflow: 'hidden', background: '#F0EEE8' }}>
-                {getFaceSamples(theme.slug).map((sample, i) => (
-                  <motion.img key={sample.key}
-                    src={`/themes_mockup/${theme.slug}_${sample.key}_mockup.webp`}
-                    alt="" decoding="async"
-                    style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'contain', transform: 'scale(1.3)' }}
-                    animate={{ opacity: i === activeIdx ? 1 : 0 }}
-                    transition={{ duration: 0.5 }}
-                    onError={e => { (e.target as HTMLImageElement).style.display = 'none'; }}
-                  />
-                ))}
-                {(() => { const at = getArrowTarget(theme.slug); return (
-                  <svg viewBox="0 0 160 90" preserveAspectRatio="none"
-                    style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', zIndex: 5, pointerEvents: 'none' }}>
-                    <motion.path d={`M 148 4 Q 148 40 ${at.x} ${at.y}`} fill="none" stroke={C.saffron}
-                      strokeWidth="2" strokeDasharray="5 3" strokeLinecap="round"
-                      initial={{ pathLength: 0, opacity: 0 }} animate={{ pathLength: 1, opacity: 1 }}
-                      transition={{ pathLength: { duration: 1.0, delay: 0.2 }, opacity: { duration: 0.2 } }}
-                      key={activeIdx} />
-                    <motion.path d={`M ${at.x + 8} ${at.y - 5} L ${at.x} ${at.y} L ${at.x + 7} ${at.y + 5}`} fill="none" stroke={C.saffron}
-                      strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
-                      initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 1.0 }}
-                      key={`ah-${activeIdx}`} />
-                  </svg>
-                ); })()}
-                {/* Face bubble */}
-                <div style={{ position: 'absolute', top: 8, right: 10, width: 48, height: 48, zIndex: 10 }}>
-                  {getFaceSamples(theme.slug).map((sample, i) => (
-                    <motion.img key={sample.face} src={sample.face} alt="" decoding="async"
-                      style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover',
-                        borderRadius: '50%', border: `2.5px solid ${C.saffron}`, boxShadow: '0 3px 12px rgba(255,107,53,0.35), 0 0 0 2px #fff' }}
-                      animate={{ opacity: i === activeIdx ? 1 : 0, scale: i === activeIdx ? 1 : 0.9 }}
-                      transition={{ duration: 0.4 }} />
-                  ))}
-                </div>
+                {useScenes ? (
+                  sceneFiles.map((s, i) => (
+                    <motion.img key={s}
+                      src={`/themes_scenes/${theme.slug}/${s}.webp`}
+                      alt="" decoding="async"
+                      style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }}
+                      animate={{ opacity: i === activeIdx % 5 ? 1 : 0 }}
+                      transition={{ duration: 0.6 }}
+                    />
+                  ))
+                ) : (
+                  <>
+                    {getFaceSamples(theme.slug).map((sample, i) => (
+                      <motion.img key={sample.key}
+                        src={`/themes_mockup/${theme.slug}_${sample.key}_mockup.webp`}
+                        alt="" decoding="async"
+                        style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'contain', transform: 'scale(1.3)' }}
+                        animate={{ opacity: i === activeIdx ? 1 : 0 }}
+                        transition={{ duration: 0.5 }}
+                        onError={e => { (e.target as HTMLImageElement).style.display = 'none'; }}
+                      />
+                    ))}
+                    {(() => { const at = getArrowTarget(theme.slug); return (
+                      <svg viewBox="0 0 160 90" preserveAspectRatio="none"
+                        style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', zIndex: 5, pointerEvents: 'none' }}>
+                        <motion.path d={`M 148 4 Q 148 40 ${at.x} ${at.y}`} fill="none" stroke={C.saffron}
+                          strokeWidth="2" strokeDasharray="5 3" strokeLinecap="round"
+                          initial={{ pathLength: 0, opacity: 0 }} animate={{ pathLength: 1, opacity: 1 }}
+                          transition={{ pathLength: { duration: 1.0, delay: 0.2 }, opacity: { duration: 0.2 } }}
+                          key={activeIdx} />
+                        <motion.path d={`M ${at.x + 8} ${at.y - 5} L ${at.x} ${at.y} L ${at.x + 7} ${at.y + 5}`} fill="none" stroke={C.saffron}
+                          strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
+                          initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 1.0 }}
+                          key={`ah-${activeIdx}`} />
+                      </svg>
+                    ); })()}
+                    {/* Face bubble */}
+                    <div style={{ position: 'absolute', top: 8, right: 10, width: 48, height: 48, zIndex: 10 }}>
+                      {getFaceSamples(theme.slug).map((sample, i) => (
+                        <motion.img key={sample.face} src={sample.face} alt="" decoding="async"
+                          style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover',
+                            borderRadius: '50%', border: `2.5px solid ${C.saffron}`, boxShadow: '0 3px 12px rgba(255,107,53,0.35), 0 0 0 2px #fff' }}
+                          animate={{ opacity: i === activeIdx ? 1 : 0, scale: i === activeIdx ? 1 : 0.9 }}
+                          transition={{ duration: 0.4 }} />
+                      ))}
+                    </div>
+                  </>
+                )}
               </div>
               <p style={{ fontFamily: "'Baloo 2', sans-serif", fontWeight: 800, fontSize: 13, color: C.navy, textAlign: 'center', margin: 0, lineHeight: 1.4 }}>
                 See your child<br />in this story
@@ -731,15 +777,14 @@ export function ThemePage() {
               ) : (
                 /* ── Default face-swap animation (or raw scenes for comingSoon) ── */
                 <div style={{ aspectRatio: '4/3', background: '#F0EEE8', position: 'relative', overflow: 'hidden' }}>
-                  {theme.comingSoon ? (
-                    [1, 2, 3].map((n, i) => (
-                      <motion.img key={n}
-                        src={`/themes_mockup/${theme.slug}_${['boy_young','boy_older','girl'][i]}_mockup.webp`}
+                  {useScenes ? (
+                    sceneFiles.map((s, i) => (
+                      <motion.img key={s}
+                        src={`/themes_scenes/${theme.slug}/${s}.webp`}
                         alt="" decoding="async"
                         style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }}
-                        animate={{ opacity: i === activeIdx % 3 ? 1 : 0 }}
-                        transition={{ duration: 0.5 }}
-                        onError={e => { (e.target as HTMLImageElement).style.display = 'none'; }}
+                        animate={{ opacity: i === activeIdx % 5 ? 1 : 0 }}
+                        transition={{ duration: 0.6 }}
                       />
                     ))
                   ) : getFaceSamples(theme.slug).map((sample, i) => (
@@ -752,7 +797,7 @@ export function ThemePage() {
                       onError={e => { (e.target as HTMLImageElement).style.display = 'none'; }}
                     />
                   ))}
-                  {(() => { const at = getArrowTarget(theme.slug); return (
+                  {!useScenes && (() => { const at = getArrowTarget(theme.slug); return (
                     <svg viewBox="0 0 160 90" preserveAspectRatio="none"
                       style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', zIndex: 5, pointerEvents: 'none' }}>
                       <motion.path d={`M 148 4 Q 148 40 ${at.x} ${at.y}`} fill="none" stroke={C.saffron}
@@ -773,7 +818,7 @@ export function ThemePage() {
                   </div>
                 </div>
               )}
-              {!locationState?.previewUrls?.some(u => u) && !theme.comingSoon && (
+              {!locationState?.previewUrls?.some(u => u) && !useScenes && (
                 <div style={{ position: 'absolute', top: 12, right: 16, width: 72, height: 72, zIndex: 10 }}>
                   {getFaceSamples(theme.slug).map((sample, i) => (
                     <motion.img key={sample.face} src={sample.face} alt="" decoding="async"

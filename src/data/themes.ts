@@ -16,6 +16,16 @@ export const THEMES: ThemeEntry[] = [
     slug: 'abc', name: 'ABC Adventure', icon: '🔤', ageRange: '0–3',
     description: 'Child goes on a magical journey through the alphabet — meeting animals and objects for every letter.',
   },
+  {
+    slug: 'potty-training', name: 'Potty Training', icon: '🚽', ageRange: '0–3',
+    description: 'A gentle, encouraging story that follows the child through their potty training journey — making it feel like a fun milestone, not a chore.',
+    comingSoon: true,
+  },
+  {
+    slug: 'hindi-alphabet', name: 'Hindi Alphabet', icon: '🔡', ageRange: '0–3',
+    description: 'Child discovers the magic of Hindi letters — each Akshar comes alive with a character, a word and a world to explore.',
+    comingSoon: true,
+  },
   // Ages 3–5
   {
     slug: 'colours-shapes', name: 'The Rainbow Kingdom Quest', icon: '🎨', ageRange: '3–5',

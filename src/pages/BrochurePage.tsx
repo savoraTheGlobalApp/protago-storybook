@@ -323,6 +323,10 @@ const FACE_SIZE_BROCHURE = 72;
 function BrochureThemeCard({ slug, icon, name, badge, description, ageRange, comingSoon, onClick }: { slug: string; icon: string; name: string; badge?: string; description?: string; ageRange?: string; comingSoon?: boolean; onClick: () => void }) {
   const faceSamples = getFaceSamples(slug);
   const arrowTarget = getArrowTarget(slug);
+  const useScenes = comingSoon || slug === 'abc';
+  const sceneFiles = slug === 'abc'
+    ? ['scene_01', 'scene_02', 'scene_03', 'scene_04', 'scene_05']
+    : ['scene_01', 'scene_03', 'scene_05', 'scene_07', 'scene_09'];
   const [activeIdx, setActiveIdx] = useState(0);
   const [hasLoaded, setHasLoaded] = useState(false);
   const cardRef = useRef<HTMLDivElement>(null);
@@ -354,9 +358,19 @@ function BrochureThemeCard({ slug, icon, name, badge, description, ageRange, com
       onClick={onClick}>
 
       {/* Mockup image + face circle */}
-      <div style={{ paddingTop: comingSoon ? 0 : FACE_SIZE_BROCHURE / 2, position: 'relative' }}>
+      <div style={{ paddingTop: useScenes ? 0 : FACE_SIZE_BROCHURE / 2, position: 'relative' }}>
         <div style={{ aspectRatio: '4/3', background: '#F7F5F0', position: 'relative', overflow: 'hidden' }}>
-          {!hasLoaded ? (
+          {useScenes ? (
+            sceneFiles.map((s, i) => (
+              <motion.img key={s}
+                src={`/themes_scenes/${slug}/${s}.webp`} alt=""
+                loading="lazy" decoding="async"
+                style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
+                animate={{ opacity: i === activeIdx % 5 ? 1 : 0 }}
+                transition={{ duration: 0.6, ease: 'easeInOut' }}
+              />
+            ))
+          ) : !hasLoaded ? (
             <img
               src={`/themes_mockup/${slug}_${faceSamples[0].key}_mockup.webp`}
               alt=""
@@ -403,7 +417,7 @@ function BrochureThemeCard({ slug, icon, name, badge, description, ageRange, com
           )}
         </div>
         {/* Face circle */}
-        {!comingSoon && (
+        {!useScenes && (
           <div style={{ position: 'absolute', top: 0, right: 12, width: FACE_SIZE_BROCHURE, height: FACE_SIZE_BROCHURE, zIndex: 10 }}>
             {!hasLoaded ? (
               <img src={faceSamples[0].face} alt="" loading="lazy" decoding="async" className="rounded-full"
