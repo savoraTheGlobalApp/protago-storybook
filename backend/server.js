@@ -1978,28 +1978,39 @@ app.get('/api/preview/status/:jobId', async (req, res) => {
 // Cached in memory; refreshed every 12 hours to minimise Places API costs.
 const FALLBACK_REVIEWS = {
     rating: 5.0,
-    userRatingCount: 12,
+    userRatingCount: 6,
     reviews: [
         {
-            authorName: 'Sumit Sharma',
+            authorName: 'Suraj Shetty',
             authorPhoto: null,
-            rating: 5,
-            relativeTime: '2 weeks ago',
-            text: 'Absolutely magical! My daughter Ananya couldn\'t believe she was the hero of the story. She asked us to read it every night for a week. Worth every rupee.',
-        },
-        {
-            authorName: 'Priya Menon',
-            authorPhoto: null,
+            authorUrl: 'https://g.page/r/CfdEg8f3DVL6EAE/review',
             rating: 5,
             relativeTime: '1 month ago',
-            text: 'Ordered for my son\'s birthday — he was speechless when he saw himself in the illustrations. The art quality is incredible. Already ordered a second one!',
+            text: 'Their custom kids book was loved by my 2 girls. They customized the book to include both sisters flying a plane together and visiting places. They will cherish these memories and share common experiences. Parents must have these books — an excellent gift for young ones.',
         },
         {
-            authorName: 'Rahul Agarwal',
+            authorName: 'A Learning Theme',
             authorPhoto: null,
+            authorUrl: 'https://g.page/r/CfdEg8f3DVL6EAE/review',
+            rating: 5,
+            relativeTime: '2 months ago',
+            text: 'Such a beautiful and thoughtful gift for kids 🥹📚✨ Seeing her own name, photos & story inside the book made her genuinely so happy 💖 The quality, illustrations and little details are absolutely lovely. A truly special keepsake for little ones.',
+        },
+        {
+            authorName: 'Jayam Chandra',
+            authorPhoto: null,
+            authorUrl: 'https://g.page/r/CfdEg8f3DVL6EAE/review',
             rating: 5,
             relativeTime: '3 weeks ago',
-            text: 'Best gift I\'ve given. Rohan is 7 and has been telling all his friends at school about his own storybook. The personalisation is spot on.',
+            text: 'My kid loves the book. He is so excited watching his version of images and is able to relate with the story better as it gives a tinge of personalization.',
+        },
+        {
+            authorName: 'Tanya Bhardwaj',
+            authorPhoto: null,
+            authorUrl: 'https://g.page/r/CfdEg8f3DVL6EAE/review',
+            rating: 5,
+            relativeTime: '2 weeks ago',
+            text: 'The book and the detailing was so amazing — it even captured my pimple patch and the story was wonderful. Best book ever.',
         },
     ],
 };
@@ -2026,7 +2037,7 @@ app.get('/api/reviews', async (req, res) => {
         const placesRes = await fetch(url, {
             headers: {
                 'X-Goog-Api-Key': apiKey,
-                'X-Goog-FieldMask': 'rating,userRatingCount,reviews.authorAttribution,reviews.rating,reviews.relativePublishTimeDescription,reviews.text,reviews.originalText,reviews.googleMapsUri',
+                'X-Goog-FieldMask': 'rating,userRatingCount,reviews.authorAttribution,reviews.rating,reviews.relativePublishTimeDescription,reviews.text,reviews.originalText',
             },
         });
 
@@ -2039,7 +2050,7 @@ app.get('/api/reviews', async (req, res) => {
         const reviews = (data.reviews || []).map(r => ({
             authorName: r.authorAttribution?.displayName || 'Anonymous',
             authorPhoto: r.authorAttribution?.photoUri || null,
-            authorUrl: r.googleMapsUri || r.authorAttribution?.uri || null,
+            authorUrl: r.authorAttribution?.uri || null,
             rating: r.rating || 5,
             relativeTime: r.relativePublishTimeDescription || '',
             text: r.text?.text || r.originalText?.text || '',
