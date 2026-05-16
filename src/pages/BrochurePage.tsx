@@ -500,7 +500,7 @@ function GoogleG() {
 type ReviewData = {
   rating: number;
   userRatingCount: number;
-  reviews: { authorName: string; authorPhoto: string | null; rating: number; relativeTime: string; text: string }[];
+  reviews: { authorName: string; authorPhoto: string | null; authorUrl: string | null; rating: number; relativeTime: string; text: string }[];
 };
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || '';
@@ -565,7 +565,11 @@ function ReviewsSection() {
               style={{ width: 300, scrollSnapAlign: 'start', background: '#FFFFFF', boxShadow: '0 2px 16px rgba(0,0,0,0.07)', border: '1px solid #F0F0F0' }}>
               {/* Top row */}
               <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
+                <a
+                  href={r.authorUrl || `https://g.page/r/CfdDQ8f3DVI-EBM/review`}
+                  target="_blank" rel="noopener noreferrer"
+                  className="flex items-center gap-3"
+                  style={{ textDecoration: 'none' }}>
                   {r.authorPhoto ? (
                     <img src={r.authorPhoto} alt={r.authorName}
                       className="rounded-full object-cover" style={{ width: 38, height: 38 }} />
@@ -579,7 +583,7 @@ function ReviewsSection() {
                     <p className="text-sm font-bold leading-tight" style={{ color: '#1A1A2E' }}>{r.authorName}</p>
                     <p className="text-xs" style={{ color: '#AAA' }}>{r.relativeTime}</p>
                   </div>
-                </div>
+                </a>
                 <GoogleG />
               </div>
               {/* Stars */}

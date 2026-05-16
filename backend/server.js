@@ -2039,6 +2039,7 @@ app.get('/api/reviews', async (req, res) => {
         const reviews = (data.reviews || []).map(r => ({
             authorName: r.authorAttribution?.displayName || 'Anonymous',
             authorPhoto: r.authorAttribution?.photoUri || null,
+            authorUrl: r.authorAttribution?.uri || null,
             rating: r.rating || 5,
             relativeTime: r.relativePublishTimeDescription || '',
             text: r.text?.text || r.originalText?.text || '',
