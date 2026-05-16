@@ -2005,7 +2005,7 @@ const FALLBACK_REVIEWS = {
 };
 
 let reviewsCache = null;
-let reviewsCacheTime = 0;
+let reviewsCacheTime = 0;  // set to 0 to force re-fetch on next request
 const REVIEWS_CACHE_TTL = 12 * 60 * 60 * 1000; // 12 hours
 
 app.get('/api/reviews', async (req, res) => {
@@ -2026,7 +2026,7 @@ app.get('/api/reviews', async (req, res) => {
         const placesRes = await fetch(url, {
             headers: {
                 'X-Goog-Api-Key': apiKey,
-                'X-Goog-FieldMask': 'rating,userRatingCount,reviews',
+                'X-Goog-FieldMask': 'rating,userRatingCount,reviews.authorAttribution,reviews.rating,reviews.relativePublishTimeDescription,reviews.text,reviews.originalText,reviews.googleMapsUri',
             },
         });
 
@@ -2039,7 +2039,7 @@ app.get('/api/reviews', async (req, res) => {
         const reviews = (data.reviews || []).map(r => ({
             authorName: r.authorAttribution?.displayName || 'Anonymous',
             authorPhoto: r.authorAttribution?.photoUri || null,
-            authorUrl: r.authorAttribution?.uri || null,
+            authorUrl: r.googleMapsUri || r.authorAttribution?.uri || null,
             rating: r.rating || 5,
             relativeTime: r.relativePublishTimeDescription || '',
             text: r.text?.text || r.originalText?.text || '',
