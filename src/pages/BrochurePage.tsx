@@ -547,7 +547,7 @@ function ReviewsSection() {
             </div>
           </div>
           <a
-            href={`https://search.google.com/local/reviews?placeid=${import.meta.env.VITE_GOOGLE_PLACE_ID || ''}`}
+            href="https://g.page/r/CfdEg8f3DVL6EAE/review"
             target="_blank" rel="noopener noreferrer"
             className="text-sm font-bold flex items-center gap-1.5 self-start sm:self-auto px-4 py-2 rounded-full border transition-colors hover:bg-gray-50"
             style={{ color: '#4285F4', borderColor: '#DADCE0' }}>

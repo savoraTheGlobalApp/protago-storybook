@@ -2037,7 +2037,7 @@ app.get('/api/reviews', async (req, res) => {
         const placesRes = await fetch(url, {
             headers: {
                 'X-Goog-Api-Key': apiKey,
-                'X-Goog-FieldMask': 'rating,userRatingCount,reviews.authorAttribution,reviews.rating,reviews.relativePublishTimeDescription,reviews.text,reviews.originalText',
+                'X-Goog-FieldMask': 'rating,userRatingCount,reviews',
             },
         });
 
@@ -2047,10 +2047,11 @@ app.get('/api/reviews', async (req, res) => {
         }
 
         const data = await placesRes.json();
+        if (data.reviews?.[0]) console.log('[reviews] first review keys:', Object.keys(data.reviews[0]));
         const reviews = (data.reviews || []).map(r => ({
             authorName: r.authorAttribution?.displayName || 'Anonymous',
             authorPhoto: r.authorAttribution?.photoUri || null,
-            authorUrl: r.authorAttribution?.uri || null,
+            authorUrl: r.googleMapsUri || r.authorAttribution?.uri || null,
             rating: r.rating || 5,
             relativeTime: r.relativePublishTimeDescription || '',
             text: r.text?.text || r.originalText?.text || '',
