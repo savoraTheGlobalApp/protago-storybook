@@ -559,17 +559,16 @@ function ReviewsSection() {
         <div ref={scrollRef} className="flex gap-4 overflow-x-auto pb-3"
           style={{ scrollSnapType: 'x mandatory', WebkitOverflowScrolling: 'touch', scrollbarWidth: 'none' }}>
           {data.reviews.map((r, i) => (
-            <motion.div key={i} initial={{ opacity: 0, y: 16 }} whileInView={{ opacity: 1, y: 0 }}
+            <motion.a key={i}
+              href={r.authorUrl || `https://g.page/r/CfdEg8f3DVL6EAE/review`}
+              target="_blank" rel="noopener noreferrer"
+              initial={{ opacity: 0, y: 16 }} whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }} transition={{ delay: i * 0.07 }}
               className="flex-shrink-0 rounded-2xl p-5 flex flex-col gap-3"
-              style={{ width: 300, scrollSnapAlign: 'start', background: '#FFFFFF', boxShadow: '0 2px 16px rgba(0,0,0,0.07)', border: '1px solid #F0F0F0' }}>
+              style={{ width: 300, scrollSnapAlign: 'start', background: '#FFFFFF', boxShadow: '0 2px 16px rgba(0,0,0,0.07)', border: '1px solid #F0F0F0', textDecoration: 'none', cursor: 'pointer', display: 'flex' }}>
               {/* Top row */}
               <div className="flex items-center justify-between">
-                <a
-                  href={r.authorUrl || `https://g.page/r/CfdEg8f3DVL6EAE/review`}
-                  target="_blank" rel="noopener noreferrer"
-                  className="flex items-center gap-3"
-                  style={{ textDecoration: 'none' }}>
+                <div className="flex items-center gap-3">
                   {r.authorPhoto ? (
                     <img src={r.authorPhoto} alt={r.authorName}
                       className="rounded-full object-cover" style={{ width: 38, height: 38 }} />
@@ -583,14 +582,14 @@ function ReviewsSection() {
                     <p className="text-sm font-bold leading-tight" style={{ color: '#1A1A2E' }}>{r.authorName}</p>
                     <p className="text-xs" style={{ color: '#AAA' }}>{r.relativeTime}</p>
                   </div>
-                </a>
+                </div>
                 <GoogleG />
               </div>
               {/* Stars */}
               <p style={{ color: '#F7B731', fontSize: 16, letterSpacing: 1 }}>{stars(r.rating)}</p>
               {/* Text */}
-              <p className="text-sm leading-relaxed" style={{ color: '#444' }}>{r.text}</p>
-            </motion.div>
+              <p className="text-sm leading-relaxed" style={{ color: '#444', margin: 0 }}>{r.text}</p>
+            </motion.a>
           ))}
         </div>
       </div>
