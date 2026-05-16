@@ -1985,7 +1985,7 @@ const FALLBACK_REVIEWS = {
             authorPhoto: null,
             authorUrl: 'https://g.page/r/CfdEg8f3DVL6EAE/review',
             rating: 5,
-            relativeTime: '1 month ago',
+            relativeTime: '',
             text: 'Their custom kids book was loved by my 2 girls. They customized the book to include both sisters flying a plane together and visiting places. They will cherish these memories and share common experiences. Parents must have these books — an excellent gift for young ones.',
         },
         {
@@ -1993,7 +1993,7 @@ const FALLBACK_REVIEWS = {
             authorPhoto: null,
             authorUrl: 'https://g.page/r/CfdEg8f3DVL6EAE/review',
             rating: 5,
-            relativeTime: '2 months ago',
+            relativeTime: '',
             text: 'Such a beautiful and thoughtful gift for kids 🥹📚✨ Seeing her own name, photos & story inside the book made her genuinely so happy 💖 The quality, illustrations and little details are absolutely lovely. A truly special keepsake for little ones.',
         },
         {
@@ -2001,7 +2001,7 @@ const FALLBACK_REVIEWS = {
             authorPhoto: null,
             authorUrl: 'https://g.page/r/CfdEg8f3DVL6EAE/review',
             rating: 5,
-            relativeTime: '3 weeks ago',
+            relativeTime: '',
             text: 'My kid loves the book. He is so excited watching his version of images and is able to relate with the story better as it gives a tinge of personalization.',
         },
         {
@@ -2009,7 +2009,7 @@ const FALLBACK_REVIEWS = {
             authorPhoto: null,
             authorUrl: 'https://g.page/r/CfdEg8f3DVL6EAE/review',
             rating: 5,
-            relativeTime: '2 weeks ago',
+            relativeTime: '',
             text: 'The book and the detailing was so amazing — it even captured my pimple patch and the story was wonderful. Best book ever.',
         },
     ],
