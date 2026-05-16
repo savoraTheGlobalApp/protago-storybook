@@ -9,10 +9,9 @@ const C = {
 };
 
 const NAV_LINKS = [
-  { label: 'Themes',       anchor: 'themes' },
-  { label: 'How It Works', anchor: 'how-it-works' },
-  { label: 'Team',         anchor: 'team' },
-  { label: 'FAQ',          anchor: 'faq' },
+  { label: 'Themes', anchor: 'themes' },
+  { label: 'Team',   anchor: 'team' },
+  { label: 'FAQ',    anchor: 'faq' },
 ];
 
 export function NavBar() {
