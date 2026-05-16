@@ -3,7 +3,7 @@ import { useParams, useNavigate, useLocation, useSearchParams } from 'react-rout
 import { motion, AnimatePresence } from 'framer-motion';
 import { MessageCircle } from 'lucide-react';
 import { THEMES } from '../data/themes';
-import { getFaceSamples, getArrowTarget } from '../data/themeMockups';
+import { getFaceSamples, getArrowTarget, THEME_FACE_SAMPLES } from '../data/themeMockups';
 import { NavBar } from '../components/NavBar';
 import { trackPreviewStarted } from '../utils/analytics';
 
@@ -293,7 +293,8 @@ export function ThemePage() {
   const theme = THEMES.find(t => t.slug === slug);
   const NINE_PAGE_THEMES = new Set(['abc', 'colours-shapes', 'bedtime-routines', 'numbers-maths', 'sharing-sorry', 'first-day-school', 'managing-emotions', 'indian-festivals', 'history-india', 'financial-literacy', 'growth-mindset', 'professions']);
   const previewPageCount = theme && NINE_PAGE_THEMES.has(theme.slug) ? 9 : 4;
-  const useScenes = !!(theme?.comingSoon || theme?.slug === 'abc');
+  const hasFaceswapMockup = theme?.slug ? theme.slug in THEME_FACE_SAMPLES : false;
+  const useScenes = !!((theme?.comingSoon && !hasFaceswapMockup) || theme?.slug === 'abc');
   const sceneFiles = theme?.slug === 'abc'
     ? ['scene_01', 'scene_02', 'scene_03', 'scene_04', 'scene_05']
     : ['scene_01', 'scene_03', 'scene_05', 'scene_07', 'scene_09'];

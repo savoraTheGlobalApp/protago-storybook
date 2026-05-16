@@ -4,7 +4,7 @@ import { motion, AnimatePresence, useInView } from 'framer-motion';
 import { ArrowRight, ChevronDown, MessageCircle } from 'lucide-react';
 import { NavBar } from '../components/NavBar';
 import { THEMES, ThemeEntry, ageToRange } from '../data/themes';
-import { DEFAULT_FACE_SAMPLES, getFaceSamples, getArrowTarget } from '../data/themeMockups';
+import { DEFAULT_FACE_SAMPLES, getFaceSamples, getArrowTarget, THEME_FACE_SAMPLES } from '../data/themeMockups';
 import { trackEvent } from '../utils/analytics';
 
 // ── Palette — two backgrounds (white / navy), one warm gradient, saffron + gold accents
@@ -327,7 +327,7 @@ const FACE_SIZE_BROCHURE = 72;
 function BrochureThemeCard({ slug, icon, name, badge, description, ageRange, comingSoon, onClick }: { slug: string; icon: string; name: string; badge?: string; description?: string; ageRange?: string; comingSoon?: boolean; onClick: () => void }) {
   const faceSamples = getFaceSamples(slug);
   const arrowTarget = getArrowTarget(slug);
-  const useScenes = comingSoon || slug === 'abc';
+  const useScenes = (comingSoon && !(slug in THEME_FACE_SAMPLES)) || slug === 'abc';
   const sceneFiles = slug === 'abc'
     ? ['scene_01', 'scene_02', 'scene_03', 'scene_04', 'scene_05']
     : ['scene_01', 'scene_03', 'scene_05', 'scene_07', 'scene_09'];
