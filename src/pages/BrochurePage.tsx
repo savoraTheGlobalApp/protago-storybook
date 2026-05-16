@@ -566,7 +566,7 @@ function ReviewsSection() {
               {/* Top row */}
               <div className="flex items-center justify-between">
                 <a
-                  href={r.authorUrl || `https://g.page/r/CfdDQ8f3DVI-EBM/review`}
+                  href={r.authorUrl || `https://g.page/r/CfdEg8f3DVL6EAE/review`}
                   target="_blank" rel="noopener noreferrer"
                   className="flex items-center gap-3"
                   style={{ textDecoration: 'none' }}>
@@ -2319,7 +2319,7 @@ export function BrochurePage() {
           {/* CTA */}
           <div className="text-center mt-10">
             <a
-              href="https://g.page/r/CfdDQ8f3DVI-EBM/review"
+              href="https://g.page/r/CfdEg8f3DVL6EAE/review"
               target="_blank" rel="noopener noreferrer"
               style={{ display: 'inline-flex', alignItems: 'center', gap: 8, background: '#fff', border: '1.5px solid #E5DDD5', borderRadius: 50, padding: '12px 26px', color: C.navy, fontWeight: 700, fontSize: 14, textDecoration: 'none', fontFamily: "'Baloo 2', sans-serif", boxShadow: '0 2px 8px rgba(0,0,0,0.07)' }}>
               <svg width="16" height="16" viewBox="0 0 48 48">
