@@ -2281,10 +2281,12 @@ export function BrochurePage() {
               { name: 'Jayam Chandra', initial: 'J', text: 'My kid loves the book. He is so excited watching his version of images and is able to relate with the story better as it gives a tinge of personalization.' },
               { name: 'Tanya Bhardwaj', initial: 'T', text: 'The book and the detailing was so amazing — it even captured my pimple patch and the story was wonderful. Best book ever.' },
             ].map(({ name, initial, text }, i) => (
-              <motion.div key={i}
+              <motion.a key={i}
+                href="https://g.page/r/CfdEg8f3DVL6EAE/review"
+                target="_blank" rel="noopener noreferrer"
                 initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }} transition={{ delay: i * 0.07 }}
-                style={{ background: '#fff', border: '1px solid #F0EBE4', borderRadius: 18, padding: '20px 22px', display: 'flex', flexDirection: 'column', gap: 14, boxShadow: '0 2px 12px rgba(0,0,0,0.05)' }}>
+                style={{ background: '#fff', border: '1px solid #F0EBE4', borderRadius: 18, padding: '20px 22px', display: 'flex', flexDirection: 'column', gap: 14, boxShadow: '0 2px 12px rgba(0,0,0,0.05)', textDecoration: 'none', cursor: 'pointer' }}>
                 {/* Header row */}
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
@@ -2311,7 +2313,7 @@ export function BrochurePage() {
                   </svg>
                 </div>
                 <p style={{ fontSize: 14, color: C.gray, lineHeight: 1.7, margin: 0, flex: 1 }}>"{text}"</p>
-              </motion.div>
+              </motion.a>
             ))}
           </div>
 
