@@ -113,14 +113,18 @@ const FACE_SCENE_SAMPLES = [
 const FACE_SIZE_CSS = 'clamp(70px, 18vw, 140px)';
 
 const HERO_FACE_SLIDES = [
-  { slug: 'bedtime-routines',  key: 'boy_1',  face: '/faces/face_boy_1.webp',  label: 'Bedtime Routines' },
-  { slug: 'bedtime-routines',  key: 'girl_1', face: '/faces/face_girl_1.webp', label: 'Bedtime Routines' },
-  { slug: 'colours-shapes',    key: 'boy_1',  face: '/faces/face_boy_1.webp',  label: 'Colours & Shapes' },
-  { slug: 'colours-shapes',    key: 'girl_1', face: '/faces/face_girl_1.webp', label: 'Colours & Shapes' },
-  { slug: 'financial-literacy',key: 'boy_1',  face: '/faces/face_boy_1.webp',  label: 'Financial Literacy' },
-  { slug: 'financial-literacy',key: 'girl_1', face: '/faces/face_girl_1.webp', label: 'Financial Literacy' },
-  { slug: 'first-day-school',  key: 'boy_1',  face: '/faces/face_boy_1.webp',  label: 'First Day at School' },
-  { slug: 'first-day-school',  key: 'girl_1', face: '/faces/face_girl_1.webp', label: 'First Day at School' },
+  { slug: 'bedtime-magic',   key: 'boy_1',  face: '/faces/face_boy_1.webp',  label: 'Bedtime Magic' },
+  { slug: 'bedtime-magic',   key: 'boy_2',  face: '/faces/face_boy_2.webp',  label: 'Bedtime Magic' },
+  { slug: 'bedtime-magic',   key: 'girl_1', face: '/faces/face_girl_1.webp', label: 'Bedtime Magic' },
+  { slug: 'first-day-school',key: 'boy_1',  face: '/faces/face_boy_1.webp',  label: 'First Day at School' },
+  { slug: 'first-day-school',key: 'boy_2',  face: '/faces/face_boy_2.webp',  label: 'First Day at School' },
+  { slug: 'first-day-school',key: 'girl_1', face: '/faces/face_girl_1.webp', label: 'First Day at School' },
+  { slug: 'growth-mindset',  key: 'boy_1',  face: '/faces/face_boy_1.webp',  label: 'Growth Mindset' },
+  { slug: 'growth-mindset',  key: 'boy_2',  face: '/faces/face_boy_2.webp',  label: 'Growth Mindset' },
+  { slug: 'growth-mindset',  key: 'girl_1', face: '/faces/face_girl_1.webp', label: 'Growth Mindset' },
+  { slug: 'potty-training',  key: 'boy_1',  face: '/faces/face_boy_1.webp',  label: 'Potty Training' },
+  { slug: 'potty-training',  key: 'boy_2',  face: '/faces/face_boy_2.webp',  label: 'Potty Training' },
+  { slug: 'potty-training',  key: 'girl_1', face: '/faces/face_girl_1.webp', label: 'Potty Training' },
 ];
 
 function HeroFaceSwapAnimation() {
