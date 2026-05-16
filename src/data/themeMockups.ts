@@ -13,6 +13,7 @@ const NEW_FACE_SAMPLES: FaceSample[] = [
 ];
 
 export const THEME_FACE_SAMPLES: Record<string, FaceSample[]> = {
+  'abc':                NEW_FACE_SAMPLES,
   'bedtime-routines':   NEW_FACE_SAMPLES,
   'colours-shapes':     NEW_FACE_SAMPLES,
   'financial-literacy': [
@@ -27,6 +28,7 @@ export const THEME_FACE_SAMPLES: Record<string, FaceSample[]> = {
 };
 
 export const THEME_ARROW_TARGET: Record<string, { x: number; y: number }> = {
+  'abc':                { x: 98, y: 28 },
   'bedtime-routines':   { x: 98, y: 28 },
   'colours-shapes':     { x: 98, y: 28 },
   'financial-literacy': { x: 98, y: 28 },
@@ -41,6 +43,16 @@ export function getFaceSamples(slug: string): FaceSample[] {
   return THEME_FACE_SAMPLES[slug] ?? DEFAULT_FACE_SAMPLES;
 }
 
+const THEME_MOCKUP_SCALE: Record<string, number> = {
+  'abc':              1.0,
+  'bedtime-routines': 1.0,
+  'professions':      1.0,
+};
+
 export function getArrowTarget(slug: string): { x: number; y: number } {
   return THEME_ARROW_TARGET[slug] ?? { x: 80, y: 28 };
+}
+
+export function getMockupScale(slug: string): number {
+  return THEME_MOCKUP_SCALE[slug] ?? 1.3;
 }

@@ -151,7 +151,7 @@ function HeroFaceSwapAnimation() {
             src={`/themes_mockup/${s.slug}_${s.key}_mockup.webp`}
             alt={s.label}
             loading="lazy" decoding="async"
-            style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'contain', transform: 'scale(1.3)' }}
+            style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'contain' }}
             animate={{ opacity: i === activeIdx ? 1 : 0 }}
             transition={{ duration: 0.6, ease: 'easeInOut' }}
             onError={e => { (e.target as HTMLImageElement).style.display = 'none'; }}
@@ -327,7 +327,7 @@ const FACE_SIZE_BROCHURE = 72;
 function BrochureThemeCard({ slug, icon, name, badge, description, ageRange, comingSoon, onClick }: { slug: string; icon: string; name: string; badge?: string; description?: string; ageRange?: string; comingSoon?: boolean; onClick: () => void }) {
   const faceSamples = getFaceSamples(slug);
   const arrowTarget = getArrowTarget(slug);
-  const useScenes = (comingSoon && !(slug in THEME_FACE_SAMPLES)) || slug === 'abc';
+  const useScenes = comingSoon && !(slug in THEME_FACE_SAMPLES);
   const sceneFiles = slug === 'abc'
     ? ['scene_01', 'scene_02', 'scene_03', 'scene_04', 'scene_05']
     : ['scene_01', 'scene_03', 'scene_05', 'scene_07', 'scene_09'];
@@ -363,13 +363,13 @@ function BrochureThemeCard({ slug, icon, name, badge, description, ageRange, com
 
       {/* Mockup image + face circle */}
       <div style={{ paddingTop: useScenes ? 0 : FACE_SIZE_BROCHURE / 2, position: 'relative' }}>
-        <div style={{ aspectRatio: '4/3', background: '#F7F5F0', position: 'relative', overflow: 'hidden' }}>
+        <div style={{ aspectRatio: '1/1', background: '#F7F5F0', position: 'relative', overflow: 'hidden' }}>
           {useScenes ? (
             sceneFiles.map((s, i) => (
               <motion.img key={s}
                 src={`/themes_scenes/${slug}/${s}.webp`} alt=""
                 loading="lazy" decoding="async"
-                style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
+                style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'contain', display: 'block' }}
                 animate={{ opacity: i === activeIdx % 5 ? 1 : 0 }}
                 transition={{ duration: 0.6, ease: 'easeInOut' }}
               />
@@ -380,7 +380,7 @@ function BrochureThemeCard({ slug, icon, name, badge, description, ageRange, com
               alt=""
               loading="lazy"
               decoding="async"
-              style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'contain', display: 'block', transform: 'scale(1.3)' }}
+              style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'contain', display: 'block' }}
               onError={e => { (e.target as HTMLImageElement).style.display = 'none'; }}
             />
           ) : faceSamples.map((sample, i) => (
@@ -390,7 +390,7 @@ function BrochureThemeCard({ slug, icon, name, badge, description, ageRange, com
               alt=""
               loading="lazy"
               decoding="async"
-              style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'contain', display: 'block', transform: 'scale(1.3)' }}
+              style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'contain', display: 'block' }}
               animate={{ opacity: i === activeIdx ? 1 : 0 }}
               transition={{ duration: 0.5, ease: 'easeInOut' }}
               onError={e => { (e.target as HTMLImageElement).style.display = 'none'; }}
@@ -984,7 +984,7 @@ function OrderForm({ price }: { price: number; scrollTo: (id: string) => void })
                     {photos.map((p, i) => (
                       <div key={i} className="relative rounded-xl overflow-hidden"
                         style={{ aspectRatio: '1/1', background: '#F0EEE8', border: `2px solid ${C.saffron}` }}>
-                        <img src={p.preview} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
+                        <img src={p.preview} alt="" style={{ width: '100%', height: '100%', objectFit: 'contain', display: 'block' }} />
                         {p.uploading && (
                           <div style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.45)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 4 }}>
                             <p className="text-white text-xs font-bold">{p.progress}%</p>
@@ -1049,7 +1049,7 @@ function OrderForm({ price }: { price: number; scrollTo: (id: string) => void })
                                 <div style={{ aspectRatio: '16/9', background: '#F0EEE8', position: 'relative' }}>
                                   <img src={`/themes/${t.slug}@thumb.webp`} alt={t.name}
                                     loading="lazy" decoding="async"
-                                    style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
+                                    style={{ width: '100%', height: '100%', objectFit: 'contain', display: 'block' }} />
                                   {selected && (
                                     <div style={{ position: 'absolute', top: 4, right: 4, background: C.saffron, borderRadius: '50%', width: 18, height: 18, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                                       <span style={{ color: '#fff', fontSize: 10, fontWeight: 800 }}>✓</span>
@@ -1085,7 +1085,7 @@ function OrderForm({ price }: { price: number; scrollTo: (id: string) => void })
                                 <div style={{ aspectRatio: '4/3', background: '#F0EEE8', position: 'relative' }}>
                                   <img src={`/themes_mockup/${t.slug}_boy_young_mockup.webp`} alt={t.name}
                                     loading="lazy" decoding="async"
-                                    style={{ width: '100%', height: '100%', objectFit: 'contain', display: 'block', transform: 'scale(1.3)' }} />
+                                    style={{ width: '100%', height: '100%', objectFit: 'contain', display: 'block' }} />
                                   {selected && (
                                     <div style={{ position: 'absolute', top: 4, right: 4, background: C.saffron, borderRadius: '50%', width: 18, height: 18, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                                       <span style={{ color: '#fff', fontSize: 10, fontWeight: 800 }}>✓</span>
@@ -1431,7 +1431,7 @@ function HeroVideo() {
           <img
             src={`https://img.youtube.com/vi/${id}/maxresdefault.jpg`}
             alt={name}
-            style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
+            style={{ width: '100%', height: '100%', objectFit: 'contain', display: 'block' }}
           />
           {/* Dark overlay */}
           <div style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.3)' }} />

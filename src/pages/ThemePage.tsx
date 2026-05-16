@@ -294,7 +294,7 @@ export function ThemePage() {
   const NINE_PAGE_THEMES = new Set(['abc', 'colours-shapes', 'bedtime-routines', 'numbers-maths', 'sharing-sorry', 'first-day-school', 'managing-emotions', 'indian-festivals', 'history-india', 'financial-literacy', 'growth-mindset', 'professions']);
   const previewPageCount = theme && NINE_PAGE_THEMES.has(theme.slug) ? 9 : 4;
   const hasFaceswapMockup = theme?.slug ? theme.slug in THEME_FACE_SAMPLES : false;
-  const useScenes = !!((theme?.comingSoon && !hasFaceswapMockup) || theme?.slug === 'abc');
+  const useScenes = !!(theme?.comingSoon && !hasFaceswapMockup);
   const sceneFiles = theme?.slug === 'abc'
     ? ['scene_01', 'scene_02', 'scene_03', 'scene_04', 'scene_05']
     : ['scene_01', 'scene_03', 'scene_05', 'scene_07', 'scene_09'];
@@ -669,13 +669,13 @@ export function ThemePage() {
             {/* 1/4: Face animation + CTA (hidden on mobile) */}
             <div className="book-hook-face-col" style={{ flex: 1, flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '24px 16px', gap: 16, minWidth: 160 }}>
               {/* Scene preview or face animation */}
-              <div style={{ position: 'relative', width: '100%', aspectRatio: '4/3', borderRadius: 12, overflow: 'hidden', background: '#F0EEE8' }}>
+              <div style={{ position: 'relative', width: '100%', aspectRatio: '1/1', borderRadius: 12, overflow: 'hidden', background: '#F0EEE8' }}>
                 {useScenes ? (
                   sceneFiles.map((s, i) => (
                     <motion.img key={s}
                       src={`/themes_scenes/${theme.slug}/${s}.webp`}
                       alt="" decoding="async"
-                      style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }}
+                      style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'contain' }}
                       animate={{ opacity: i === activeIdx % 5 ? 1 : 0 }}
                       transition={{ duration: 0.6 }}
                     />
@@ -686,7 +686,7 @@ export function ThemePage() {
                       <motion.img key={sample.key}
                         src={`/themes_mockup/${theme.slug}_${sample.key}_mockup.webp`}
                         alt="" decoding="async"
-                        style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'contain', transform: 'scale(1.3)' }}
+                        style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'contain' }}
                         animate={{ opacity: i === activeIdx ? 1 : 0 }}
                         transition={{ duration: 0.5 }}
                         onError={e => { (e.target as HTMLImageElement).style.display = 'none'; }}
@@ -770,13 +770,13 @@ export function ThemePage() {
                 </div>
               ) : (
                 /* ── Default face-swap animation (or raw scenes for comingSoon) ── */
-                <div style={{ aspectRatio: '4/3', background: '#F0EEE8', position: 'relative', overflow: 'hidden' }}>
+                <div style={{ aspectRatio: '1/1', background: '#F0EEE8', position: 'relative', overflow: 'hidden' }}>
                   {useScenes ? (
                     sceneFiles.map((s, i) => (
                       <motion.img key={s}
                         src={`/themes_scenes/${theme.slug}/${s}.webp`}
                         alt="" decoding="async"
-                        style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }}
+                        style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'contain' }}
                         animate={{ opacity: i === activeIdx % 5 ? 1 : 0 }}
                         transition={{ duration: 0.6 }}
                       />
@@ -785,7 +785,7 @@ export function ThemePage() {
                     <motion.img key={sample.key}
                       src={`/themes_mockup/${theme.slug}_${sample.key}_mockup.webp`}
                       alt="" decoding="async"
-                      style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'contain', transform: 'scale(1.3)' }}
+                      style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'contain' }}
                       animate={{ opacity: i === activeIdx ? 1 : 0 }}
                       transition={{ duration: 0.5 }}
                       onError={e => { (e.target as HTMLImageElement).style.display = 'none'; }}
@@ -1473,7 +1473,7 @@ export function ThemePage() {
                 <div style={{ position: 'absolute', top: -16, right: 8, width: 36, height: 36, zIndex: 10, borderRadius: '50%', overflow: 'hidden', border: `2.5px solid ${C.saffron}`, boxShadow: '0 2px 8px rgba(255,107,53,0.3), 0 0 0 1.5px #fff' }}>
                   {getFaceSamples(t.slug).map((s, i) => (
                     <motion.img key={s.key} src={s.face} alt=""
-                      style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }}
+                      style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'contain' }}
                       animate={{ opacity: i === activeIdx ? 1 : 0 }} transition={{ duration: 0.5 }} />
                   ))}
                 </div>
@@ -1483,7 +1483,7 @@ export function ThemePage() {
                     <motion.img key={s.key}
                       src={`/themes_mockup/${t.slug}_${s.key}_mockup.webp`} alt=""
                       loading="lazy" decoding="async"
-                      style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'contain', display: 'block', transform: 'scale(1.3)' }}
+                      style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'contain', display: 'block' }}
                       animate={{ opacity: i === activeIdx ? 1 : 0 }}
                       transition={{ duration: 0.5 }}
                       onError={e => { (e.target as HTMLImageElement).style.display = 'none'; }} />
