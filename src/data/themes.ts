@@ -45,6 +45,14 @@ export const THEMES: ThemeEntry[] = [
   },
   // Ages 5–8
   {
+    slug: 'managing-emotions', name: 'Managing Emotions', icon: '😤', ageRange: '6–8',
+    description: 'Story built around a specific emotion the child struggles with — anger, fear, or jealousy.',
+  },
+  {
+    slug: 'professions', name: 'My Dream Career', icon: '🚀', ageRange: ['6–8', '9–12'],
+    description: 'Child steps into their dream profession — astronaut, doctor, chef, engineer — and saves the day using their skills.',
+  },
+  {
     slug: 'numbers-maths', name: 'Numbers & Maths Adventure', icon: '🔢', ageRange: '6–8',
     description: 'Child solves puzzles using addition and subtraction to save the day.',
   },
@@ -55,10 +63,6 @@ export const THEMES: ThemeEntry[] = [
   {
     slug: 'body-safety', name: 'Body Safety', icon: '🛡️', ageRange: '6–8',
     description: 'Age-appropriate story teaching consent and safe vs unsafe touch — expert reviewed.',
-  },
-  {
-    slug: 'managing-emotions', name: 'Managing Emotions', icon: '😤', ageRange: '6–8',
-    description: 'Story built around a specific emotion the child struggles with — anger, fear, or jealousy.',
   },
   // Ages 8–12
   {
@@ -80,10 +84,6 @@ export const THEMES: ThemeEntry[] = [
   {
     slug: 'environmental-science', name: 'Environmental Science', icon: '🌿', ageRange: '9–12',
     description: 'Adventure where the child solves a real ecological problem in their own city or region.',
-  },
-  {
-    slug: 'professions', name: 'My Dream Career', icon: '🚀', ageRange: ['6–8', '9–12'],
-    description: 'Child steps into their dream profession — astronaut, doctor, chef, engineer — and saves the day using their skills.',
   },
   // Mythology
   {
