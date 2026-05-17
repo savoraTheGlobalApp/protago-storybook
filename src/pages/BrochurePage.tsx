@@ -509,6 +509,69 @@ type ReviewData = {
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || '';
 
+const CUSTOMER_VIDEOS = [
+  { name: 'Pransh',    url: 'https://www.instagram.com/p/DXwdV83zex3/' },
+  { name: 'Shreyansh', url: 'https://www.instagram.com/p/DWvGPa8j5g8/' },
+  { name: 'Adishi',    url: 'https://www.instagram.com/p/DYZhLw6TZ8E/' },
+  { name: 'Vihaan',    url: 'https://www.instagram.com/p/DXAAreLDxkZ/' },
+  { name: 'Vihaan',    url: 'https://www.instagram.com/p/DYAN2zKpGK8/' },
+  { name: 'Harsh',     url: 'https://www.instagram.com/p/DXb-CcmjcTj/' },
+];
+
+function VideoSection() {
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const scroll = (dir: 'left' | 'right') => {
+    const el = scrollRef.current;
+    if (!el) return;
+    el.scrollBy({ left: dir === 'right' ? 340 : -340, behavior: 'smooth' });
+  };
+  return (
+    <section style={{ background: '#FFF8F5' }} className="py-14 sm:py-18">
+      <div className="max-w-6xl mx-auto px-5 sm:px-8">
+        <div className="flex items-center justify-between mb-6">
+          <div>
+            <p className="text-xs font-bold uppercase tracking-widest mb-1" style={{ color: C.saffron }}>Happy Families</p>
+            <h2 className="text-2xl sm:text-3xl font-extrabold" style={{ color: C.navy }}>See their reactions 🎉</h2>
+          </div>
+          <div className="flex gap-2">
+            <button onClick={() => scroll('left')}
+              className="flex items-center justify-center rounded-full transition-opacity hover:opacity-70"
+              style={{ width: 40, height: 40, background: C.white, border: `1.5px solid #E5E7EB`, cursor: 'pointer', boxShadow: '0 1px 6px rgba(0,0,0,0.08)' }}>
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke={C.navy} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+            </button>
+            <button onClick={() => scroll('right')}
+              className="flex items-center justify-center rounded-full transition-opacity hover:opacity-70"
+              style={{ width: 40, height: 40, background: C.white, border: `1.5px solid #E5E7EB`, cursor: 'pointer', boxShadow: '0 1px 6px rgba(0,0,0,0.08)' }}>
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke={C.navy} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+            </button>
+          </div>
+        </div>
+        <div ref={scrollRef}
+          className="flex gap-4 overflow-x-auto pb-2"
+          style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
+          {CUSTOMER_VIDEOS.map((v, i) => (
+            <a key={i} href={v.url} target="_blank" rel="noopener noreferrer"
+              className="flex-none rounded-2xl overflow-hidden transition-transform hover:scale-[1.02]"
+              style={{ width: 315, minWidth: 315, background: C.white, boxShadow: '0 2px 12px rgba(0,0,0,0.08)', border: '1px solid #EBEBEB', display: 'block' }}>
+              <iframe
+                src={`${v.url}embed/`}
+                width="315" height="560"
+                frameBorder="0" scrolling="no" allowTransparency
+                allow="autoplay; clipboard-write; encrypted-media; picture-in-picture; web-share"
+                style={{ display: 'block', pointerEvents: 'none' }}
+              />
+              <div style={{ padding: '10px 14px', borderTop: '1px solid #F0F0F0' }}>
+                <span style={{ fontSize: 13, fontWeight: 700, color: C.navy }}>{v.name}'s story</span>
+                <span style={{ fontSize: 12, color: '#999', marginLeft: 6 }}>via Instagram ↗</span>
+              </div>
+            </a>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}
+
 function ReviewsSection() {
   const [data, setData] = useState<ReviewData | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -2246,6 +2309,11 @@ export function BrochurePage() {
           § REVIEWS — live from Google Places API
       ══════════════════════════════════════════ */}
       <ReviewsSection />
+
+      {/* ══════════════════════════════════════════
+          § CUSTOMER VIDEOS — Instagram reels
+      ══════════════════════════════════════════ */}
+      <VideoSection />
 
       {/* ══════════════════════════════════════════
           § CUSTOM STORY — white
