@@ -20,6 +20,123 @@ const WAITING_LINES = [
   (name: string) => `${name}'s adventure is coming to life…`,
 ];
 
+const CUSTOMER_VIDEOS = [
+  { name: 'Pransh',    url: 'https://www.instagram.com/p/DXwdV83zex3/' },
+  { name: 'Shreyansh', url: 'https://www.instagram.com/p/DWvGPa8j5g8/' },
+  { name: 'Adishi',    url: 'https://www.instagram.com/p/DYZhLw6TZ8E/' },
+  { name: 'Vihaan',    url: 'https://www.instagram.com/p/DXAAreLDxkZ/' },
+  { name: 'Vihaan',    url: 'https://www.instagram.com/p/DYAN2zKpGK8/' },
+  { name: 'Harsh',     url: 'https://www.instagram.com/p/DXb-CcmjcTj/' },
+];
+
+const REVIEWS = [
+  { name: 'Priya M.', quote: "My daughter cried tears of joy seeing herself as the hero. Worth every rupee!", stars: 5 },
+  { name: 'Rahul S.', quote: "The quality is stunning — we've read it every night for two weeks straight.", stars: 5 },
+  { name: 'Ananya K.', quote: "Ordered for my nephew's birthday. He wouldn't let anyone else hold it!", stars: 5 },
+];
+
+function WhileWaitingSection() {
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const scroll = (dir: 'left' | 'right') => {
+    const el = scrollRef.current;
+    if (!el) return;
+    el.scrollBy({ left: dir === 'right' ? 340 : -340, behavior: 'smooth' });
+  };
+
+  return (
+    <div style={{ width: '100%', marginBottom: 40 }}>
+      {/* Reviews */}
+      <div style={{ marginBottom: 32 }}>
+        <p style={{ fontSize: 14, fontWeight: 700, color: 'rgba(255,255,255,0.5)', textTransform: 'uppercase', letterSpacing: 1.2, marginBottom: 16, textAlign: 'center' }}>
+          What families are saying
+        </p>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+          {REVIEWS.map((r, i) => (
+            <div key={i} style={{ background: 'rgba(255,255,255,0.05)', borderRadius: 14, padding: '14px 18px', border: '1px solid rgba(255,255,255,0.08)' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6 }}>
+                <span style={{ color: '#F7B731', fontSize: 13 }}>{'★'.repeat(r.stars)}</span>
+                <span style={{ fontSize: 13, fontWeight: 700, color: 'rgba(255,255,255,0.7)' }}>{r.name}</span>
+              </div>
+              <p style={{ fontSize: 14, color: 'rgba(255,255,255,0.8)', margin: 0, lineHeight: 1.55, fontStyle: 'italic' }}>"{r.quote}"</p>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Customer videos */}
+      <p style={{ fontSize: 14, fontWeight: 700, color: 'rgba(255,255,255,0.5)', textTransform: 'uppercase', letterSpacing: 1.2, marginBottom: 16, textAlign: 'center' }}>
+        Real families, real stories
+      </p>
+      <div style={{ position: 'relative' }}>
+        <button onClick={() => scroll('left')}
+          style={{ position: 'absolute', left: -14, top: '50%', transform: 'translateY(-50%)', zIndex: 2, background: 'rgba(30,28,54,0.92)', border: '1.5px solid rgba(255,255,255,0.18)', color: '#fff', borderRadius: '50%', width: 36, height: 36, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 16 }}>
+          ‹
+        </button>
+        <div ref={scrollRef} style={{ display: 'flex', gap: 12, overflowX: 'auto', scrollSnapType: 'x mandatory', paddingBottom: 4, scrollbarWidth: 'none' }}>
+          {CUSTOMER_VIDEOS.map((v, i) => (
+            <div key={i} style={{ flexShrink: 0, scrollSnapAlign: 'start', width: 240, borderRadius: 14, overflow: 'hidden', border: '1px solid rgba(255,255,255,0.1)' }}>
+              <iframe
+                src={`${v.url}embed/`}
+                width="240"
+                height="400"
+                frameBorder="0"
+                scrolling="no"
+                allowFullScreen
+                style={{ display: 'block' }}
+              />
+            </div>
+          ))}
+        </div>
+        <button onClick={() => scroll('right')}
+          style={{ position: 'absolute', right: -14, top: '50%', transform: 'translateY(-50%)', zIndex: 2, background: 'rgba(30,28,54,0.92)', border: '1.5px solid rgba(255,255,255,0.18)', color: '#fff', borderRadius: '50%', width: 36, height: 36, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 16 }}>
+          ›
+        </button>
+      </div>
+    </div>
+  );
+}
+
+function ScrollViewer({ urls }: { urls: (string | null)[] }) {
+  type PageEntry = { url: string; side: 'left' | 'right'; num: number };
+  const pages: PageEntry[] = [];
+  let num = 1;
+  for (const url of urls) {
+    if (url) {
+      pages.push({ url, side: 'left',  num: num++ });
+      pages.push({ url, side: 'right', num: num++ });
+    }
+  }
+
+  return (
+    <div style={{ width: '100%', display: 'flex', flexDirection: 'column', gap: 14, marginBottom: 32 }}>
+      {pages.map((p, i) => (
+        <div key={i} style={{ position: 'relative', width: '100%', aspectRatio: '8/9', borderRadius: 12, overflow: 'hidden', boxShadow: '0 8px 32px rgba(0,0,0,0.55)', background: '#0d0a04' }}>
+          <img
+            src={p.url}
+            loading="lazy"
+            style={{
+              position: 'absolute', top: 0, height: '100%', width: '200%',
+              objectFit: 'cover', display: 'block',
+              ...(p.side === 'left'
+                ? { left: 0, objectPosition: 'left' }
+                : { right: 0, objectPosition: 'right' }),
+            }}
+          />
+          <span style={{
+            position: 'absolute', bottom: 10,
+            ...(p.side === 'left' ? { left: 14 } : { right: 14 }),
+            fontSize: 11, fontWeight: 700, color: 'rgba(255,255,255,0.45)',
+            background: 'rgba(0,0,0,0.5)', borderRadius: 6, padding: '2px 7px',
+            backdropFilter: 'blur(4px)',
+          }}>
+            {p.num}
+          </span>
+        </div>
+      ))}
+    </div>
+  );
+}
+
 function ShimmerCard() {
   return (
     <div style={{
@@ -951,6 +1068,7 @@ export function PreviewResultPage() {
     return () => clearInterval(intervalRef.current!);
   }, [jobId, API_BASE]);
 
+  const [viewMode, setViewMode] = useState<'book' | 'scroll'>('scroll');
   const [shareCopied, setShareCopied] = useState(false);
   const handleShare = async () => {
     const imageUrl = resultUrls[1] || resultUrls.find(Boolean);
@@ -1078,6 +1196,9 @@ export function PreviewResultPage() {
           </div>
         )}
 
+        {/* While waiting — show customer videos + review highlights */}
+        {status === 'processing' && <WhileWaitingSection />}
+
         {/* Buttons — shown as soon as done, above the scenes */}
         <AnimatePresence>
           {done && (
@@ -1113,6 +1234,29 @@ export function PreviewResultPage() {
           )}
         </AnimatePresence>
 
+        {/* View toggle */}
+        {done && (
+          <div style={{ display: 'flex', gap: 8, marginBottom: 16, background: 'rgba(255,255,255,0.06)', borderRadius: 50, padding: 4 }}>
+            {(['book', 'scroll'] as const).map(mode => (
+              <button key={mode} onClick={() => setViewMode(mode)}
+                style={{
+                  background: viewMode === mode ? 'rgba(255,255,255,0.15)' : 'transparent',
+                  color: viewMode === mode ? '#fff' : 'rgba(255,255,255,0.45)',
+                  border: 'none', borderRadius: 50, padding: '7px 20px',
+                  fontWeight: 700, fontSize: 13, cursor: 'pointer',
+                  display: 'flex', alignItems: 'center', gap: 6,
+                  transition: 'background 0.2s, color 0.2s',
+                }}>
+                {mode === 'book' ? (
+                  <><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="7" height="18"/><rect x="14" y="3" width="7" height="18"/></svg> Book</>
+                ) : (
+                  <><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="18" height="5" rx="1"/><rect x="3" y="10" width="18" height="5" rx="1"/><rect x="3" y="17" width="18" height="5" rx="1"/></svg> Scroll</>
+                )}
+              </button>
+            ))}
+          </div>
+        )}
+
         {/* Book viewer */}
         {done && (
           <p style={{ fontSize: 16, color: 'rgba(255,255,255,0.6)', textAlign: 'center', margin: '0 0 8px', width: '100%' }}>
@@ -1123,9 +1267,12 @@ export function PreviewResultPage() {
             </a>{' '}and we'll sort it out.
           </p>
         )}
-        {resultUrls.some(Boolean) && (themeSlug === 'abc'
-          ? <PairedPageViewer urls={resultUrls} isComplete={done} onOrder={handleOrder} />
-          : <BookViewer urls={SKIP_COVER_THEMES.has(themeSlug ?? '') ? resultUrls.slice(1) : resultUrls} firstIsCover={false} isComplete={done} onOrder={handleOrder} />
+        {resultUrls.some(Boolean) && (
+          viewMode === 'scroll'
+            ? <ScrollViewer urls={SKIP_COVER_THEMES.has(themeSlug ?? '') ? resultUrls.slice(1) : resultUrls} />
+            : themeSlug === 'abc'
+              ? <PairedPageViewer urls={resultUrls} isComplete={done} onOrder={handleOrder} />
+              : <BookViewer urls={SKIP_COVER_THEMES.has(themeSlug ?? '') ? resultUrls.slice(1) : resultUrls} firstIsCover={false} isComplete={done} onOrder={handleOrder} />
         )}
 
         {/* Error */}
