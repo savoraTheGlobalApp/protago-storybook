@@ -554,7 +554,7 @@ function VideoSection() {
               className="flex-none rounded-2xl overflow-hidden transition-transform hover:scale-[1.02]"
               style={{ width: 315, minWidth: 315, background: C.white, boxShadow: '0 2px 12px rgba(0,0,0,0.08)', border: '1px solid #EBEBEB', display: 'block' }}>
               <iframe
-                src={`${v.url}embed/`}
+                src={`${v.url}embed/?autoplay=1&muted=1`}
                 width="315" height="560"
                 frameBorder="0" scrolling="no" allowTransparency
                 allow="autoplay; clipboard-write; encrypted-media; picture-in-picture; web-share"
@@ -1943,6 +1943,11 @@ export function BrochurePage() {
       </section>
 
       {/* ══════════════════════════════════════════
+          § CUSTOMER VIDEOS — Instagram reels
+      ══════════════════════════════════════════ */}
+      <VideoSection />
+
+      {/* ══════════════════════════════════════════
           § THEMES — white
       ══════════════════════════════════════════ */}
       <section id="themes" style={{ background: C.white }} className="py-16 sm:py-20">
@@ -2309,11 +2314,6 @@ export function BrochurePage() {
           § REVIEWS — live from Google Places API
       ══════════════════════════════════════════ */}
       <ReviewsSection />
-
-      {/* ══════════════════════════════════════════
-          § CUSTOMER VIDEOS — Instagram reels
-      ══════════════════════════════════════════ */}
-      <VideoSection />
 
       {/* ══════════════════════════════════════════
           § CUSTOM STORY — white
