@@ -1196,8 +1196,8 @@ export function PreviewResultPage() {
           </div>
         )}
 
-        {/* While waiting — show customer videos + review highlights */}
-        {status === 'processing' && <WhileWaitingSection />}
+        {/* Customer videos + review highlights — always visible */}
+        <WhileWaitingSection />
 
         {/* Buttons — shown as soon as done, above the scenes */}
         <AnimatePresence>
