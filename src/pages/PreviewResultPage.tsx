@@ -108,9 +108,9 @@ function ScrollViewer({ urls }: { urls: (string | null)[] }) {
   }
 
   return (
-    <div style={{ width: '100%', display: 'flex', flexDirection: 'column', gap: 14, marginBottom: 32 }}>
+    <div style={{ width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 14, marginBottom: 32 }}>
       {pages.map((p, i) => (
-        <div key={i} style={{ position: 'relative', width: '100%', aspectRatio: '8/9', borderRadius: 12, overflow: 'hidden', boxShadow: '0 8px 32px rgba(0,0,0,0.55)', background: '#0d0a04' }}>
+        <div key={i} style={{ position: 'relative', width: '75%', aspectRatio: '8/9', borderRadius: 12, overflow: 'hidden', boxShadow: '0 8px 32px rgba(0,0,0,0.55)', background: '#0d0a04' }}>
           <img
             src={p.url}
             loading="lazy"
