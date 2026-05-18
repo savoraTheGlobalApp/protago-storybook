@@ -2012,7 +2012,7 @@ export function BrochurePage() {
 
                     {/* ── Custom story card — last slot ── */}
                     <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.15 }}
-                      onClick={() => document.getElementById('custom-story')?.scrollIntoView({ behavior: 'smooth', block: 'start' })}
+                      onClick={() => navigate('/custom-story')}
                       style={{ borderRadius: 20, border: `2px dashed ${C.saffron}`, background: 'linear-gradient(135deg, #FFF3EE 0%, #FFF8F0 100%)', cursor: 'pointer', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 12, padding: '32px 24px', textAlign: 'center', minHeight: 200 }}
                       whileHover={{ scale: 1.02, boxShadow: '0 8px 32px rgba(255,107,53,0.18)' }}>
                       <span style={{ fontSize: 48 }}>✨</span>
