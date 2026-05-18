@@ -324,7 +324,7 @@ function FaceToSceneAnimation() {
 
 const FACE_SIZE_BROCHURE = 72;
 
-function BrochureThemeCard({ slug, icon, name, badge, description, ageRange, comingSoon, onClick, onOrder }: { slug: string; icon: string; name: string; badge?: string; description?: string; ageRange?: string; comingSoon?: boolean; onClick: () => void; onOrder?: () => void }) {
+function BrochureThemeCard({ slug, icon, name, badge, description, ageRange, comingSoon, onClick, onOrder, onPreview }: { slug: string; icon: string; name: string; badge?: string; description?: string; ageRange?: string; comingSoon?: boolean; onClick: () => void; onOrder?: () => void; onPreview?: () => void }) {
   const faceSamples = getFaceSamples(slug);
   const arrowTarget = getArrowTarget(slug);
   const useScenes = comingSoon && !(slug in THEME_FACE_SAMPLES);
@@ -472,7 +472,7 @@ function BrochureThemeCard({ slug, icon, name, badge, description, ageRange, com
           </button>
           {!comingSoon && (
             <button
-              onClick={e => { e.stopPropagation(); onClick(); }}
+              onClick={e => { e.stopPropagation(); onPreview ? onPreview() : onClick(); }}
               style={{ width: '100%', padding: '10px 0', borderRadius: 12, background: 'transparent', color: C.saffron, border: `1.5px solid ${C.saffron}`, fontWeight: 700, fontSize: 14, cursor: 'pointer', fontFamily: "'Baloo 2', sans-serif" }}>
               ✨ Free Preview first
             </button>
@@ -2013,7 +2013,7 @@ export function BrochurePage() {
                     exit={{ opacity: 0, y: -10 }} transition={{ duration: 0.2 }}
                     style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: 20 }}>
                     {tabThemes.map(t => (
-                      <BrochureThemeCard key={t.slug} slug={t.slug} icon={t.icon} name={t.name} description={t.description} ageRange={Array.isArray(t.ageRange) ? t.ageRange.join(', ') : t.ageRange} badge={['abc', 'colours-shapes', 'bedtime-routines', 'numbers-maths', 'sharing-sorry', 'first-day-school', 'managing-emotions', 'indian-festivals', 'history-india', 'financial-literacy', 'growth-mindset', 'professions', 'internet-safety', 'body-safety'].includes(t.slug) ? '✨ 9-Page Preview' : undefined} comingSoon={t.comingSoon} onClick={() => navigate(`/theme/${t.slug}`)} onOrder={() => navigate(`/theme/${t.slug}?order=1`)} />
+                      <BrochureThemeCard key={t.slug} slug={t.slug} icon={t.icon} name={t.name} description={t.description} ageRange={Array.isArray(t.ageRange) ? t.ageRange.join(', ') : t.ageRange} badge={['abc', 'colours-shapes', 'bedtime-routines', 'numbers-maths', 'sharing-sorry', 'first-day-school', 'managing-emotions', 'indian-festivals', 'history-india', 'financial-literacy', 'growth-mindset', 'professions', 'internet-safety', 'body-safety'].includes(t.slug) ? '✨ 9-Page Preview' : undefined} comingSoon={t.comingSoon} onClick={() => navigate(`/theme/${t.slug}`)} onOrder={() => navigate(`/theme/${t.slug}?order=1`)} onPreview={() => navigate(`/theme/${t.slug}?preview=1`)} />
                     ))}
 
                     {/* ── Custom story card — last slot ── */}
@@ -2052,7 +2052,7 @@ export function BrochurePage() {
                     </div>
                     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: 20 }}>
                       {mythologyThemes.map(t => (
-                        <BrochureThemeCard key={t.slug} slug={t.slug} icon={t.icon} name={t.name} description={t.description} ageRange={Array.isArray(t.ageRange) ? t.ageRange.join(', ') : t.ageRange} badge={['abc', 'colours-shapes', 'bedtime-routines', 'numbers-maths', 'sharing-sorry', 'first-day-school', 'managing-emotions', 'indian-festivals', 'history-india', 'financial-literacy', 'growth-mindset', 'professions', 'internet-safety', 'body-safety'].includes(t.slug) ? '✨ 9-Page Preview' : undefined} onClick={() => navigate(`/theme/${t.slug}`)} />
+                        <BrochureThemeCard key={t.slug} slug={t.slug} icon={t.icon} name={t.name} description={t.description} ageRange={Array.isArray(t.ageRange) ? t.ageRange.join(', ') : t.ageRange} badge={['abc', 'colours-shapes', 'bedtime-routines', 'numbers-maths', 'sharing-sorry', 'first-day-school', 'managing-emotions', 'indian-festivals', 'history-india', 'financial-literacy', 'growth-mindset', 'professions', 'internet-safety', 'body-safety'].includes(t.slug) ? '✨ 9-Page Preview' : undefined} onClick={() => navigate(`/theme/${t.slug}`)} onOrder={() => navigate(`/theme/${t.slug}?order=1`)} onPreview={() => navigate(`/theme/${t.slug}?preview=1`)} />
                       ))}
                     </div>
                   </motion.div>

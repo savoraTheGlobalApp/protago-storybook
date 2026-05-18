@@ -437,6 +437,13 @@ export function ThemePage() {
     }
   }, [slug]);
 
+  // Auto-scroll to preview form when arriving via ?preview=1
+  useEffect(() => {
+    if (searchParams.get('preview') === '1') {
+      setTimeout(() => formRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 300);
+    }
+  }, [slug]);
+
   const setOf = (k: string, v: string) => setOrderForm(f => ({ ...f, [k]: v }));
 
   const handleOrderPhotoAdd = (file: File) => {
@@ -877,9 +884,9 @@ export function ThemePage() {
                 ))}
               </div>
 
-              <button onClick={handleOrder}
+              <button onClick={scrollToForm}
                 style={{ width: '100%', background: 'none', border: `1.5px solid ${C.saffron}`, borderRadius: 10, padding: '11px 16px', fontWeight: 800, fontSize: 13, color: C.saffron, cursor: 'pointer', fontFamily: "'Baloo 2', sans-serif", marginTop: 4 }}>
-                Skip preview — Order this story →
+                Skip order — Generate free preview →
               </button>
             </div>
           </div>
