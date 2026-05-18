@@ -1436,7 +1436,7 @@ function OrderForm({ price }: { price: number; scrollTo: (id: string) => void })
 // ── Real child reaction carousel ────────────────────────────────────────────
 
 const REACTION_VIDEOS = [
-  { id: 'UoNgye4Y2DA', name: 'Harsh' },
+  { id: 'At_FrzzTpQ0', name: 'Customer reaction' },
   { id: 'OsUGHz9LILY', name: 'Shreyansh' },
 ];
 
