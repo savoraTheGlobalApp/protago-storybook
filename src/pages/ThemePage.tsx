@@ -316,7 +316,7 @@ export function ThemePage() {
   const [photo, setPhoto] = useState<{ preview: string; uploading: boolean; signedUrl: string | null; quality?: { score: number; tip: string | null } | null } | null>(null);
   const [consent, setConsent] = useState(false);
   const [jobStatus, setJobStatus] = useState('');
-  const [showOrder, setShowOrder] = useState(false);
+  const [showOrder, setShowOrder] = useState(true);
   const [orderForm, setOrderForm] = useState({ parentName: '', email: '', phone: '', childName: '', childAge: '', childGender: '', bindingType: 'perfect', addressLine1: '', addressLine2: '', city: '', state: '', pincode: '', notes: '', dedicationMessage: '' });
   const [orderPhoto, setOrderPhoto] = useState<{ preview: string; uploading: boolean; uploadedPath: string | null; signedUrl: string | null; uploadFailed?: boolean } | null>(null);
   const [orderConsent, setOrderConsent] = useState(false);
@@ -428,6 +428,14 @@ export function ThemePage() {
     setShowOrder(true);
     setTimeout(() => document.getElementById('inline-order')?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 80);
   };
+
+  // Auto-open order form when arriving via ?order=1
+  useEffect(() => {
+    if (searchParams.get('order') === '1') {
+      setShowOrder(true);
+      setTimeout(() => document.getElementById('inline-order')?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 300);
+    }
+  }, [slug]);
 
   const setOf = (k: string, v: string) => setOrderForm(f => ({ ...f, [k]: v }));
 
@@ -749,7 +757,7 @@ export function ThemePage() {
         )}
 
         {/* ── Two-column card ── */}
-        <div ref={formRef} style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'stretch', background: C.white, borderRadius: 20, overflow: 'hidden', boxShadow: '0 4px 32px rgba(0,0,0,0.07)', margin: '0 16px' }}>
+        <div id="inline-order" style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'stretch', background: C.white, borderRadius: 20, overflow: 'hidden', boxShadow: '0 4px 32px rgba(0,0,0,0.07)', margin: '0 16px' }}>
 
           {/* LEFT: animation + info */}
           <div style={{ flex: '1 1 340px', display: 'flex', flexDirection: 'column', borderRight: '1px solid #F5F5F5' }}>
@@ -876,300 +884,14 @@ export function ThemePage() {
             </div>
           </div>
 
-          {/* RIGHT: preview form */}
-          <div style={{ flex: '1 1 300px', padding: '32px 28px 36px', display: 'flex', flexDirection: 'column', background: C.white }}>
-
-            <AnimatePresence mode="wait">
-              {jobStatus === 'opened' ? (
-                <motion.div key="opened" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}
-                  style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 16, padding: '40px 0', textAlign: 'center', flex: 1, justifyContent: 'center' }}>
-                  <div style={{ fontSize: 56 }}>✨</div>
-                  <p style={{ fontWeight: 800, color: C.navy, fontSize: 17, margin: 0, fontFamily: "'Baloo 2', sans-serif" }}>Preview is generating!</p>
-                  <p style={{ fontSize: 13, color: C.lgray, margin: 0 }}>Check the new tab — ready in ~2 min.</p>
-                  <button onClick={() => { setJobStatus(''); setPhoto(null); setChildName(''); setGenerating(false); setConsent(false); }}
-                    style={{ marginTop: 8, background: 'none', border: '1.5px solid #E5E7EB', borderRadius: 10, padding: '10px 20px', fontSize: 13, color: C.gray, cursor: 'pointer', fontWeight: 700 }}>
-                    Generate another →
-                  </button>
-                </motion.div>
-
-              ) : generating ? (
-                <motion.div key="generating" initial={{ opacity: 0 }} animate={{ opacity: 1 }}
-                  style={{ textAlign: 'center', padding: '50px 0', flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
-                  <motion.div animate={{ rotate: 360 }} transition={{ repeat: Infinity, duration: 1.5, ease: 'linear' }}
-                    style={{ fontSize: 40, marginBottom: 14 }}>⚙️</motion.div>
-                  <p style={{ fontSize: 14, color: C.lgray }}>Starting your preview…</p>
-                </motion.div>
-
-              ) : (
-                <motion.div key="form" initial={{ opacity: 0 }} animate={{ opacity: 1 }}
-                  style={{ display: 'flex', flexDirection: 'column', gap: 0 }}>
-
-                  {/* Header */}
-                  <p style={{ fontSize: 11, fontWeight: 700, color: C.saffron, textTransform: 'uppercase', letterSpacing: 1.5, margin: '0 0 4px' }}>Free {previewPageCount}-Page Preview</p>
-                  <h2 style={{ fontFamily: "'Baloo 2', sans-serif", fontWeight: 800, fontSize: 21, color: C.navy, margin: '0 0 24px', lineHeight: 1.2 }}>
-                    See your child<br />in this story
-                  </h2>
-
-                  {jobStatus.startsWith('Error') && (
-                    <div style={{ padding: '10px 14px', background: '#FFF0F0', borderRadius: 8, marginBottom: 14, border: '1px solid #FFCDD2' }}>
-                      <p style={{ fontSize: 12, color: '#C0392B', margin: 0 }}>{jobStatus}</p>
-                    </div>
-                  )}
-
-                  {/* Step 1: Name */}
-                  <div style={{ marginBottom: 14 }}>
-                    <label style={{ fontSize: 12, fontWeight: 700, color: C.navy, display: 'block', marginBottom: 6 }}>
-                      Child's name <span style={{ color: C.saffron }}>*</span>
-                    </label>
-                    <input
-                      placeholder="e.g. Aryan"
-                      value={childName}
-                      onChange={e => { setChildName(e.target.value); if (e.target.value.trim()) setNameError(false); }}
-                      onBlur={e => { const first = e.target.value.trim().split(/\s+/)[0]; setChildName(first); }}
-                      style={{
-                        border: `1.5px solid ${nameError ? '#E53E3E' : '#E5E7EB'}`,
-                        borderRadius: 10, padding: '12px 14px', fontSize: 15, outline: 'none',
-                        width: '100%', boxSizing: 'border-box', fontFamily: 'inherit',
-                        background: nameError ? '#FFF5F5' : '#fff',
-                        transition: 'border-color 0.2s',
-                      }} />
-                    {nameError && <p style={{ fontSize: 11, color: '#E53E3E', margin: '4px 0 0' }}>Please enter your child's name</p>}
-                  </div>
-
-                  {/* Gender toggle */}
-                  <div style={{ marginBottom: 14 }}>
-                    <label style={{ fontSize: 12, fontWeight: 700, color: C.navy, display: 'block', marginBottom: 8 }}>
-                      Child's gender <span style={{ color: C.saffron }}>*</span>
-                    </label>
-                    <div style={{ display: 'flex', gap: 8 }}>
-                      {(['boy', 'girl'] as const).map(g => (
-                        <button key={g} type="button" onClick={() => setGender(g)}
-                          style={{
-                            flex: 1, padding: '11px 0', borderRadius: 10, cursor: 'pointer', fontFamily: 'inherit',
-                            border: `1.5px solid ${gender === g ? C.saffron : '#E5E7EB'}`,
-                            background: gender === g ? C.saffron + '18' : '#fff',
-                            color: gender === g ? C.saffron : C.gray,
-                            fontWeight: 800, fontSize: 15,
-                            transition: 'all 0.15s',
-                          }}>
-                          {g === 'boy' ? '👦 Boy' : '👧 Girl'}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-
-                  {/* Age picker — individual ages 3–12 */}
-                  <div style={{ marginBottom: 14 }}>
-                    <label style={{ fontSize: 12, fontWeight: 700, color: C.navy, display: 'block', marginBottom: 8 }}>
-                      Child's age <span style={{ color: C.saffron }}>*</span>
-                    </label>
-                    <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
-                      {[3,4,5,6,7,8,9,10,11,12].map(age => {
-                        const sel = selectedAge === age;
-                        return (
-                          <button key={age} type="button" onClick={() => pickAge(age)}
-                            style={{
-                              width: 40, height: 40, borderRadius: 10, cursor: 'pointer',
-                              fontFamily: 'inherit', fontWeight: 800, fontSize: 14,
-                              border: `1.5px solid ${sel ? C.saffron : '#E5E7EB'}`,
-                              background: sel ? C.saffron : '#fff',
-                              color: sel ? '#fff' : C.gray,
-                              transition: 'all 0.15s',
-                            }}>
-                            {age}
-                          </button>
-                        );
-                      })}
-                    </div>
-                  </div>
-
-                  {/* Email */}
-                  <div style={{ marginBottom: 14 }}>
-                    <label style={{ fontSize: 12, fontWeight: 700, color: C.navy, display: 'block', marginBottom: 6 }}>
-                      Your email <span style={{ color: C.saffron }}>*</span>
-                    </label>
-                    <input
-                      type="email"
-                      placeholder="you@email.com"
-                      value={previewEmail}
-                      onChange={e => { setPreviewEmail(e.target.value); if (emailError) setEmailError(''); }}
-                      style={{
-                        border: `1.5px solid ${emailError ? '#E53E3E' : '#E5E7EB'}`,
-                        borderRadius: 10, padding: '12px 14px', fontSize: 15, outline: 'none',
-                        width: '100%', boxSizing: 'border-box', fontFamily: 'inherit',
-                        background: emailError ? '#FFF5F5' : '#fff',
-                        transition: 'border-color 0.2s',
-                      }}
-                      onFocus={e => (e.target.style.borderColor = emailError ? '#E53E3E' : C.saffron)}
-                      onBlur={e => (e.target.style.borderColor = emailError ? '#E53E3E' : '#E5E7EB')} />
-                    {emailError
-                      ? <p style={{ fontSize: 11, color: '#E53E3E', margin: '4px 0 0' }}>{emailError}</p>
-                      : <p style={{ fontSize: 13, fontWeight: 700, color: '#E53E3E', margin: '6px 0 0' }}>⭐ We'll send your preview here so you can always access it</p>
-                    }
-                  </div>
-
-                  {/* WhatsApp */}
-                  <div style={{ marginBottom: 14 }}>
-                    <label style={{ fontSize: 12, fontWeight: 700, color: C.navy, display: 'block', marginBottom: 6 }}>
-                      WhatsApp number <span style={{ color: C.saffron }}>*</span>
-                    </label>
-                    <div style={{ display: 'flex', border: `1.5px solid ${phoneError ? '#E53E3E' : '#E5E7EB'}`, borderRadius: 10, overflow: 'hidden', background: phoneError ? '#FFF5F5' : '#fff', transition: 'border-color 0.2s' }}
-                      onFocus={() => {}} >
-                      <span style={{ padding: '12px 12px', fontSize: 15, fontWeight: 700, color: C.gray, background: '#F9FAFB', borderRight: '1.5px solid #E5E7EB', whiteSpace: 'nowrap', display: 'flex', alignItems: 'center' }}>+91</span>
-                      <input
-                        type="tel"
-                        placeholder="98765 43210"
-                        value={previewPhone}
-                        maxLength={10}
-                        onChange={e => {
-                          const digits = e.target.value.replace(/\D/g, '').slice(0, 10);
-                          setPreviewPhone(digits);
-                          if (phoneError) setPhoneError('');
-                        }}
-                        style={{
-                          border: 'none', padding: '12px 14px', fontSize: 15, outline: 'none',
-                          flex: 1, fontFamily: 'inherit', background: 'transparent',
-                        }}
-                        onFocus={e => (e.target.closest('div') as HTMLDivElement).style.borderColor = phoneError ? '#E53E3E' : C.saffron}
-                        onBlur={e => (e.target.closest('div') as HTMLDivElement).style.borderColor = phoneError ? '#E53E3E' : '#E5E7EB'} />
-                    </div>
-                    {phoneError
-                      ? <p style={{ fontSize: 11, color: '#E53E3E', margin: '4px 0 0' }}>{phoneError}</p>
-                      : <p style={{ fontSize: 11, color: C.lgray, margin: '4px 0 0' }}>We'll send your preview link on WhatsApp</p>
-                    }
-                  </div>
-
-                  {/* Step 2: Photo */}
-                  <div style={{ marginBottom: 18 }}>
-                    <label style={{ fontSize: 12, fontWeight: 700, color: C.navy, display: 'block', marginBottom: 6 }}>
-                      Child's photo <span style={{ color: C.saffron }}>*</span>
-                    </label>
-                    {/* Photo tips */}
-                    <div style={{ background: '#F9FAFB', border: '1px solid #E5E7EB', borderRadius: 10, padding: '10px 12px', marginBottom: 8 }}>
-                      <p style={{ fontSize: 9, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', color: C.lgray, textAlign: 'center', margin: '0 0 8px' }}>Tips</p>
-                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 6 }}>
-                        {[
-                          { img: '/photo-tips/good.avif',       label: 'Clear front-facing', good: true },
-                          { img: '/photo-tips/group.jpg',       label: 'Only one person',    good: false },
-                          { img: '/photo-tips/sunglasses.avif', label: 'No accessories',     good: false },
-                          { img: '/photo-tips/sideangle.jpg',   label: 'No side angle',      good: false },
-                        ].map(({ img, label, good }) => (
-                          <div key={label} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4 }}>
-                            <div style={{ position: 'relative', width: 52, height: 52 }}>
-                              <img src={img} alt={label} style={{ width: 52, height: 52, borderRadius: '50%', objectFit: 'cover', objectPosition: 'top', border: `2.5px solid ${good ? '#22C55E' : '#EF4444'}` }} />
-                              <div style={{ position: 'absolute', bottom: 0, right: 0, width: 16, height: 16, borderRadius: '50%', background: good ? '#22C55E' : '#EF4444', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 9, color: '#fff', fontWeight: 800, border: '1.5px solid #fff' }}>
-                                {good ? '✓' : '✕'}
-                              </div>
-                            </div>
-                            <p style={{ fontSize: 8, color: C.gray, textAlign: 'center', lineHeight: 1.3, margin: 0 }}>{label}</p>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                    {!photo ? (
-                      <label style={{
-                        border: '2px dashed #E5E7EB', borderRadius: 12, padding: '22px 14px',
-                        display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6,
-                        cursor: 'pointer', background: '#FAFAFA', transition: 'border-color 0.2s',
-                      }}
-                        onMouseEnter={e => (e.currentTarget.style.borderColor = C.saffron)}
-                        onMouseLeave={e => (e.currentTarget.style.borderColor = '#E5E7EB')}>
-                        <span style={{ fontSize: 34 }}>📸</span>
-                        <span style={{ fontWeight: 700, color: C.navy, fontSize: 13 }}>Upload child's photo</span>
-                        <span style={{ fontSize: 11, color: C.lgray }}>Clear, front-facing works best</span>
-                        <span style={{ fontSize: 11, fontWeight: 700, color: C.saffron, textAlign: 'center' }}>📷 Higher quality photo = better results</span>
-                        <span style={{ fontSize: 10, color: C.lgray, textAlign: 'center' }}>Any size accepted · Auto-compressed · JPG, PNG, HEIC</span>
-                        <input type="file" accept="image/*" style={{ display: 'none' }}
-                          onChange={e => { const f = e.target.files?.[0]; if (f) handlePhotoAdd(f); }} />
-                      </label>
-                    ) : (
-                      <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '10px 12px', background: '#F0FDF4', borderRadius: 10, border: '1.5px solid #BBF7D0' }}>
-                          <img src={photo.preview} style={{ width: 48, height: 48, borderRadius: 8, objectFit: 'cover', flexShrink: 0 }} alt="" />
-                          <div style={{ flex: 1, minWidth: 0 }}>
-                            <div style={{ fontWeight: 700, fontSize: 13, color: '#166534' }}>{photo.uploading ? '⏳ Uploading…' : '✓ Photo ready'}</div>
-                            {photo.uploading && <div style={{ fontSize: 11, color: '#166534', opacity: 0.7 }}>Please wait…</div>}
-                          </div>
-                          {!photo.uploading && (
-                            <button onClick={() => setPhoto(null)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: C.lgray, fontSize: 20, lineHeight: 1, flexShrink: 0 }}>×</button>
-                          )}
-                        </div>
-
-                        {/* Photo quality score */}
-                        {!photo.uploading && photo.quality && (() => {
-                          const { score, tip } = photo.quality!;
-                          const color = score >= 75 ? '#16a34a' : score >= 50 ? '#d97706' : '#dc2626';
-                          const bg    = score >= 75 ? '#f0fdf4' : score >= 50 ? '#fffbeb' : '#fef2f2';
-                          const border = score >= 75 ? '#bbf7d0' : score >= 50 ? '#fde68a' : '#fecaca';
-                          const label = score >= 75 ? 'Great photo!' : score >= 50 ? 'Decent photo' : 'Low image quality';
-                          return (
-                            <div style={{ padding: '10px 12px', background: bg, borderRadius: 10, border: `1.5px solid ${border}` }}>
-                              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: tip ? 6 : 0 }}>
-                                <span style={{ fontSize: 12, fontWeight: 700, color }}>{label}</span>
-                                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                                  {/* Progress bar */}
-                                  <div style={{ width: 80, height: 6, background: '#e5e7eb', borderRadius: 99, overflow: 'hidden' }}>
-                                    <div style={{ width: `${score}%`, height: '100%', background: color, borderRadius: 99, transition: 'width 0.6s ease' }} />
-                                  </div>
-                                  <span style={{ fontSize: 13, fontWeight: 800, color, minWidth: 36, textAlign: 'right' }}>{score}%</span>
-                                </div>
-                              </div>
-                              {tip && <p style={{ margin: 0, fontSize: 11, color, lineHeight: 1.5 }}>{tip}</p>}
-                            </div>
-                          );
-                        })()}
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Consent */}
-                  <label style={{ display: 'flex', alignItems: 'flex-start', gap: 10, cursor: 'pointer', marginBottom: 16 }}>
-                    <input type="checkbox" checked={consent} onChange={e => setConsent(e.target.checked)}
-                      style={{ marginTop: 2, flexShrink: 0, accentColor: C.saffron, width: 15, height: 15, cursor: 'pointer' }} />
-                    <span style={{ fontSize: 12, lineHeight: 1.6, color: C.gray }}>
-                      I confirm that I am at least 18 years old and have obtained consent from the child's parent or guardian to share this information for the purpose of creating a personalised storybook, in accordance with the{' '}
-                      <a href="/privacy" style={{ color: C.saffron, textDecoration: 'underline' }}>Privacy Policy</a>.
-                    </span>
-                  </label>
-
-                  {/* Generate button */}
-                  {theme.comingSoon ? (
-                    <div style={{ background: '#F5F3FF', border: '1.5px solid #DDD6FE', borderRadius: 12, padding: '14px 18px', textAlign: 'center' }}>
-                      <p style={{ fontWeight: 800, fontSize: 15, color: '#7C3AED', margin: '0 0 4px', fontFamily: "'Baloo 2', sans-serif" }}>🚀 Preview Coming Soon</p>
-                      <p style={{ fontSize: 12, color: '#6B7280', margin: 0 }}>We're still generating sample scenes — check back soon!</p>
-                    </div>
-                  ) : (
-                    <button disabled={!canGenerate} onClick={handleGenerate}
-                      style={{
-                        background: canGenerate ? `linear-gradient(135deg, ${C.saffron} 0%, #FF8C42 100%)` : '#E5E7EB',
-                        color: canGenerate ? '#fff' : '#9CA3AF',
-                        border: 'none', borderRadius: 12, padding: '15px 18px',
-                        fontWeight: 800, fontSize: 16, cursor: canGenerate ? 'pointer' : 'default',
-                        fontFamily: "'Baloo 2', sans-serif", transition: 'all 0.2s',
-                        boxShadow: canGenerate ? '0 4px 16px rgba(255,107,53,0.4)' : 'none',
-                      }}>
-                      ✨ Generate Free {previewPageCount}-Page Preview
-                    </button>
-                  )}
-                  {!theme.comingSoon && <p style={{ fontSize: 11, color: C.lgray, textAlign: 'center', margin: '10px 0 0' }}>Free · ~2 min · No card required</p>}
-
-                </motion.div>
-              )}
-            </AnimatePresence>
-          </div>
-        </div>
-
-        {/* ── Inline order form ── */}
-        {showOrder && (
-          <div id="inline-order" style={{ margin: '32px 16px 0', background: C.white, borderRadius: 24, boxShadow: '0 8px 40px rgba(0,0,0,0.10)', overflow: 'hidden', border: '1px solid #F0EEE8' }}>
-            {/* Header */}
-            <div style={{ background: `linear-gradient(135deg, ${C.saffron} 0%, #FF8C42 100%)`, padding: '28px 36px 24px' }}>
-              <p style={{ fontSize: 11, fontWeight: 700, color: 'rgba(255,255,255,0.75)', textTransform: 'uppercase', letterSpacing: 1.8, margin: '0 0 6px' }}>Order your book</p>
-              <h2 style={{ fontFamily: "'Baloo 2', sans-serif", fontWeight: 800, fontSize: 24, color: '#fff', margin: '0 0 4px' }}>
-                {theme.icon} {theme.name}
-              </h2>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 4 }}>
-                <span style={{ fontSize: 11, fontWeight: 700, color: '#22C55E', background: 'rgba(255,255,255,0.15)', borderRadius: 50, padding: '2px 8px', letterSpacing: 0.3 }}>35% OFF</span>
+          {/* RIGHT: order form */}
+          <div style={{ flex: '1 1 300px', display: 'flex', flexDirection: 'column', background: C.white, overflow: 'hidden' }}>
+            {/* Gradient header */}
+            <div style={{ background: `linear-gradient(135deg, ${C.saffron} 0%, #FF8C42 100%)`, padding: '24px 28px 20px' }}>
+              <p style={{ fontSize: 11, fontWeight: 700, color: 'rgba(255,255,255,0.75)', textTransform: 'uppercase', letterSpacing: 1.8, margin: '0 0 4px' }}>Order your book</p>
+              <h2 style={{ fontFamily: "'Baloo 2', sans-serif", fontWeight: 800, fontSize: 20, color: '#fff', margin: '0 0 4px' }}>{theme.icon} {theme.name}</h2>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                <span style={{ fontSize: 11, fontWeight: 700, color: '#22C55E', background: 'rgba(255,255,255,0.15)', borderRadius: 50, padding: '2px 8px' }}>35% OFF</span>
                 <span style={{ fontSize: 13, color: 'rgba(255,255,255,0.55)', textDecoration: 'line-through', fontWeight: 600 }}>₹1,499</span>
                 <span style={{ fontSize: 18, fontWeight: 800, color: '#fff', fontFamily: "'Baloo 2', sans-serif" }}>₹974</span>
               </div>
@@ -1456,6 +1178,298 @@ export function ThemePage() {
               </form>
             )}
           </div>
+        </div>
+
+        {/* ── Free preview (below order form) ── */}
+        {!theme.comingSoon && (
+          <>
+            <div style={{ margin: '40px 16px 0', display: 'flex', alignItems: 'center', gap: 12 }}>
+              <div style={{ flex: 1, height: 1, background: '#E5E7EB' }} />
+              <span style={{ fontSize: 13, fontWeight: 700, color: '#9CA3AF', whiteSpace: 'nowrap' }}>Or try a free preview first</span>
+              <div style={{ flex: 1, height: 1, background: '#E5E7EB' }} />
+            </div>
+            <div ref={formRef} style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'stretch', background: C.white, borderRadius: 20, overflow: 'hidden', boxShadow: '0 4px 32px rgba(0,0,0,0.07)', margin: '16px 16px 0' }}>
+              <div style={{ width: '100%', padding: '32px 28px 36px', display: 'flex', flexDirection: 'column', background: C.white }}>
+                <AnimatePresence mode="wait">
+                  {jobStatus === 'opened' ? (
+                    <motion.div key="opened" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}
+                      style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 16, padding: '40px 0', textAlign: 'center', flex: 1, justifyContent: 'center' }}>
+                      <div style={{ fontSize: 56 }}>✨</div>
+                      <p style={{ fontWeight: 800, color: C.navy, fontSize: 17, margin: 0, fontFamily: "'Baloo 2', sans-serif" }}>Preview is generating!</p>
+                      <p style={{ fontSize: 13, color: C.lgray, margin: 0 }}>Check the new tab — ready in ~2 min.</p>
+                      <button onClick={() => { setJobStatus(''); setPhoto(null); setChildName(''); setGenerating(false); setConsent(false); }}
+                        style={{ marginTop: 8, background: 'none', border: '1.5px solid #E5E7EB', borderRadius: 10, padding: '10px 20px', fontSize: 13, color: C.gray, cursor: 'pointer', fontWeight: 700 }}>
+                        Generate another →
+                      </button>
+                    </motion.div>
+
+                  ) : generating ? (
+                    <motion.div key="generating" initial={{ opacity: 0 }} animate={{ opacity: 1 }}
+                      style={{ textAlign: 'center', padding: '50px 0', flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
+                      <motion.div animate={{ rotate: 360 }} transition={{ repeat: Infinity, duration: 1.5, ease: 'linear' }}
+                        style={{ fontSize: 40, marginBottom: 14 }}>⚙️</motion.div>
+                      <p style={{ fontSize: 14, color: C.lgray }}>Starting your preview…</p>
+                    </motion.div>
+
+                  ) : (
+                    <motion.div key="form" initial={{ opacity: 0 }} animate={{ opacity: 1 }}
+                      style={{ display: 'flex', flexDirection: 'column', gap: 0 }}>
+
+                      {/* Header */}
+                      <p style={{ fontSize: 11, fontWeight: 700, color: C.saffron, textTransform: 'uppercase', letterSpacing: 1.5, margin: '0 0 4px' }}>Free {previewPageCount}-Page Preview</p>
+                      <h2 style={{ fontFamily: "'Baloo 2', sans-serif", fontWeight: 800, fontSize: 21, color: C.navy, margin: '0 0 24px', lineHeight: 1.2 }}>
+                        See your child<br />in this story
+                      </h2>
+
+                      {jobStatus.startsWith('Error') && (
+                        <div style={{ padding: '10px 14px', background: '#FFF0F0', borderRadius: 8, marginBottom: 14, border: '1px solid #FFCDD2' }}>
+                          <p style={{ fontSize: 12, color: '#C0392B', margin: 0 }}>{jobStatus}</p>
+                        </div>
+                      )}
+
+                      {/* Step 1: Name */}
+                      <div style={{ marginBottom: 14 }}>
+                        <label style={{ fontSize: 12, fontWeight: 700, color: C.navy, display: 'block', marginBottom: 6 }}>
+                          Child's name <span style={{ color: C.saffron }}>*</span>
+                        </label>
+                        <input
+                          placeholder="e.g. Aryan"
+                          value={childName}
+                          onChange={e => { setChildName(e.target.value); if (e.target.value.trim()) setNameError(false); }}
+                          onBlur={e => { const first = e.target.value.trim().split(/\s+/)[0]; setChildName(first); }}
+                          style={{
+                            border: `1.5px solid ${nameError ? '#E53E3E' : '#E5E7EB'}`,
+                            borderRadius: 10, padding: '12px 14px', fontSize: 15, outline: 'none',
+                            width: '100%', boxSizing: 'border-box', fontFamily: 'inherit',
+                            background: nameError ? '#FFF5F5' : '#fff',
+                            transition: 'border-color 0.2s',
+                          }} />
+                        {nameError && <p style={{ fontSize: 11, color: '#E53E3E', margin: '4px 0 0' }}>Please enter your child's name</p>}
+                      </div>
+
+                      {/* Gender toggle */}
+                      <div style={{ marginBottom: 14 }}>
+                        <label style={{ fontSize: 12, fontWeight: 700, color: C.navy, display: 'block', marginBottom: 8 }}>
+                          Child's gender <span style={{ color: C.saffron }}>*</span>
+                        </label>
+                        <div style={{ display: 'flex', gap: 8 }}>
+                          {(['boy', 'girl'] as const).map(g => (
+                            <button key={g} type="button" onClick={() => setGender(g)}
+                              style={{
+                                flex: 1, padding: '11px 0', borderRadius: 10, cursor: 'pointer', fontFamily: 'inherit',
+                                border: `1.5px solid ${gender === g ? C.saffron : '#E5E7EB'}`,
+                                background: gender === g ? C.saffron + '18' : '#fff',
+                                color: gender === g ? C.saffron : C.gray,
+                                fontWeight: 800, fontSize: 15,
+                                transition: 'all 0.15s',
+                              }}>
+                              {g === 'boy' ? '👦 Boy' : '👧 Girl'}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+
+                      {/* Age picker — individual ages 3–12 */}
+                      <div style={{ marginBottom: 14 }}>
+                        <label style={{ fontSize: 12, fontWeight: 700, color: C.navy, display: 'block', marginBottom: 8 }}>
+                          Child's age <span style={{ color: C.saffron }}>*</span>
+                        </label>
+                        <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+                          {[3,4,5,6,7,8,9,10,11,12].map(age => {
+                            const sel = selectedAge === age;
+                            return (
+                              <button key={age} type="button" onClick={() => pickAge(age)}
+                                style={{
+                                  width: 40, height: 40, borderRadius: 10, cursor: 'pointer',
+                                  fontFamily: 'inherit', fontWeight: 800, fontSize: 14,
+                                  border: `1.5px solid ${sel ? C.saffron : '#E5E7EB'}`,
+                                  background: sel ? C.saffron : '#fff',
+                                  color: sel ? '#fff' : C.gray,
+                                  transition: 'all 0.15s',
+                                }}>
+                                {age}
+                              </button>
+                            );
+                          })}
+                        </div>
+                      </div>
+
+                      {/* Email */}
+                      <div style={{ marginBottom: 14 }}>
+                        <label style={{ fontSize: 12, fontWeight: 700, color: C.navy, display: 'block', marginBottom: 6 }}>
+                          Your email <span style={{ color: C.saffron }}>*</span>
+                        </label>
+                        <input
+                          type="email"
+                          placeholder="you@email.com"
+                          value={previewEmail}
+                          onChange={e => { setPreviewEmail(e.target.value); if (emailError) setEmailError(''); }}
+                          style={{
+                            border: `1.5px solid ${emailError ? '#E53E3E' : '#E5E7EB'}`,
+                            borderRadius: 10, padding: '12px 14px', fontSize: 15, outline: 'none',
+                            width: '100%', boxSizing: 'border-box', fontFamily: 'inherit',
+                            background: emailError ? '#FFF5F5' : '#fff',
+                            transition: 'border-color 0.2s',
+                          }}
+                          onFocus={e => (e.target.style.borderColor = emailError ? '#E53E3E' : C.saffron)}
+                          onBlur={e => (e.target.style.borderColor = emailError ? '#E53E3E' : '#E5E7EB')} />
+                        {emailError
+                          ? <p style={{ fontSize: 11, color: '#E53E3E', margin: '4px 0 0' }}>{emailError}</p>
+                          : <p style={{ fontSize: 13, fontWeight: 700, color: '#E53E3E', margin: '6px 0 0' }}>⭐ We'll send your preview here so you can always access it</p>
+                        }
+                      </div>
+
+                      {/* WhatsApp */}
+                      <div style={{ marginBottom: 14 }}>
+                        <label style={{ fontSize: 12, fontWeight: 700, color: C.navy, display: 'block', marginBottom: 6 }}>
+                          WhatsApp number <span style={{ color: C.saffron }}>*</span>
+                        </label>
+                        <div style={{ display: 'flex', border: `1.5px solid ${phoneError ? '#E53E3E' : '#E5E7EB'}`, borderRadius: 10, overflow: 'hidden', background: phoneError ? '#FFF5F5' : '#fff', transition: 'border-color 0.2s' }}
+                          onFocus={() => {}} >
+                          <span style={{ padding: '12px 12px', fontSize: 15, fontWeight: 700, color: C.gray, background: '#F9FAFB', borderRight: '1.5px solid #E5E7EB', whiteSpace: 'nowrap', display: 'flex', alignItems: 'center' }}>+91</span>
+                          <input
+                            type="tel"
+                            placeholder="98765 43210"
+                            value={previewPhone}
+                            maxLength={10}
+                            onChange={e => {
+                              const digits = e.target.value.replace(/\D/g, '').slice(0, 10);
+                              setPreviewPhone(digits);
+                              if (phoneError) setPhoneError('');
+                            }}
+                            style={{
+                              border: 'none', padding: '12px 14px', fontSize: 15, outline: 'none',
+                              flex: 1, fontFamily: 'inherit', background: 'transparent',
+                            }}
+                            onFocus={e => (e.target.closest('div') as HTMLDivElement).style.borderColor = phoneError ? '#E53E3E' : C.saffron}
+                            onBlur={e => (e.target.closest('div') as HTMLDivElement).style.borderColor = phoneError ? '#E53E3E' : '#E5E7EB'} />
+                        </div>
+                        {phoneError
+                          ? <p style={{ fontSize: 11, color: '#E53E3E', margin: '4px 0 0' }}>{phoneError}</p>
+                          : <p style={{ fontSize: 11, color: C.lgray, margin: '4px 0 0' }}>We'll send your preview link on WhatsApp</p>
+                        }
+                      </div>
+
+                      {/* Step 2: Photo */}
+                      <div style={{ marginBottom: 18 }}>
+                        <label style={{ fontSize: 12, fontWeight: 700, color: C.navy, display: 'block', marginBottom: 6 }}>
+                          Child's photo <span style={{ color: C.saffron }}>*</span>
+                        </label>
+                        {/* Photo tips */}
+                        <div style={{ background: '#F9FAFB', border: '1px solid #E5E7EB', borderRadius: 10, padding: '10px 12px', marginBottom: 8 }}>
+                          <p style={{ fontSize: 9, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', color: C.lgray, textAlign: 'center', margin: '0 0 8px' }}>Tips</p>
+                          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 6 }}>
+                            {[
+                              { img: '/photo-tips/good.avif',       label: 'Clear front-facing', good: true },
+                              { img: '/photo-tips/group.jpg',       label: 'Only one person',    good: false },
+                              { img: '/photo-tips/sunglasses.avif', label: 'No accessories',     good: false },
+                              { img: '/photo-tips/sideangle.jpg',   label: 'No side angle',      good: false },
+                            ].map(({ img, label, good }) => (
+                              <div key={label} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4 }}>
+                                <div style={{ position: 'relative', width: 52, height: 52 }}>
+                                  <img src={img} alt={label} style={{ width: 52, height: 52, borderRadius: '50%', objectFit: 'cover', objectPosition: 'top', border: `2.5px solid ${good ? '#22C55E' : '#EF4444'}` }} />
+                                  <div style={{ position: 'absolute', bottom: 0, right: 0, width: 16, height: 16, borderRadius: '50%', background: good ? '#22C55E' : '#EF4444', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 9, color: '#fff', fontWeight: 800, border: '1.5px solid #fff' }}>
+                                    {good ? '✓' : '✕'}
+                                  </div>
+                                </div>
+                                <p style={{ fontSize: 8, color: C.gray, textAlign: 'center', lineHeight: 1.3, margin: 0 }}>{label}</p>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                        {!photo ? (
+                          <label style={{
+                            border: '2px dashed #E5E7EB', borderRadius: 12, padding: '22px 14px',
+                            display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6,
+                            cursor: 'pointer', background: '#FAFAFA', transition: 'border-color 0.2s',
+                          }}
+                            onMouseEnter={e => (e.currentTarget.style.borderColor = C.saffron)}
+                            onMouseLeave={e => (e.currentTarget.style.borderColor = '#E5E7EB')}>
+                            <span style={{ fontSize: 34 }}>📸</span>
+                            <span style={{ fontWeight: 700, color: C.navy, fontSize: 13 }}>Upload child's photo</span>
+                            <span style={{ fontSize: 11, color: C.lgray }}>Clear, front-facing works best</span>
+                            <span style={{ fontSize: 11, fontWeight: 700, color: C.saffron, textAlign: 'center' }}>📷 Higher quality photo = better results</span>
+                            <span style={{ fontSize: 10, color: C.lgray, textAlign: 'center' }}>Any size accepted · Auto-compressed · JPG, PNG, HEIC</span>
+                            <input type="file" accept="image/*" style={{ display: 'none' }}
+                              onChange={e => { const f = e.target.files?.[0]; if (f) handlePhotoAdd(f); }} />
+                          </label>
+                        ) : (
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '10px 12px', background: '#F0FDF4', borderRadius: 10, border: '1.5px solid #BBF7D0' }}>
+                              <img src={photo.preview} style={{ width: 48, height: 48, borderRadius: 8, objectFit: 'cover', flexShrink: 0 }} alt="" />
+                              <div style={{ flex: 1, minWidth: 0 }}>
+                                <div style={{ fontWeight: 700, fontSize: 13, color: '#166534' }}>{photo.uploading ? '⏳ Uploading…' : '✓ Photo ready'}</div>
+                                {photo.uploading && <div style={{ fontSize: 11, color: '#166534', opacity: 0.7 }}>Please wait…</div>}
+                              </div>
+                              {!photo.uploading && (
+                                <button onClick={() => setPhoto(null)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: C.lgray, fontSize: 20, lineHeight: 1, flexShrink: 0 }}>×</button>
+                              )}
+                            </div>
+
+                            {/* Photo quality score */}
+                            {!photo.uploading && photo.quality && (() => {
+                              const { score, tip } = photo.quality!;
+                              const color = score >= 75 ? '#16a34a' : score >= 50 ? '#d97706' : '#dc2626';
+                              const bg    = score >= 75 ? '#f0fdf4' : score >= 50 ? '#fffbeb' : '#fef2f2';
+                              const border = score >= 75 ? '#bbf7d0' : score >= 50 ? '#fde68a' : '#fecaca';
+                              const label = score >= 75 ? 'Great photo!' : score >= 50 ? 'Decent photo' : 'Low image quality';
+                              return (
+                                <div style={{ padding: '10px 12px', background: bg, borderRadius: 10, border: `1.5px solid ${border}` }}>
+                                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: tip ? 6 : 0 }}>
+                                    <span style={{ fontSize: 12, fontWeight: 700, color }}>{label}</span>
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                                      {/* Progress bar */}
+                                      <div style={{ width: 80, height: 6, background: '#e5e7eb', borderRadius: 99, overflow: 'hidden' }}>
+                                        <div style={{ width: `${score}%`, height: '100%', background: color, borderRadius: 99, transition: 'width 0.6s ease' }} />
+                                      </div>
+                                      <span style={{ fontSize: 13, fontWeight: 800, color, minWidth: 36, textAlign: 'right' }}>{score}%</span>
+                                    </div>
+                                  </div>
+                                  {tip && <p style={{ margin: 0, fontSize: 11, color, lineHeight: 1.5 }}>{tip}</p>}
+                                </div>
+                              );
+                            })()}
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Consent */}
+                      <label style={{ display: 'flex', alignItems: 'flex-start', gap: 10, cursor: 'pointer', marginBottom: 16 }}>
+                        <input type="checkbox" checked={consent} onChange={e => setConsent(e.target.checked)}
+                          style={{ marginTop: 2, flexShrink: 0, accentColor: C.saffron, width: 15, height: 15, cursor: 'pointer' }} />
+                        <span style={{ fontSize: 12, lineHeight: 1.6, color: C.gray }}>
+                          I confirm that I am at least 18 years old and have obtained consent from the child's parent or guardian to share this information for the purpose of creating a personalised storybook, in accordance with the{' '}
+                          <a href="/privacy" style={{ color: C.saffron, textDecoration: 'underline' }}>Privacy Policy</a>.
+                        </span>
+                      </label>
+
+                      {/* Generate button */}
+                      {theme.comingSoon ? (
+                        <div style={{ background: '#F5F3FF', border: '1.5px solid #DDD6FE', borderRadius: 12, padding: '14px 18px', textAlign: 'center' }}>
+                          <p style={{ fontWeight: 800, fontSize: 15, color: '#7C3AED', margin: '0 0 4px', fontFamily: "'Baloo 2', sans-serif" }}>🚀 Preview Coming Soon</p>
+                          <p style={{ fontSize: 12, color: '#6B7280', margin: 0 }}>We're still generating sample scenes — check back soon!</p>
+                        </div>
+                      ) : (
+                        <button disabled={!canGenerate} onClick={handleGenerate}
+                          style={{
+                            background: canGenerate ? `linear-gradient(135deg, ${C.saffron} 0%, #FF8C42 100%)` : '#E5E7EB',
+                            color: canGenerate ? '#fff' : '#9CA3AF',
+                            border: 'none', borderRadius: 12, padding: '15px 18px',
+                            fontWeight: 800, fontSize: 16, cursor: canGenerate ? 'pointer' : 'default',
+                            fontFamily: "'Baloo 2', sans-serif", transition: 'all 0.2s',
+                            boxShadow: canGenerate ? '0 4px 16px rgba(255,107,53,0.4)' : 'none',
+                          }}>
+                          ✨ Generate Free {previewPageCount}-Page Preview
+                        </button>
+                      )}
+                      {!theme.comingSoon && <p style={{ fontSize: 11, color: C.lgray, textAlign: 'center', margin: '10px 0 0' }}>Free · ~2 min · No card required</p>}
+
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </div>
+            </div>
+          </>
         )}
 
         {/* ── Explore more themes ── */}

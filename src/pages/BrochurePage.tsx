@@ -324,7 +324,7 @@ function FaceToSceneAnimation() {
 
 const FACE_SIZE_BROCHURE = 72;
 
-function BrochureThemeCard({ slug, icon, name, badge, description, ageRange, comingSoon, onClick }: { slug: string; icon: string; name: string; badge?: string; description?: string; ageRange?: string; comingSoon?: boolean; onClick: () => void }) {
+function BrochureThemeCard({ slug, icon, name, badge, description, ageRange, comingSoon, onClick, onOrder }: { slug: string; icon: string; name: string; badge?: string; description?: string; ageRange?: string; comingSoon?: boolean; onClick: () => void; onOrder?: () => void }) {
   const faceSamples = getFaceSamples(slug);
   const arrowTarget = getArrowTarget(slug);
   const useScenes = comingSoon && !(slug in THEME_FACE_SAMPLES);
@@ -457,20 +457,26 @@ function BrochureThemeCard({ slug, icon, name, badge, description, ageRange, com
             {description}
           </p>
         )}
-        {/* Price + button */}
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
-          <div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-              <span style={{ fontSize: 22, fontWeight: 800, color: C.navy, fontFamily: "'Baloo 2', sans-serif" }}>₹974</span>
-              <span style={{ fontSize: 11, fontWeight: 700, color: '#92400E', background: '#FEF3C7', borderRadius: 20, padding: '2px 8px' }}>35% off</span>
-            </div>
-            <span style={{ fontSize: 13, color: '#9CA3AF', textDecoration: 'line-through', fontWeight: 500 }}>₹1,499</span>
-          </div>
+        {/* Price */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 10 }}>
+          <span style={{ fontSize: 22, fontWeight: 800, color: C.navy, fontFamily: "'Baloo 2', sans-serif" }}>₹974</span>
+          <span style={{ fontSize: 11, fontWeight: 700, color: '#92400E', background: '#FEF3C7', borderRadius: 20, padding: '2px 8px' }}>35% off</span>
+          <span style={{ fontSize: 13, color: '#9CA3AF', textDecoration: 'line-through', fontWeight: 500 }}>₹1,499</span>
+        </div>
+        {/* Buttons */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
           <button
-            onClick={onClick}
-            style={{ padding: '12px 22px', borderRadius: 12, background: `linear-gradient(135deg, ${C.saffron} 0%, #F7B731 100%)`, color: '#fff', border: 'none', fontWeight: 800, fontSize: 15, cursor: 'pointer', fontFamily: "'Baloo 2', sans-serif", boxShadow: '0 3px 12px rgba(255,107,53,0.35)', whiteSpace: 'nowrap', letterSpacing: 0.2 }}>
-            Personalize
+            onClick={e => { e.stopPropagation(); onOrder?.(); }}
+            style={{ width: '100%', padding: '13px 0', borderRadius: 12, background: `linear-gradient(135deg, ${C.navy} 0%, #2a2a4a 100%)`, color: '#fff', border: 'none', fontWeight: 800, fontSize: 15, cursor: 'pointer', fontFamily: "'Baloo 2', sans-serif", boxShadow: '0 4px 16px rgba(26,26,46,0.3)', letterSpacing: 0.2 }}>
+            Order Now →
           </button>
+          {!comingSoon && (
+            <button
+              onClick={e => { e.stopPropagation(); onClick(); }}
+              style={{ width: '100%', padding: '10px 0', borderRadius: 12, background: 'transparent', color: C.saffron, border: `1.5px solid ${C.saffron}`, fontWeight: 700, fontSize: 14, cursor: 'pointer', fontFamily: "'Baloo 2', sans-serif" }}>
+              ✨ Free Preview first
+            </button>
+          )}
         </div>
       </div>
     </motion.div>
@@ -2007,7 +2013,7 @@ export function BrochurePage() {
                     exit={{ opacity: 0, y: -10 }} transition={{ duration: 0.2 }}
                     style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: 20 }}>
                     {tabThemes.map(t => (
-                      <BrochureThemeCard key={t.slug} slug={t.slug} icon={t.icon} name={t.name} description={t.description} ageRange={Array.isArray(t.ageRange) ? t.ageRange.join(', ') : t.ageRange} badge={['abc', 'colours-shapes', 'bedtime-routines', 'numbers-maths', 'sharing-sorry', 'first-day-school', 'managing-emotions', 'indian-festivals', 'history-india', 'financial-literacy', 'growth-mindset', 'professions', 'internet-safety', 'body-safety'].includes(t.slug) ? '✨ 9-Page Preview' : undefined} comingSoon={t.comingSoon} onClick={() => navigate(`/theme/${t.slug}`)} />
+                      <BrochureThemeCard key={t.slug} slug={t.slug} icon={t.icon} name={t.name} description={t.description} ageRange={Array.isArray(t.ageRange) ? t.ageRange.join(', ') : t.ageRange} badge={['abc', 'colours-shapes', 'bedtime-routines', 'numbers-maths', 'sharing-sorry', 'first-day-school', 'managing-emotions', 'indian-festivals', 'history-india', 'financial-literacy', 'growth-mindset', 'professions', 'internet-safety', 'body-safety'].includes(t.slug) ? '✨ 9-Page Preview' : undefined} comingSoon={t.comingSoon} onClick={() => navigate(`/theme/${t.slug}`)} onOrder={() => navigate(`/theme/${t.slug}?order=1`)} />
                     ))}
 
                     {/* ── Custom story card — last slot ── */}
