@@ -444,7 +444,7 @@ function BrochureThemeCard({ slug, icon, name, badge, description, ageRange, com
         <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 8, flexWrap: 'wrap' }}>
           {badge && <span style={{ fontSize: 11, fontWeight: 700, background: 'rgba(255,107,53,0.12)', color: C.saffron, borderRadius: 20, padding: '2px 9px' }}>{badge}</span>}
           {comingSoon && <span style={{ fontSize: 11, fontWeight: 700, background: '#EDE9FE', color: '#7C3AED', borderRadius: 20, padding: '2px 9px' }}>🚀 Preview soon</span>}
-          <span style={{ fontSize: 11, fontWeight: 600, background: '#F3F4F6', color: '#555', borderRadius: 20, padding: '2px 9px' }}>26 Pages</span>
+          <span style={{ fontSize: 11, fontWeight: 600, background: '#F3F4F6', color: '#555', borderRadius: 20, padding: '2px 9px' }}>32 Pages</span>
           {ageRange && <span style={{ fontSize: 11, fontWeight: 600, color: '#9CA3AF', marginLeft: 'auto' }}>Ages {ageRange}</span>}
         </div>
         {/* Title */}
@@ -2197,7 +2197,7 @@ export function BrochurePage() {
                   ))}
                 </div>
                 <span className="inline-block text-xs font-bold px-3 py-1 rounded-full" style={{ background: C.gold + '28', color: C.navy, border: `1px solid ${C.gold}` }}>
-                  📖 26 pages including cover
+                  📖 32 pages including cover
                 </span>
               </div>
             </motion.div>
@@ -2316,11 +2316,22 @@ export function BrochurePage() {
       <ReviewsSection />
 
       {/* ══════════════════════════════════════════
-          § CUSTOM STORY — white
+          § CUSTOM STORY CTA — white
       ══════════════════════════════════════════ */}
       <section style={{ background: C.white }} className="py-16 sm:py-20">
-        <div className="max-w-5xl mx-auto px-5 sm:px-8">
-          <CustomStorySection />
+        <div className="max-w-2xl mx-auto px-5 sm:px-8 text-center">
+          <span style={{ display: 'inline-block', background: `linear-gradient(135deg, ${C.saffron}, ${C.gold})`, color: '#fff', fontSize: 11, fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', borderRadius: 20, padding: '4px 14px', marginBottom: 16 }}>Custom Story</span>
+          <h2 style={{ fontFamily: "'Baloo 2', sans-serif", fontWeight: 800, fontSize: 'clamp(24px, 4vw, 36px)', color: C.navy, margin: '0 0 12px', lineHeight: 1.2 }}>
+            Your story, your rules
+          </h2>
+          <p style={{ fontSize: 16, color: C.gray, lineHeight: 1.65, marginBottom: 28 }}>
+            Have a unique idea — a birthday adventure, a family trip, a lesson you want them to live? Share the brief and we'll write &amp; illustrate it completely bespoke.
+          </p>
+          <button onClick={() => navigate('/custom-story')}
+            style={{ background: `linear-gradient(135deg, ${C.saffron}, #FF8C42)`, color: '#fff', border: 'none', borderRadius: 50, padding: '15px 36px', fontWeight: 800, fontSize: 17, cursor: 'pointer', fontFamily: "'Baloo 2', sans-serif", boxShadow: '0 6px 24px rgba(255,107,53,0.4)' }}>
+            Start Your Custom Story →
+          </button>
+          <p style={{ fontSize: 13, color: C.lgray, marginTop: 12 }}>Starting ₹1,980 · We'll contact you within 24 hours to finalise</p>
         </div>
       </section>
 

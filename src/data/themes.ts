@@ -43,6 +43,11 @@ export const THEMES: ThemeEntry[] = [
     slug: 'first-day-school', name: 'First Day at School', icon: '🏫', ageRange: '3–5',
     description: 'Helps anxious children prepare for school by seeing themselves navigate it confidently.',
   },
+  {
+    slug: 'pet-buddy', name: 'My Pet & Me', icon: '🐾', ageRange: ['0–3', '3–5', '6–8', '9–12'],
+    description: 'Your child and their furry best friend go on adventures together — morning walks, bath time, treat hunts and cuddles at bedtime.',
+    comingSoon: true,
+  },
   // Ages 5–8
   {
     slug: 'managing-emotions', name: 'Managing Emotions', icon: '😤', ageRange: '6–8',

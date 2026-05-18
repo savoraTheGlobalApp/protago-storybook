@@ -146,6 +146,13 @@ const SAMPLE_PAGES: Record<string, SamplePage[]> = {
     { imageUrl: '/themes_scenes/potty-training/scene_07.webp', title: 'Getting Braver', text: 'Every day your child gets a little braver, a little more confident. Accidents happen — and that is perfectly okay. What matters is trying. The potty knows your child is on the way to becoming a pro!' },
     { imageUrl: '/themes_scenes/potty-training/scene_09.webp', title: 'Potty Hero!', text: 'Your child stands tall — a true Potty Hero! This milestone means independence, growth, and pride. The whole family is cheering. Growing up is the greatest adventure of all.' },
   ],
+  'pet-buddy': [
+    { imageUrl: '/pet-theme/cover.webp',                         title: 'My Pet & Me', text: 'Every morning your child wakes up to the most excited face in the world — their furry best friend! This is the story of a child and their pet going through every moment of the day together.' },
+    { imageUrl: '/pet-theme/scene_01_good_morning_bhaiya.webp',  title: 'Good Morning!', text: 'Tiny paws and happy barks — your child and their pet greet the morning together. The day always feels brighter when your best friend is there to welcome it with you.' },
+    { imageUrl: '/pet-theme/scene_02_breakfast_race.webp',       title: 'Breakfast Race', text: 'Who finishes breakfast first — your child or their pet? The great breakfast race is on! Learning to share mealtimes builds a bond that lasts a lifetime.' },
+    { imageUrl: '/pet-theme/scene_03_garden_run.webp',           title: 'Garden Run', text: 'Out into the garden — running, leaping, and chasing each other through the grass! Exercise is always more fun when you have a furry companion to share it with.' },
+    { imageUrl: '/pet-theme/scene_04_the_ball.webp',             title: 'The Ball', text: 'One ball, two players — and the best game in the world! Fetch, throw, catch — your child and their pet discover that joy is always multiplied when you share it.' },
+  ],
   'hindi-alphabet': [
     { imageUrl: '/themes_scenes/hindi-alphabet/scene_01.webp', title: 'अ से आम — A for Aam', text: 'Your child reaches for a golden mango hanging from the tallest branch — "अ!" The Hindi alphabet begins with the sweetest letter of all. Every language is a treasure, and Hindi is one of the oldest in the world.' },
     { imageUrl: '/themes_scenes/hindi-alphabet/scene_03.webp', title: 'इ से इमली — I for Imli', text: 'A twisty tamarind tree sways gently in the warm breeze — "इ!" Your child traces the letter in the air. Each Hindi akshar is a little piece of art — curved, flowing, and full of life.' },
@@ -840,7 +847,7 @@ export function ThemePage() {
                   Ages {ageLabel}
                 </span>
                 <span style={{ fontSize: 11, fontWeight: 700, color: '#6B7280', background: '#F3F4F6', padding: '3px 10px', borderRadius: 20, border: '1px solid #E5E7EB' }}>
-                  26 pages
+                  32 pages
                 </span>
               </div>
               <p style={{ fontSize: 14, lineHeight: 1.65, color: C.gray, margin: 0 }}>{theme.description}</p>
