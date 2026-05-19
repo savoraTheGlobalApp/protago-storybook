@@ -20,13 +20,13 @@ const WAITING_LINES = [
   (name: string) => `${name}'s adventure is coming to life…`,
 ];
 
-const CUSTOMER_VIDEOS = [
-  { name: 'Pransh',    url: 'https://www.instagram.com/p/DXwdV83zex3/' },
-  { name: 'Shreyansh', url: 'https://www.instagram.com/p/DWvGPa8j5g8/' },
-  { name: 'Adishi',    url: 'https://www.instagram.com/p/DYZhLw6TZ8E/' },
-  { name: 'Vihaan',    url: 'https://www.instagram.com/p/DXAAreLDxkZ/' },
-  { name: 'Vihaan',    url: 'https://www.instagram.com/p/DYAN2zKpGK8/' },
-  { name: 'Harsh',     url: 'https://www.instagram.com/p/DXb-CcmjcTj/' },
+const CUSTOMER_VIDEOS: { name: string; embedUrl: string }[] = [
+  { name: 'Pransh',    embedUrl: 'https://www.instagram.com/p/DXwdV83zex3/embed/' },
+  { name: 'Shreyansh', embedUrl: 'https://www.instagram.com/p/DWvGPa8j5g8/embed/' },
+  { name: 'Adishi',    embedUrl: 'https://www.instagram.com/p/DYZhLw6TZ8E/embed/' },
+  { name: 'Vihaan',    embedUrl: 'https://www.instagram.com/p/DXAAreLDxkZ/embed/' },
+  { name: 'Vihaan',    embedUrl: 'https://www.instagram.com/p/DYAN2zKpGK8/embed/' },
+  { name: 'Customer',  embedUrl: 'https://www.youtube.com/embed/At_FrzzTpQ0?loop=1&playlist=At_FrzzTpQ0&autoplay=1&mute=1&playsinline=1&controls=0&rel=0' },
 ];
 
 type ReviewData = {
@@ -117,10 +117,11 @@ function WhileWaitingSection() {
           {CUSTOMER_VIDEOS.map((v, i) => (
             <div key={i} style={{ flexShrink: 0, scrollSnapAlign: 'start', width: 240, borderRadius: 14, overflow: 'hidden', border: '1px solid rgba(255,255,255,0.1)' }}>
               <iframe
-                src={`${v.url}embed/`}
+                src={v.embedUrl}
                 width="240"
                 height="400"
                 allowFullScreen
+                allow="autoplay; encrypted-media"
                 style={{ display: 'block', border: 'none' }}
               />
             </div>
@@ -1256,7 +1257,7 @@ export function PreviewResultPage() {
                 </button>
               </div>
               <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.35)', margin: '0 0 2px' }}>
-                Delivered in 5–7 business days · Premium 200GSM glossy paper
+                Delivered in 5–7 business days · Premium 300GSM glossy paper
               </p>
               <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.45)', margin: 0, textAlign: 'center', lineHeight: 1.5 }}>
                 Tag <strong style={{ color: '#fff' }}>@protago.in</strong> in your story &amp; send us a screenshot on{' '}

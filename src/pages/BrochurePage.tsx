@@ -26,7 +26,7 @@ const faqs = [
   { q: 'How does the personalisation work?',
     a: "You share your child's name, age, and a photo. Our AI recreates their likeness across every page, making them the true hero of the adventure." },
   { q: 'How long does delivery take?',
-    a: 'We deliver within 5–7 business days across India on premium 200GSM glossy paper, carefully packaged.' },
+    a: 'We deliver within 5–7 business days across India on premium 300GSM glossy paper, carefully packaged.' },
   { q: 'What age group are these books for?',
     a: 'We have stories for children aged 3–12, with language calibrated precisely to their age.' },
   { q: 'Can I see a sample before buying?',

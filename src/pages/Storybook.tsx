@@ -26,7 +26,7 @@ const faqs = [
   },
   {
     q: 'How long does delivery take?',
-    a: 'We deliver within 5–7 business days across India. Each book is printed on premium 200GSM glossy paper and carefully packaged to arrive in perfect condition.',
+    a: 'We deliver within 5–7 business days across India. Each book is printed on premium 300GSM glossy paper and carefully packaged to arrive in perfect condition.',
   },
   {
     q: 'What age group are these books for?',
@@ -324,7 +324,7 @@ export function Storybook() {
                 { emoji: '📖', cardBg: 'bg-amber-50',   border: 'border-amber-100', label: 'text-amber-600',   n: '01', title: 'Pick your story',        desc: 'Browse 4 adventures. Choose the one your child will treasure.' },
                 { emoji: '📸', cardBg: 'bg-sky-50',     border: 'border-sky-100',   label: 'text-sky-600',     n: '02', title: 'Personalise with photos', desc: 'Add their name, age, and a photo. Takes less than a minute.' },
                 { emoji: '🤖', cardBg: 'bg-rose-50',    border: 'border-rose-100',  label: 'text-rose-600',    n: '03', title: 'AI creates the magic',   desc: "Your child's real face goes on every single page of the story." },
-                { emoji: '📦', cardBg: 'bg-emerald-50', border: 'border-emerald-100', label: 'text-emerald-700', n: '04', title: 'Delivered to your door', desc: '200GSM glossy hardcover, beautifully packaged, free shipping.' },
+                { emoji: '📦', cardBg: 'bg-emerald-50', border: 'border-emerald-100', label: 'text-emerald-700', n: '04', title: 'Delivered to your door', desc: '300GSM glossy hardcover, beautifully packaged, free shipping.' },
               ].flatMap((item, i, arr) => {
                 const card = (
                   <motion.div

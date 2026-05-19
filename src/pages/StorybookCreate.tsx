@@ -548,7 +548,7 @@ export function StorybookCreate() {
                           <span className="text-base">🖨️</span>
                           <div>
                             <p className="text-sm font-semibold text-gray-800">Premium printing</p>
-                            <p className="text-xs text-gray-400">Hardcover, 200GSM glossy paper — printed with care</p>
+                            <p className="text-xs text-gray-400">Hardcover, 300GSM glossy paper — printed with care</p>
                           </div>
                         </div>
                         <div className="flex items-start gap-3">

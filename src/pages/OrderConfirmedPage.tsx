@@ -60,7 +60,7 @@ export function OrderConfirmedPage() {
           <div style={{ display: 'flex', flexDirection: 'column', gap: 14, marginBottom: 36, textAlign: 'left' }}>
             {[
               { n: '1', text: `Our AI places ${childName || "your child"}'s face into every scene of the story` },
-              { n: '2', text: 'Printed on premium 200GSM glossy paper and carefully packaged' },
+              { n: '2', text: 'Printed on premium 300GSM glossy paper and carefully packaged' },
               { n: '3', text: 'Delivered to your door in 5–7 business days' },
             ].map(({ n, text }) => (
               <div key={n} style={{ display: 'flex', alignItems: 'flex-start', gap: 14 }}>
