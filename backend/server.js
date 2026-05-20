@@ -1577,7 +1577,7 @@ app.post('/api/preview-job-alert', async (req, res) => {
 // Creates a preview_jobs row in Supabase DB, fires Modal async.
 // Body: { storySlug, photoUrl, childName?, email?, gender?, ageGroup? }
 const VALID_GENDERS = new Set(['boy', 'girl']);
-const VALID_AGE_GROUPS = new Set(['young', 'middle', 'older']);
+const VALID_AGE_GROUPS = new Set(['age3', 'age4', 'age5', 'young', 'middle', 'older']);
 
 app.post('/api/preview/trigger', async (req, res) => {
   try {

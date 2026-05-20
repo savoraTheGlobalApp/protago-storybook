@@ -66,7 +66,23 @@ const VARIATIONS_AVAILABLE = new Set([
   'internet-safety/middle_girl', 'krishna/middle_girl', 'managing-emotions/middle_girl',
   'numbers-maths/middle_girl', 'ramayana/middle_girl',
 
-  // young_boy / young_girl — 5-scene themes
+  // age3_boy / age3_girl / age4_boy / age4_girl / age5_boy / age5_girl
+  // Themes covering ages 3–5: colours-shapes, bedtime-routines, sharing-sorry, first-day-school
+  // GCS folders mirror young_* for now; swap scenes per-age when ready.
+  'colours-shapes/age3_boy',    'colours-shapes/age3_girl',
+  'colours-shapes/age4_boy',    'colours-shapes/age4_girl',
+  'colours-shapes/age5_boy',    'colours-shapes/age5_girl',
+  'bedtime-routines/age3_boy',  'bedtime-routines/age3_girl',
+  'bedtime-routines/age4_boy',  'bedtime-routines/age4_girl',
+  'bedtime-routines/age5_boy',  'bedtime-routines/age5_girl',
+  'sharing-sorry/age3_boy',     'sharing-sorry/age3_girl',
+  'sharing-sorry/age4_boy',     'sharing-sorry/age4_girl',
+  'sharing-sorry/age5_boy',     'sharing-sorry/age5_girl',
+  'first-day-school/age3_boy',  'first-day-school/age3_girl',
+  'first-day-school/age4_boy',  'first-day-school/age4_girl',
+  'first-day-school/age5_boy',  'first-day-school/age5_girl',
+
+  // young_boy / young_girl — 5-scene themes (ages 6–8)
   'colours-shapes/young_boy',       'colours-shapes/young_girl',
   'bedtime-routines/young_boy',     'bedtime-routines/young_girl',
   'numbers-maths/young_boy',        'numbers-maths/young_girl',

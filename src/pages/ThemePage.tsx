@@ -349,7 +349,7 @@ export function ThemePage() {
 
   const [generating, setGenerating] = useState(false);
   const [gender, setGender] = useState<'boy' | 'girl' | null>(null);
-  const [selectedAgeGroup, setSelectedAgeGroup] = useState<'young' | 'middle' | 'older' | null>(null);
+  const [selectedAgeGroup, setSelectedAgeGroup] = useState<'age3' | 'age4' | 'age5' | 'young' | 'middle' | 'older' | null>(null);
   const [selectedAge, setSelectedAge] = useState<number | null>(null);
 
   const formRef = useRef<HTMLDivElement>(null);
@@ -367,7 +367,7 @@ export function ThemePage() {
 
   const pickAge = (age: number) => {
     setSelectedAge(age);
-    setSelectedAgeGroup(age <= 5 ? 'young' : age <= 8 ? 'middle' : 'older');
+    setSelectedAgeGroup(age === 3 ? 'age3' : age === 4 ? 'age4' : age === 5 ? 'age5' : age <= 8 ? 'middle' : 'older');
   };
 
   // Reset on theme change
@@ -379,7 +379,7 @@ export function ThemePage() {
       setShowOrder(true);
       const ls = locationState;
       // Resolve exact age number: prefer the specific age, fall back to ageGroup midpoints
-      const exactAge = ls.age ? Number(ls.age) : ls.ageGroup === 'young' ? 4 : ls.ageGroup === 'middle' ? 6 : ls.ageGroup === 'older' ? 10 : null;
+      const exactAge = ls.age ? Number(ls.age) : ls.ageGroup === 'age3' ? 3 : ls.ageGroup === 'age4' ? 4 : ls.ageGroup === 'age5' ? 5 : ls.ageGroup === 'young' ? 4 : ls.ageGroup === 'middle' ? 7 : ls.ageGroup === 'older' ? 10 : null;
       setOrderForm(f => ({
         ...f,
         childName: ls.childName || f.childName,
