@@ -120,11 +120,24 @@ const VARIATIONS_AVAILABLE = new Set([
 // Bucket: protago-story-scenes (asia-south1)
 // Generic path:  {storySlug}/scene_01_spread.png
 // Variant path:  {storySlug}/{ageGroup}_{gender}/scene_01_spread.png
+//
+// Fallback chain for per-age groups: age3/age4/age5 → young → middle → bare slug
+const AGE_GROUP_FALLBACK = { age3: 'young', age4: 'young', age5: 'young', young: 'middle', middle: 'older' };
+
 function getSceneUrls(storySlug, { gender, ageGroup } = {}) {
   const base = `https://storage.googleapis.com/${process.env.GCS_SCENES_BUCKET || 'protago-story-scenes'}`;
-  const variantKey = gender && ageGroup ? `${storySlug}/${ageGroup}_${gender}` : null;
-  const useVariant = variantKey && VARIATIONS_AVAILABLE.has(variantKey);
-  const prefix = useVariant ? `${storySlug}/${ageGroup}_${gender}` : storySlug;
+
+  let prefix = storySlug; // bare fallback — last resort
+  if (gender && ageGroup) {
+    let group = ageGroup;
+    // Walk the fallback chain until we find a registered variant or exhaust options
+    while (group) {
+      const key = `${storySlug}/${group}_${gender}`;
+      if (VARIATIONS_AVAILABLE.has(key)) { prefix = key; break; }
+      group = AGE_GROUP_FALLBACK[group];
+    }
+  }
+
   const count = getSceneCount(storySlug, ageGroup);
   return Array.from({ length: count }, (_, i) =>
     `${base}/${prefix}/scene_${String(i + 1).padStart(2, '0')}_spread.png`
