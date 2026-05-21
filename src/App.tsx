@@ -14,6 +14,7 @@ import { BlogListPage } from './pages/BlogListPage';
 import { BlogPostPage } from './pages/BlogPostPage';
 import { BlogAdminPage } from './pages/BlogAdminPage';
 import { CustomStoryPage } from './pages/CustomStoryPage';
+import { ReadingQuestPage } from './pages/ReadingQuestPage';
 
 function SocialFloats() {
   const btnStyle = (bg: string, shadow: string): React.CSSProperties => ({
@@ -69,6 +70,7 @@ export default function App() {
         <Route path="/blog/:slug" element={<BlogPostPage />} />
         <Route path="/admin/blog" element={<BlogAdminPage />} />
         <Route path="/custom-story" element={<CustomStoryPage />} />
+        <Route path="/reading-quest" element={<ReadingQuestPage />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </Router>
