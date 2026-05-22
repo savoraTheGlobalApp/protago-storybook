@@ -166,11 +166,43 @@ function useSTT() {
   return { transcript, interim, isListening, error, start, stop, reset, supported };
 }
 
+// ── Edit distance (Levenshtein) ───────────────────────────────────────────
+function editDistance(a: string, b: string): number {
+  if (a === b) return 0;
+  if (Math.abs(a.length - b.length) > 2) return 99; // fast reject
+  const m = a.length, n = b.length;
+  const prev = Array.from({ length: n + 1 }, (_, j) => j);
+  const curr = new Array(n + 1).fill(0);
+  for (let i = 1; i <= m; i++) {
+    curr[0] = i;
+    for (let j = 1; j <= n; j++)
+      curr[j] = a[i-1] === b[j-1] ? prev[j-1] : 1 + Math.min(prev[j-1], prev[j], curr[j-1]);
+    prev.splice(0, n + 1, ...curr);
+  }
+  return curr[n];
+}
+
+// Fuzzy match: short words must be exact; longer words allow 1–2 edits.
+// Handles common Indian-accent STT drops: pond→pod, stand→stad, school→skool.
+function wordsMatch(a: string, b: string): boolean {
+  if (a === b) return true;
+  const len = Math.max(a.length, b.length);
+  if (len <= 3) return false;
+  return editDistance(a, b) <= (len <= 5 ? 1 : 2);
+}
+
 // ── ORF scoring ─────────────────────────────────────────────────────────────
-// Window-based alignment: if a transcript word doesn't match the current passage
-// word, look ahead SKIP words in the passage. If found → passage word was skipped
-// (advance pi). If not found → transcript word was misrecognized (advance ti).
-// This prevents one bad word from breaking all subsequent matches.
+// Bidirectional window alignment with fuzzy matching.
+//
+// On mismatch, we look ahead in BOTH directions:
+//   foundInPassage   → current transcript word appears later in passage
+//                      (child skipped a word → advance pi)
+//   foundInTranscript → current passage word appears soon in transcript
+//                      (STT garbled/delayed it → advance ti and wait)
+//
+// Priority: if the passage word is coming in the transcript soon, WAIT for it
+// rather than abandoning it. This fixes early words not going green when STT
+// misses the first syllable of a sentence.
 function scoreORF(passageText: string, transcriptText: string) {
   const norm = (s: string) => s.toLowerCase().replace(/[^a-z]/g, '');
   const pWords = passageText.split(/\s+/).filter(Boolean);
@@ -178,17 +210,25 @@ function scoreORF(passageText: string, transcriptText: string) {
   const tNorm = transcriptText.split(/\s+/).map(norm).filter(Boolean);
   const matched = new Set<number>();
   let pi = 0, ti = 0;
-  const SKIP = 5;
+  const PASSAGE_SKIP = 8;    // how far ahead to look in passage for transcript word
+  const TRANSCRIPT_WAIT = 4; // how far ahead to look in transcript for passage word
   while (pi < pNorm.length && ti < tNorm.length) {
-    if (pNorm[pi] === tNorm[ti]) {
+    if (wordsMatch(pNorm[pi], tNorm[ti])) {
       matched.add(pi); pi++; ti++;
     } else {
-      let foundAhead = false;
-      for (let w = 1; w <= SKIP && pi + w < pNorm.length; w++) {
-        if (pNorm[pi + w] === tNorm[ti]) { foundAhead = true; break; }
+      let foundInPassage = false;
+      for (let w = 1; w <= PASSAGE_SKIP && pi + w < pNorm.length; w++) {
+        if (wordsMatch(pNorm[pi + w], tNorm[ti])) { foundInPassage = true; break; }
       }
-      if (foundAhead) pi++; // child skipped this passage word
-      else ti++;            // this transcript word is a misrecognition
+      let foundInTranscript = false;
+      for (let w = 1; w <= TRANSCRIPT_WAIT && ti + w < tNorm.length; w++) {
+        if (wordsMatch(pNorm[pi], tNorm[ti + w])) { foundInTranscript = true; break; }
+      }
+      // If passage word is coming soon in transcript, wait for it (advance ti)
+      // Only skip the passage word if the transcript word matches ahead AND
+      // the passage word isn't about to appear.
+      if (foundInPassage && !foundInTranscript) pi++;
+      else ti++;
     }
   }
   return { correct: matched.size, total: pWords.length, matched };
@@ -303,68 +343,105 @@ function TimerRing({ timeLeft, maxTime, color }: { timeLeft: number; maxTime: nu
 const LNF_LETTERS = 'trnfyIRDGYVrbPLZicAOJpTxKavMUQhgNjXsCHqomSBzeuEFVdkRUXhyOqtmSxKecTGZrgP'.split('');
 
 const PSF_WORDS = [
-  { word: 'sun', sounds: ['s','u','n'], count: 3 },
-  { word: 'for', sounds: ['f','or'], count: 2 },
-  { word: 'bit', sounds: ['b','i','t'], count: 3 },
-  { word: 'ask', sounds: ['a','s','k'], count: 3 },
-  { word: 'ball', sounds: ['b','o','l'], count: 3 },
-  { word: 'wave', sounds: ['w','A','v'], count: 3 },
-  { word: 'bring', sounds: ['b','r','i','ng'], count: 4 },
-  { word: 'soft', sounds: ['s','o','f','t'], count: 4 },
-  { word: 'drop', sounds: ['d','r','o','p'], count: 4 },
-  { word: 'stand', sounds: ['s','t','a','n','d'], count: 5 },
+  { word: 'sun',   sounds: ['s','u','n'],         count: 3 },
+  { word: 'for',   sounds: ['f','or'],             count: 2 },
+  { word: 'bit',   sounds: ['b','i','t'],          count: 3 },
+  { word: 'ask',   sounds: ['a','s','k'],          count: 3 },
+  { word: 'ball',  sounds: ['b','o','l'],          count: 3 },
+  { word: 'wave',  sounds: ['w','A','v'],          count: 3 },
+  { word: 'bring', sounds: ['b','r','i','ng'],     count: 4 },
+  { word: 'soft',  sounds: ['s','o','f','t'],      count: 4 },
+  { word: 'drop',  sounds: ['d','r','o','p'],      count: 4 },
+  { word: 'stand', sounds: ['s','t','a','n','d'],  count: 5 },
+  { word: 'map',   sounds: ['m','a','p'],          count: 3 },
+  { word: 'run',   sounds: ['r','u','n'],          count: 3 },
+  { word: 'cat',   sounds: ['k','a','t'],          count: 3 },
+  { word: 'fish',  sounds: ['f','i','sh'],         count: 3 },
+  { word: 'chip',  sounds: ['ch','i','p'],         count: 3 },
+  { word: 'ship',  sounds: ['sh','i','p'],         count: 3 },
+  { word: 'hope',  sounds: ['h','O','p'],          count: 3 },
+  { word: 'rope',  sounds: ['r','O','p'],          count: 3 },
+  { word: 'plan',  sounds: ['p','l','a','n'],      count: 4 },
+  { word: 'frog',  sounds: ['f','r','o','g'],      count: 4 },
+  { word: 'clip',  sounds: ['k','l','i','p'],      count: 4 },
+  { word: 'milk',  sounds: ['m','i','l','k'],      count: 4 },
+  { word: 'just',  sounds: ['j','u','s','t'],      count: 4 },
+  { word: 'flat',  sounds: ['f','l','a','t'],      count: 4 },
+  { word: 'flag',  sounds: ['f','l','a','g'],      count: 4 },
+  { word: 'chest', sounds: ['ch','e','s','t'],     count: 4 },
+  { word: 'think', sounds: ['th','i','ng','k'],    count: 4 },
+  { word: 'green', sounds: ['g','r','E','n'],      count: 4 },
+  { word: 'stamp', sounds: ['s','t','a','m','p'],  count: 5 },
+  { word: 'blend', sounds: ['b','l','e','n','d'],  count: 5 },
 ];
 
-const NWF_BY_GRADE: Record<number, string[]> = {
-  1: ['tib','rep','hab','com','tep','tut','nup','sep','dat','nen','hon','yan','nop','sug','teg','nug'],
-  2: ['tud','neg','sut','gan','fom','hode','tur','pide','tage','hime','lome','surp','hage','mide','vem','sish'],
-  3: ['nibe','dort','corm','nade','nork','rame','dern','dant','flin','thag','dorn','gop','mard','tirk','fime','prab'],
-};
 
 const WRF_BY_GRADE: Record<number, string[]> = {
   1: ['no','they','if','one','for','there','help','came','stop','first','note','head','nice','line','stay','turn','said','walk','play','sing'],
   2: ['did','going','point','over','time','made','still','write','nearly','seen','saying','bear','need','say','picture','foot','best','blue','drink','leader'],
   3: ['further','front','station','deep','powerful','double','meaning','quick','answer','behind','happy','doctor','drive','daily','morning','straight','waiting','circle','himself','safety'],
+  4: ['achieve','ancient','border','century','climate','colony','compare','continent','culture','debate','declare','depend','describe','develop','discover','distance','divide','energy','explore','famous'],
+  5: ['accompany','accomplish','accurate','category','challenge','character','communicate','community','conclude','contribute','determine','evaluate','evidence','generate','illustrate','influence','interpret','maintain','opportunity','perspective'],
 };
 
 const MAZE_BY_GRADE: Record<number, { passage: string; choices: string[]; answer: string }[]> = {
   2: [
-    { passage: 'Cindy and Anne were on the soccer _____ and liked to practice together.', choices: ['team','food','rain'], answer: 'team' },
-    { passage: 'They set up a net in the field for a _____.', choices: ['goal','table','shoe'], answer: 'goal' },
-    { passage: 'When the sun was shining they got hot and _____.', choices: ['thirsty','happy','tired'], answer: 'thirsty' },
-    { passage: 'Soccer is a hard game. You do plenty of fast _____ when you play.', choices: ['running','eating','sleeping'], answer: 'running' },
-    { passage: 'Kicking the ball takes strength and _____.', choices: ['practice','colour','weather'], answer: 'practice' },
-    { passage: 'After the game, they sat down on the _____ to rest.', choices: ['grass','cloud','music'], answer: 'grass' },
+    { passage: 'Ravi and his sister went to the market to buy _____ for their mother.', choices: ['vegetables','elephants','numbers'], answer: 'vegetables' },
+    { passage: 'The vegetable seller had piled up his cart with bright green and orange _____.', choices: ['colours','furniture','music'], answer: 'colours' },
+    { passage: 'When it started to rain, everyone ran under the big _____ at the corner.', choices: ['tree','mountain','ocean'], answer: 'tree' },
+    { passage: 'Ravi liked the rain because it made the air feel cool and _____.', choices: ['fresh','hot','loud'], answer: 'fresh' },
+    { passage: 'He splashed through a puddle and his shoes got very _____.', choices: ['wet','tall','square'], answer: 'wet' },
+    { passage: 'At home his mother laughed and said he looked like a little _____ who had jumped in a pond.', choices: ['frog','clock','mountain'], answer: 'frog' },
   ],
   3: [
-    { passage: 'The library was special for Maya. She visited every _____ after school.', choices: ['week','apple','river'], answer: 'week' },
-    { passage: 'She always chose books about _____. Wolves, elephants, dolphins — she loved them all.', choices: ['animals','colours','numbers'], answer: 'animals' },
-    { passage: 'Maya found a book she had never seen before. She picked it up and began to _____.', choices: ['read','dance','swim'], answer: 'read' },
-    { passage: 'She forgot all about going home. When the librarian said it was closing time, Maya was _____ to leave.', choices: ['sad','loud','early'], answer: 'sad' },
-    { passage: 'She checked out three books and _____ them home carefully in her bag.', choices: ['carried','painted','dropped'], answer: 'carried' },
-    { passage: 'That night she read until her mum turned off the _____.', choices: ['light','water','table'], answer: 'light' },
+    { passage: 'The old fort on the hill had stood for five hundred years, through battles and _____.', choices: ['monsoons','laughter','pillows'], answer: 'monsoons' },
+    { passage: 'Nisha climbed its ancient steps slowly, running her fingers along the _____ stone walls.', choices: ['rough','musical','invisible'], answer: 'rough' },
+    { passage: 'At the top she could see the entire city spread out below her like a _____.', choices: ['map','river','cloud'], answer: 'map' },
+    { passage: 'Her history teacher had told her the kings who lived here were famous for their _____.', choices: ['justice','cooking','sleeping'], answer: 'justice' },
+    { passage: 'Nisha took out her notebook and began to _____ everything she could see from the fort.', choices: ['sketch','eat','forget'], answer: 'sketch' },
+    { passage: 'She decided to return with her grandfather, who would have a _____ story about every stone.', choices: ['fascinating','boring','quiet'], answer: 'fascinating' },
+  ],
+  4: [
+    { passage: 'Sachin had played cricket since he was six, and everyone in the _____ knew he was talented.', choices: ['colony','ocean','forest'], answer: 'colony' },
+    { passage: 'His coach said that to become great, practice alone was not enough — you also needed _____.', choices: ['courage','furniture','weather'], answer: 'courage' },
+    { passage: 'During the big inter-school match, Sachin walked out to bat with his hands _____.', choices: ['trembling','floating','singing'], answer: 'trembling' },
+    { passage: 'The bowler ran up fast and sent a spinning ball straight toward the _____.', choices: ['stumps','clouds','window'], answer: 'stumps' },
+    { passage: 'Sachin swung hard — the ball flew over the boundary rope for a _____.', choices: ['six','river','plate'], answer: 'six' },
+    { passage: 'His teammates rushed onto the field, cheering so _____ the whole neighbourhood could hear.', choices: ['loudly','quietly','slowly'], answer: 'loudly' },
+  ],
+  5: [
+    { passage: 'ISRO scientists had worked for seven years to design the spacecraft that would _____ the Moon.', choices: ['orbit','forget','decorate'], answer: 'orbit' },
+    { passage: 'Every calculation had to be _____ because even a tiny error could destroy the mission.', choices: ['precise','colourful','ordinary'], answer: 'precise' },
+    { passage: 'Dr Meera stayed at the control centre for three nights, monitoring _____ from the probe.', choices: ['signals','recipes','paintings'], answer: 'signals' },
+    { passage: 'When the lander safely touched down, the team broke into cheers — years of _____ had paid off.', choices: ['dedication','confusion','hesitation'], answer: 'dedication' },
+    { passage: 'The mission proved that India could _____ with the most advanced space programmes in the world.', choices: ['compete','disagree','disappear'], answer: 'compete' },
+    { passage: 'Dr Meera told students later that the greatest tool any scientist has is simply a _____ mind.', choices: ['curious','empty','ancient'], answer: 'curious' },
   ],
 };
 
 const ORF_PASSAGES: Record<number, string> = {
-  1: `I have a pond in my yard and there are lots of fish in it. There are lights in the pond. They light up the yard at night. My grandpa helped my dad build this pond many years ago. They used a lot of tools to make a big hole in the ground. My dad said it was hard work, but he is happy he did it.`,
-  2: `The church on our street has a big parking lot. On a patch of grass at one end is a pear tree. The church lot and its tree are our playground. Most days there are no cars in the lot. On those days, my brother and I ride our bikes around and around. But our favourite thing is to climb the church pear tree.`,
-  3: `Maria loved the night sky more than anything else. Every evening she would drag her blanket outside and lie on the grass, looking up at the stars. Her grandfather had taught her the names of the constellations when she was small. Now she could find them herself — Orion, the Big Dipper, the bright star Sirius.`,
+  1: `Priya has a dog named Moti. Moti is brown and has big ears. Every day Priya gives Moti a roti from her plate. Moti wags his tail and jumps up. Her dadi laughs and says Moti is just like one of the family. After school Priya and Moti play in the park near their home. Moti can run very fast. Priya has to run hard to keep up with him.`,
+  2: `Every summer Arjun went to his nani's house in the village. There was a big neem tree in the courtyard. After lunch, when the sun was too hot, everyone rested in its shade. His nani would tell stories about the old days. His favourite was about a clever crow who outsmarted a fox near the river. At night the whole family slept on the roof under the open sky and counted the stars together.`,
+  3: `The old bazaar in Jaipur came alive every morning. Vendors called out to passing shoppers, cloth merchants spread bright fabrics on their carts, and the smell of fresh jalebis drifted through the narrow lanes. Kavya walked carefully through the crowd, her canvas bag bumping against her hip. She was looking for one thing — the perfect shade of blue thread to finish her mother's kurta before the festival next week.`,
+  4: `Ratan had never seen the sea before the day his father's train pulled into Mumbai. When they stepped onto the platform and into the thick, salty air, he understood at once why people spoke of the city with such longing. The next morning they walked along Marine Drive as the sun rose over the water. Fishermen were already hauling in their nets, and a row of old men sat on the sea wall doing their morning exercises, looking out at the horizon as though they owned it.`,
+  5: `India has over fourteen hundred languages, but Hindi and English serve as bridges between them. When Leila moved from Kerala to Delhi for her father's new job, she discovered this firsthand. At her new school she understood almost nothing the first week — the teacher switched between Hindi and English the way some people mix spices in a dish. By the third month Leila found herself doing the same thing without thinking, her sentences weaving between both languages, and she realised that being caught between two worlds was not a problem at all. It was a superpower.`,
 };
 
 // ── Timers by grade ────────────────────────────────────────────────────────
 const TIMERS: Record<string, Record<number, number>> = {
-  lnf: { 1: 90, 2: 75, 3: 60 },
-  psf: { 1: 80, 2: 65, 3: 50 },
-  nwf: { 1: 90, 2: 75, 3: 65 },
-  wrf: { 1: 90, 2: 75, 3: 65 },
-  maze: { 1: 120, 2: 100, 3: 90 },
-  orf: { 1: 65, 2: 65, 3: 65 },
+  lnf:  { 1: 90, 2: 75, 3: 60, 4: 50, 5: 45 },
+  psf:  { 1: 80, 2: 65, 3: 50, 4: 45, 5: 40 },
+  wrf:  { 1: 90, 2: 75, 3: 65, 4: 55, 5: 50 },
+  maze: { 1: 120, 2: 100, 3: 90, 4: 80, 5: 75 },
+  orf:  { 1: 65, 2: 65, 3: 65, 4: 65, 5: 65 },
 };
 
+// DIBELS ORF end-of-year benchmark (words correct per minute) by grade
+const ORF_BENCHMARK: Record<number, number> = { 1: 47, 2: 87, 3: 107, 4: 123, 5: 139 };
+
 // ── Types ──────────────────────────────────────────────────────────────────
-type Grade = 1 | 2 | 3;
-type Module = 'lnf' | 'psf' | 'nwf' | 'wrf' | 'maze' | 'orf';
+type Grade = 1 | 2 | 3 | 4 | 5;
+type Module = 'lnf' | 'psf' | 'wrf' | 'maze' | 'orf';
 interface ModuleResult { module: Module; score: number; total: number; pct: number }
 
 function shuffle<T>(arr: T[]): T[] { return [...arr].sort(() => Math.random() - 0.5) }
@@ -597,85 +674,6 @@ function PSFGame({ grade, onDone }: { grade: Grade; onDone: (r: ModuleResult) =>
   );
 }
 
-// ── Alien Words ────────────────────────────────────────────────────────────
-function NWFGame({ grade, onDone }: { grade: Grade; onDone: (r: ModuleResult) => void }) {
-  const bank = NWF_BY_GRADE[grade];
-  const items = useRef(shuffle(bank).slice(0, 10));
-  const [idx, setIdx] = useState(0);
-  const [score, setScore] = useState(0);
-  const [feedback, setFeedback] = useState<'correct' | 'wrong' | null>(null);
-  const [done, setDone] = useState(false);
-  const [mascot, setMascot] = useState<'idle' | 'happy' | 'sad' | 'excited'>('idle');
-  const audio = useAudio();
-  const { stars, spawn } = useStars();
-  const maxTime = TIMERS.nwf[grade];
-
-  const finish = useCallback((s: number, i: number) => {
-    if (done) return; setDone(true); audio.fanfare();
-    onDone({ module: 'nwf', score: s, total: Math.max(i, 1), pct: Math.round((s / Math.max(i, 1)) * 100) });
-  }, [done]);
-
-  const timeLeft = useGameTimer(maxTime, () => finish(score, idx), !done);
-  const current = items.current[idx];
-
-  function makeWrong(w: string): string {
-    const v = 'aeiou'; const c = 'bdfghjklmnprstvwyz';
-    return w.split('').map(ch => Math.random() > 0.55 ? (v.includes(ch) ? v[Math.floor(Math.random()*v.length)] : c.includes(ch) ? c[Math.floor(Math.random()*c.length)] : ch) : ch).join('');
-  }
-
-  const opts = useRef<string[]>([]);
-  if (!opts.current.length || !opts.current.includes(current)) {
-    let w1 = makeWrong(current), w2 = makeWrong(current);
-    while (w1 === current) w1 = makeWrong(current);
-    while (w2 === current || w2 === w1) w2 = makeWrong(current);
-    opts.current = shuffle([current, w1, w2]);
-  }
-
-  const handlePick = (w: string) => {
-    if (feedback || done) return;
-    const correct = w === current;
-    const ns = correct ? score + 1 : score;
-    if (correct) { setScore(ns); audio.correct(); spawn('👽'); setMascot('happy'); }
-    else { audio.wrong(); setMascot('sad'); }
-    setFeedback(correct ? 'correct' : 'wrong');
-    opts.current = [];
-    setTimeout(() => {
-      setFeedback(null); setMascot('idle');
-      if (idx + 1 >= items.current.length) finish(ns, idx + 1);
-      else setIdx(i => i + 1);
-    }, 800);
-  };
-
-  return (
-    <>
-      <FloatingStars stars={stars} />
-      <FeedbackBadge feedback={feedback} />
-      <GameShell title="Alien Words" emoji="👽" timeLeft={timeLeft} maxTime={maxTime} score={score} total={idx} color={C.sky} mascotMood={mascot}>
-        <div style={{ textAlign: 'center', marginBottom: 16 }}>
-          <div style={{ fontSize: 13, color: '#888', marginBottom: 6 }}>The alien wants you to read its word!</div>
-          <div style={{ fontSize: 13, color: C.sky, marginBottom: 10, fontWeight: 600 }}>👽 "How do you say this?"</div>
-          <div style={{
-            fontSize: 72, fontWeight: 900, color: C.navy, letterSpacing: 8, fontFamily: 'monospace',
-            background: `${C.sky}18`, borderRadius: 20, padding: '12px 32px',
-            display: 'inline-block', animation: 'pop 0.3s ease-out',
-          }}>{current}</div>
-        </div>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-          {opts.current.map(w => (
-            <button key={w} className="btn-game" onClick={() => handlePick(w)} style={{
-              padding: '18px', fontSize: 30, fontWeight: 900, fontFamily: 'monospace',
-              letterSpacing: 6, color: C.navy, textAlign: 'center',
-              border: `3px solid ${C.sky}44`, borderRadius: 16,
-              background: 'linear-gradient(135deg, #fff, #F0FBFF)',
-              cursor: 'pointer', boxShadow: '0 4px 12px rgba(0,188,212,0.15)',
-            }}>{w}</button>
-          ))}
-        </div>
-      </GameShell>
-    </>
-  );
-}
-
 // ── Word Flash ─────────────────────────────────────────────────────────────
 function WRFGame({ grade, onDone }: { grade: Grade; onDone: (r: ModuleResult) => void }) {
   const bank = WRF_BY_GRADE[grade];
@@ -829,13 +827,14 @@ function MazeGame({ grade, onDone }: { grade: Grade; onDone: (r: ModuleResult) =
 
 // ── Read Aloud (ORF) ───────────────────────────────────────────────────────
 function ORFGame({ grade, onDone }: { grade: Grade; onDone: (r: ModuleResult) => void }) {
-  const passage = ORF_PASSAGES[grade];
+  const passage = ORF_PASSAGES[grade] ?? ORF_PASSAGES[5];
   const stt = useSTT();
   const [phase, setPhase] = useState<'intro' | 'reading' | 'done'>('intro');
   const [timeLeft, setTimeLeft] = useState(65);
   const [manualMode, setManualMode] = useState(!stt.supported);
   const [wordsRead, setWordsRead] = useState('');
   const [errorsInput, setErrorsInput] = useState('');
+  const [errorCount, setErrorCount] = useState(0);
   const audio = useAudio();
   const maxTime = 65;
 
@@ -863,9 +862,15 @@ function ORFGame({ grade, onDone }: { grade: Grade; onDone: (r: ModuleResult) =>
   const handleStart = () => {
     audio.start();
     stt.reset();
+    setErrorCount(0);
     if (!manualMode) stt.start();
     setPhase('reading');
   };
+
+  // Pre-fill error input from tap count when timer ends in manual mode
+  useEffect(() => {
+    if (phase === 'done' && manualMode) setErrorsInput(String(errorCount));
+  }, [phase]);
 
   const handleSubmit = () => {
     if (manualMode) {
@@ -950,9 +955,7 @@ function ORFGame({ grade, onDone }: { grade: Grade; onDone: (r: ModuleResult) =>
           {/* Mic status bar */}
           {!manualMode && (
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 4 }}>
-              <div style={{ fontSize: 13, color: '#666' }}>
-                {liveCorrect}/{totalWords} words ✓
-              </div>
+              <div style={{ fontSize: 13, color: '#666' }}>{liveCorrect}/{totalWords} words ✓</div>
               <div style={{
                 fontSize: 11, padding: '3px 10px', borderRadius: 99,
                 background: stt.isListening ? '#F0FFF4' : '#FFF5F5',
@@ -963,83 +966,124 @@ function ORFGame({ grade, onDone }: { grade: Grade; onDone: (r: ModuleResult) =>
               </div>
             </div>
           )}
-          {/* Debug: raw transcript so user can see what Chrome is hearing */}
-          {(stt.transcript || stt.interim) && (
+          {/* Heard strip */}
+          {!manualMode && (stt.transcript || stt.interim) && (
             <div style={{ background: '#F8F8F8', border: '1px solid #E5E7EB', borderRadius: 10, padding: '6px 12px', marginTop: 8, fontSize: 12, color: '#666', lineHeight: 1.5 }}>
-              🎙 Heard: <span style={{ color: C.navy }}>{stt.transcript}</span>
+              🎙 <span style={{ color: C.navy }}>{stt.transcript}</span>
               {stt.interim && <span style={{ color: '#aaa' }}>{stt.interim}</span>}
             </div>
           )}
+          {/* Proctor error tap button (manual mode) */}
+          {manualMode && (
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8, marginTop: 16 }}>
+              <button className="btn-game" onClick={() => setErrorCount(c => c + 1)} style={{
+                width: 96, height: 96, borderRadius: '50%', background: C.rose, color: '#fff',
+                border: 'none', fontSize: 20, fontWeight: 900, cursor: 'pointer',
+                boxShadow: `0 6px 20px ${C.rose}55`, lineHeight: 1.3,
+              }}>✗<br /><span style={{ fontSize: 12 }}>Error</span></button>
+              <div style={{ fontSize: 14, color: C.rose, fontWeight: 800 }}>
+                {errorCount} error{errorCount !== 1 ? 's' : ''} marked
+              </div>
+              {errorCount > 0 && (
+                <button onClick={() => setErrorCount(c => Math.max(0, c - 1))} style={{
+                  background: 'none', border: 'none', color: '#aaa', fontSize: 12, cursor: 'pointer',
+                }}>↩ undo last</button>
+              )}
+            </div>
+          )}
+          {/* Mic error */}
           {stt.error && (
-            <div style={{ color: C.rose, fontSize: 12, marginTop: 8, textAlign: 'center' }}>
-              Mic error: {stt.error}.{' '}
-              <button onClick={() => setManualMode(true)} style={{ color: C.sky, background: 'none', border: 'none', cursor: 'pointer', fontSize: 12, textDecoration: 'underline' }}>
-                Switch to manual
+            <div style={{ background: '#FFF5F5', border: `1px solid ${C.rose}44`, borderRadius: 10, padding: '10px 14px', marginTop: 8, fontSize: 13, color: '#555', lineHeight: 1.6 }}>
+              {stt.error === 'not-allowed' || stt.error === 'permission-denied'
+                ? '🚫 Microphone access was blocked. Please allow mic access in your browser settings, then refresh.'
+                : stt.error === 'network'
+                ? '📶 Speech recognition needs an internet connection. Switch to manual mode below.'
+                : `Mic issue: ${stt.error}.`}{' '}
+              <button onClick={() => setManualMode(true)} style={{ color: C.sky, background: 'none', border: 'none', cursor: 'pointer', fontSize: 13, textDecoration: 'underline' }}>
+                Switch to manual mode
               </button>
             </div>
           )}
         </>
       )}
 
-      {phase === 'done' && (
-        <div>
-          <div style={{ textAlign: 'center', fontSize: 24, marginBottom: 20, animation: 'bounce-in 0.3s' }}>⏱ Time's up!</div>
-
-          {!manualMode ? (
-            <>
-              <div style={{ background: '#F0FFF4', border: `2px solid ${C.mint}`, borderRadius: 20, padding: '24px', textAlign: 'center', marginBottom: 20 }}>
-                <div style={{ fontSize: 14, fontWeight: 700, color: '#555', marginBottom: 4 }}>🎤 Auto-scored</div>
-                <div style={{ fontSize: 60, fontWeight: 900, color: C.navy, lineHeight: 1 }}>
-                  {liveCorrect}<span style={{ fontSize: 20, color: '#888' }}>/{totalWords}</span>
-                </div>
-                <div style={{ fontSize: 14, color: '#666', marginTop: 4 }}>words read correctly</div>
-              </div>
-              <button className="btn-game" onClick={handleSubmit} style={{
-                width: '100%', background: `linear-gradient(135deg, ${C.saffron}, #FF8C42)`,
-                color: '#fff', border: 'none', borderRadius: 16, padding: '18px',
-                fontSize: 18, fontWeight: 900, cursor: 'pointer',
-                fontFamily: "'Baloo 2', sans-serif", boxShadow: `0 6px 20px ${C.saffron}55`,
-              }}>See My Report! 🎉</button>
-            </>
-          ) : (
-            <div>
-              <div style={{ background: '#FFF8F0', borderRadius: 18, padding: '20px', marginBottom: 20 }}>
-                <div style={{ fontSize: 14, color: '#555', marginBottom: 16, lineHeight: 1.6 }}>
-                  <strong>Parent:</strong> Enter how many words your child read and how many errors.
-                </div>
-                <div style={{ display: 'flex', gap: 12, marginBottom: 8 }}>
-                  <div style={{ flex: 1 }}>
-                    <label style={{ fontSize: 13, color: '#666', display: 'block', marginBottom: 6, fontWeight: 700 }}>Words read</label>
-                    <input type="number" min={0} max={totalWords} placeholder="e.g. 48" value={wordsRead}
-                      onChange={e => setWordsRead(e.target.value)}
-                      style={{ width: '100%', padding: '14px', fontSize: 22, border: `2px solid ${C.mint}`, borderRadius: 12, textAlign: 'center', boxSizing: 'border-box', fontWeight: 800 }} />
+      {phase === 'done' && (() => {
+        const wcmAuto = Math.round(liveCorrect * 60 / 65);
+        const manualWR = parseInt(wordsRead) || 0;
+        const manualErr = parseInt(errorsInput) || 0;
+        const wcmManual = Math.round(Math.max(0, manualWR - manualErr) * 60 / 65);
+        const benchmark = ORF_BENCHMARK[grade] ?? 139;
+        const WCMBadge = ({ wcm }: { wcm: number }) => (
+          <div style={{ marginTop: 8, fontSize: 13, color: '#555', lineHeight: 1.8 }}>
+            <strong style={{ color: C.navy }}>~{wcm} WCM</strong>
+            {' · '}Grade {grade} benchmark: <strong>{benchmark} WCM</strong>
+            {' '}
+            <span style={{ fontWeight: 800, color: wcm >= benchmark ? C.mint : wcm >= benchmark * 0.7 ? C.gold : C.rose }}>
+              {wcm >= benchmark ? '🌟 Above!' : wcm >= benchmark * 0.7 ? '⚡ Approaching' : '💪 Keep practising'}
+            </span>
+          </div>
+        );
+        return (
+          <div>
+            <div style={{ textAlign: 'center', fontSize: 24, marginBottom: 20, animation: 'bounce-in 0.3s' }}>⏱ Time's up!</div>
+            {!manualMode ? (
+              <>
+                <div style={{ background: '#F0FFF4', border: `2px solid ${C.mint}`, borderRadius: 20, padding: '24px', textAlign: 'center', marginBottom: 20 }}>
+                  <div style={{ fontSize: 14, fontWeight: 700, color: '#555', marginBottom: 4 }}>🎤 Auto-scored</div>
+                  <div style={{ fontSize: 60, fontWeight: 900, color: C.navy, lineHeight: 1 }}>
+                    {liveCorrect}<span style={{ fontSize: 20, color: '#888' }}>/{totalWords}</span>
                   </div>
-                  <div style={{ flex: 1 }}>
-                    <label style={{ fontSize: 13, color: '#666', display: 'block', marginBottom: 6, fontWeight: 700 }}>Errors</label>
-                    <input type="number" min={0} placeholder="e.g. 2" value={errorsInput}
-                      onChange={e => setErrorsInput(e.target.value)}
-                      style={{ width: '100%', padding: '14px', fontSize: 22, border: `2px solid ${C.rose}`, borderRadius: 12, textAlign: 'center', boxSizing: 'border-box', fontWeight: 800 }} />
-                  </div>
+                  <div style={{ fontSize: 14, color: '#666', marginTop: 4 }}>words read correctly</div>
+                  <WCMBadge wcm={wcmAuto} />
                 </div>
-                <div style={{ fontSize: 12, color: '#aaa' }}>Passage has {totalWords} words</div>
-              </div>
-              <button className="btn-game" onClick={handleSubmit} disabled={!wordsRead}
-                style={{
-                  width: '100%', background: wordsRead ? `linear-gradient(135deg, ${C.saffron}, #FF8C42)` : '#E5E7EB',
-                  color: wordsRead ? '#fff' : '#aaa', border: 'none', borderRadius: 16,
-                  padding: '18px', fontSize: 18, fontWeight: 900, cursor: wordsRead ? 'pointer' : 'default',
-                  fontFamily: "'Baloo 2', sans-serif", boxShadow: wordsRead ? `0 6px 20px ${C.saffron}55` : 'none',
+                <button className="btn-game" onClick={handleSubmit} style={{
+                  width: '100%', background: `linear-gradient(135deg, ${C.saffron}, #FF8C42)`,
+                  color: '#fff', border: 'none', borderRadius: 16, padding: '18px',
+                  fontSize: 18, fontWeight: 900, cursor: 'pointer',
+                  fontFamily: "'Baloo 2', sans-serif", boxShadow: `0 6px 20px ${C.saffron}55`,
                 }}>See My Report! 🎉</button>
-            </div>
-          )}
-        </div>
-      )}
+              </>
+            ) : (
+              <div>
+                <div style={{ background: '#FFF8F0', borderRadius: 18, padding: '20px', marginBottom: 20 }}>
+                  <div style={{ fontSize: 14, color: '#555', marginBottom: 16, lineHeight: 1.6 }}>
+                    <strong>Parent:</strong> Enter words reached and adjust errors (pre-filled from your taps).
+                  </div>
+                  <div style={{ display: 'flex', gap: 12, marginBottom: 8 }}>
+                    <div style={{ flex: 1 }}>
+                      <label style={{ fontSize: 13, color: '#666', display: 'block', marginBottom: 6, fontWeight: 700 }}>Words reached</label>
+                      <input type="number" min={0} max={totalWords} placeholder="e.g. 48" value={wordsRead}
+                        onChange={e => setWordsRead(e.target.value)}
+                        style={{ width: '100%', padding: '14px', fontSize: 22, border: `2px solid ${C.mint}`, borderRadius: 12, textAlign: 'center', boxSizing: 'border-box', fontWeight: 800 }} />
+                    </div>
+                    <div style={{ flex: 1 }}>
+                      <label style={{ fontSize: 13, color: '#666', display: 'block', marginBottom: 6, fontWeight: 700 }}>Errors</label>
+                      <input type="number" min={0} placeholder="e.g. 2" value={errorsInput}
+                        onChange={e => setErrorsInput(e.target.value)}
+                        style={{ width: '100%', padding: '14px', fontSize: 22, border: `2px solid ${C.rose}`, borderRadius: 12, textAlign: 'center', boxSizing: 'border-box', fontWeight: 800 }} />
+                    </div>
+                  </div>
+                  <div style={{ fontSize: 12, color: '#aaa', marginBottom: 4 }}>Passage has {totalWords} words</div>
+                  {wordsRead && <WCMBadge wcm={wcmManual} />}
+                </div>
+                <button className="btn-game" onClick={handleSubmit} disabled={!wordsRead}
+                  style={{
+                    width: '100%', background: wordsRead ? `linear-gradient(135deg, ${C.saffron}, #FF8C42)` : '#E5E7EB',
+                    color: wordsRead ? '#fff' : '#aaa', border: 'none', borderRadius: 16,
+                    padding: '18px', fontSize: 18, fontWeight: 900, cursor: wordsRead ? 'pointer' : 'default',
+                    fontFamily: "'Baloo 2', sans-serif", boxShadow: wordsRead ? `0 6px 20px ${C.saffron}55` : 'none',
+                  }}>See My Report! 🎉</button>
+              </div>
+            )}
+          </div>
+        );
+      })()}
     </div>
   );
 }
 
 // ── Module celebration screen ──────────────────────────────────────────────
-function ModuleCelebration({ result, onNext, isLast }: { result: ModuleResult; onNext: () => void; isLast: boolean }) {
+function ModuleCelebration({ result, onNext, onRetry, isLast }: { result: ModuleResult; onNext: () => void; onRetry: () => void; isLast: boolean }) {
   const audio = useAudio();
   useEffect(() => {
     setTimeout(() => audio.fanfare(), 100);
@@ -1077,88 +1121,155 @@ function ModuleCelebration({ result, onNext, isLast }: { result: ModuleResult; o
         }}>
           {isLast ? '🎉 See My Report!' : '➡ Next Game!'}
         </button>
+        <button onClick={onRetry} style={{
+          marginTop: 14, background: 'none', border: 'none', color: '#aaa',
+          fontSize: 14, cursor: 'pointer', textDecoration: 'underline',
+        }}>↩ Try this game again</button>
       </div>
     </>
   );
 }
 
-// ── Results ────────────────────────────────────────────────────────────────
-const ACTION: Record<Module, { title: string; weak: string; strong: string }> = {
+// ── Reading level helpers ──────────────────────────────────────────────────
+function getReadingLevel(pct: number) {
+  if (pct >= 75) return { label: 'Confident Reader', emoji: '🌟', color: C.mint, stars: 3 };
+  if (pct >= 45) return { label: 'Growing Reader',   emoji: '⚡', color: C.gold, stars: 2 };
+  return               { label: 'Emerging Reader',   emoji: '💪', color: C.saffron, stars: 1 };
+}
+
+function getBookRec(grade: Grade, pct: number): { name: string; slug: string; emoji: string; desc: string } {
+  if (pct >= 75) {
+    if (grade >= 4) return { name: 'Internet Safety',  slug: 'internet-safety',  emoji: '🔒', desc: 'Complex real-world themes for confident older readers.' };
+    if (grade >= 3) return { name: 'History of India', slug: 'history-india',    emoji: '🏛️', desc: 'Rich vocabulary and fascinating stories — perfect for advanced readers.' };
+    return               { name: 'Growth Mindset',    slug: 'growth-mindset',   emoji: '🧠', desc: 'Big ideas and bold language for confident young readers.' };
+  }
+  if (pct >= 45) {
+    if (grade >= 3) return { name: 'Managing Emotions', slug: 'managing-emotions', emoji: '❤️', desc: 'Relatable situations and vocabulary just right for growing readers.' };
+    return               { name: 'Bedtime Routines',   slug: 'bedtime-routines',  emoji: '🌙', desc: 'Familiar, comforting themes at just the right reading level.' };
+  }
+  if (grade >= 2)  return { name: 'Numbers & Maths',  slug: 'numbers-maths',    emoji: '🔢', desc: 'Simple, engaging language that builds reading confidence step by step.' };
+  return                  { name: 'Colours & Shapes', slug: 'colours-shapes',   emoji: '🎨', desc: 'Joyful, repetitive language — perfect for building early reading confidence.' };
+}
+
+// ── Results data ───────────────────────────────────────────────────────────
+type Resource = { label: string; desc: string; url?: string; free: boolean };
+
+const ACTION: Record<Module, {
+  title: string;
+  weak: string;
+  strong: string;
+  resources: Resource[];
+}> = {
   lnf: {
     title: 'Letter Recognition',
     weak: 'Play "Alphabet Snap" daily — flashcards or a letter app. Label household objects with sticky notes. The goal is instant recognition in under 1 second.',
-    strong: 'Great letter knowledge! Move to practising letter sounds and simple 3-letter words like "cat", "dog", "run".',
+    strong: 'Great letter knowledge! Move to letter sounds and simple 3-letter words like "cat", "dog", "run".',
+    resources: [
+      { label: 'Duolingo ABC', desc: 'Free app with letter recognition games — beautifully designed for ages 3–6.', url: 'https://abc.duolingo.com', free: true },
+      { label: 'Starfall.com', desc: 'Free website: click letters to hear their sounds and names. Works great on a tablet.', url: 'https://www.starfall.com', free: true },
+      { label: 'Sticky-note hunt', desc: 'Label 10 objects at home (door, fan, table). Child reads the label every time they touch the object.', free: true },
+    ],
   },
   psf: {
     title: 'Hearing Sounds',
-    weak: 'Try "sound counting" in the car — say a word, count sounds on fingers. "cat" = 3 sounds. Clapping syllables also helps a lot.',
-    strong: 'Excellent phonemic awareness! The single best predictor of reading success. Now focus on blending sounds smoothly into words.',
-  },
-  nwf: {
-    title: 'Phonics & Decoding',
-    weak: 'Focus on word families: -at, -an, -it, -og. Make rhyming card sets. Read decodable books (not just picture books) — look for "Level 1 Readers".',
-    strong: 'Solid phonics! Introduce digraphs (sh, ch, th) and blends (sl, br, tr). Oxford Reading Tree Level 3+ is a great next step.',
+    weak: 'Try "sound counting" in the car — say a word, count sounds on fingers. "cat" = 3 sounds /k/ /a/ /t/. Clapping syllables also helps a lot.',
+    strong: 'Excellent phonemic awareness! The best predictor of reading success. Now focus on blending sounds smoothly into words.',
+    resources: [
+      { label: 'Duolingo ABC', desc: 'The phonics module teaches sound isolation in a fun game format. Free.', url: 'https://abc.duolingo.com', free: true },
+      { label: 'Sound counting game', desc: '"I say a word, you hold up fingers for each sound." Play for 5 minutes daily — in the car, at dinner, anywhere.', free: true },
+      { label: 'Khan Academy Kids', desc: 'Free app covering phonemic awareness through interactive stories and songs.', url: 'https://learn.khanacademy.org/khan-academy-kids/', free: true },
+    ],
   },
   wrf: {
     title: 'Sight Words',
     weak: 'The top 100 sight words make up 50% of all text. 10 words a week via sticky notes around the house. Make it a treasure hunt — find the word in a book!',
     strong: 'Good sight word bank! Try Dolch Grade 2–3 words next. Reading at the "just right" level — 90% known words — builds the most fluency.',
+    resources: [
+      { label: 'Sight Words Ninja (app)', desc: 'Free app where kids slash sight words with a sword. Covers Dolch and Fry lists. Very motivating.', free: true },
+      { label: 'Dolch word list', desc: 'Search "Dolch sight word list Grade 1" — print it free, 100 words. Make flashcards 10 at a time.', free: true },
+      { label: 'Scholastic Guided Readers', desc: 'Affordable levelled readers available in India that naturally repeat high-frequency words. ₹150–300 per book.', free: false },
+    ],
   },
   maze: {
     title: 'Reading Comprehension',
-    weak: 'Read together daily. Pause and ask "why did they do that?" and "what happens next?" Audiobooks while following the text is also very effective.',
+    weak: 'Read together daily. Pause and ask "why did they do that?" and "what happens next?" Audiobooks while following the text are also very effective.',
     strong: 'Strong comprehension! Try non-fiction and longer chapter books. Ask deeper questions: "What was the main idea? What would you have done differently?"',
+    resources: [
+      { label: 'Pratham Storyweaver', desc: 'Free Indian stories with comprehension-friendly narratives. Read together and discuss — perfect for building meaning-making.', url: 'https://storyweaver.org.in', free: true },
+      { label: 'Epic! (free for schools)', desc: 'Digital library with thousands of books and built-in quizzes. Ask your child\'s school if they have a class code.', url: 'https://www.getepic.com', free: true },
+      { label: '"5-finger retell" technique', desc: 'After reading, child holds up one finger per point: Who? Where? Problem? Events? Solution? No app needed — just a hand.', free: true },
+    ],
   },
   orf: {
     title: 'Reading Fluency',
-    weak: '"Repeated reading" works best — read the same short book 3 times in a row. Echo reading (parent reads a sentence, child repeats) builds rhythm and confidence.',
+    weak: '"Repeated reading" works best — same short passage 3 times in a row. Echo reading (parent reads a sentence, child repeats) builds rhythm and confidence fast.',
     strong: 'Fluent reader! Focus on expression and pace. Try reader\'s theatre — acting out stories with different voices builds advanced fluency and comprehension together.',
+    resources: [
+      { label: 'Repeated reading (no app needed)', desc: 'Pick any passage. Child reads it 3 times in a row. Time them. Celebrate the improvement — usually 10–20% faster by the third read.', free: true },
+      { label: 'Librivox / YouTube read-alouds', desc: 'Free audiobooks. Play while child follows the text. The model of fluent reading trains their internal voice.', url: 'https://librivox.org', free: true },
+      { label: 'Pratham Storyweaver (read-aloud mode)', desc: 'Free Indian stories with audio narration — child can listen first, then read along independently.', url: 'https://storyweaver.org.in', free: true },
+    ],
   },
 };
 
 function getLevel(pct: number) {
   if (pct >= 75) return { label: 'At Benchmark', color: C.mint, emoji: '🌟', stars: 3 };
-  if (pct >= 45) return { label: 'Approaching', color: C.gold, emoji: '⚡', stars: 2 };
-  return { label: 'Needs Support', color: C.rose, emoji: '💪', stars: 1 };
+  if (pct >= 45) return { label: 'Approaching',  color: C.gold, emoji: '⚡', stars: 2 };
+  return               { label: 'Needs Support', color: C.rose, emoji: '💪', stars: 1 };
 }
 
-function ResultsScreen({ results, childName, grade, onRetake }: {
-  results: ModuleResult[]; childName: string; grade: Grade; onRetake: () => void;
+function ResultsScreen({ results, childName, grade, onRetake, onBook }: {
+  results: ModuleResult[]; childName: string; grade: Grade; onRetake: () => void; onBook: (slug: string) => void;
 }) {
+  const orfBenchmark = ORF_BENCHMARK[grade] ?? 139;
   const audio = useAudio();
   useEffect(() => { setTimeout(() => audio.fanfare(), 400); }, []);
   const overall = Math.round(results.reduce((s, r) => s + r.pct, 0) / results.length);
-  const lvl = getLevel(overall);
+  const lvl = getReadingLevel(overall);
   const weak = results.filter(r => r.pct < 60);
   const strong = results.filter(r => r.pct >= 75);
+  const book = getBookRec(grade, overall);
+
+  const shareOnWhatsApp = () => {
+    const text = `${childName} just completed a Reading Quest! 📚\n\n${lvl.emoji} ${lvl.label} · Grade ${grade} · ${overall}% overall\n\nDiscover your child's reading level free at protago.in/reading-quest`;
+    window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, '_blank');
+  };
 
   return (
     <>
       {overall >= 75 && <Confetti />}
       <div style={{ maxWidth: 480, margin: '0 auto', padding: '28px 16px 60px' }}>
-        <div style={{ textAlign: 'center', marginBottom: 24 }}>
-          <div style={{ fontSize: 64, animation: 'bounce-in 0.5s' }}>📊</div>
-          <h2 style={{ fontFamily: "'Baloo 2', sans-serif", fontSize: 26, fontWeight: 900, color: C.navy, margin: '8px 0 4px' }}>
-            {childName}'s Reading Report
-          </h2>
-          <div style={{ fontSize: 13, color: '#888' }}>Grade {grade} Assessment · DIBELS 8th Edition</div>
-        </div>
 
-        {/* Overall */}
+        {/* ── Child reveal card ── */}
         <div style={{
-          background: `linear-gradient(135deg, ${lvl.color}22, ${lvl.color}0A)`,
-          border: `3px solid ${lvl.color}`, borderRadius: 22, padding: '24px', textAlign: 'center', marginBottom: 24,
-          animation: 'pop 0.5s ease-out',
+          background: `linear-gradient(135deg, ${lvl.color}22, ${lvl.color}08)`,
+          border: `3px solid ${lvl.color}`, borderRadius: 24, padding: '28px 20px',
+          textAlign: 'center', marginBottom: 20, animation: 'pop 0.5s ease-out',
         }}>
-          <div style={{ fontSize: 13, fontWeight: 700, color: '#888', marginBottom: 4 }}>Overall Score</div>
-          <div style={{ fontSize: 72, fontWeight: 900, color: lvl.color, lineHeight: 1 }}>{overall}%</div>
-          <div style={{ display: 'flex', justifyContent: 'center', gap: 6, margin: '8px 0' }}>
-            {[1,2,3].map(i => <span key={i} style={{ fontSize: 28, opacity: i <= lvl.stars ? 1 : 0.2 }}>⭐</span>)}
+          <div style={{ fontSize: 72, marginBottom: 4, animation: 'bounce-in 0.5s' }}>{lvl.emoji}</div>
+          <h2 style={{ fontFamily: "'Baloo 2', sans-serif", fontSize: 28, fontWeight: 900, color: C.navy, margin: '0 0 4px' }}>
+            {childName} is a
+          </h2>
+          <div style={{ fontSize: 26, fontWeight: 900, color: lvl.color, marginBottom: 8 }}>{lvl.label}!</div>
+          <div style={{ display: 'flex', justifyContent: 'center', gap: 6, marginBottom: 12 }}>
+            {[1,2,3].map(i => <span key={i} style={{ fontSize: 32, opacity: i <= lvl.stars ? 1 : 0.15 }}>⭐</span>)}
           </div>
-          <div style={{ fontSize: 17, fontWeight: 800, color: lvl.color }}>{lvl.emoji} {lvl.label}</div>
+          <div style={{ fontSize: 13, color: '#777' }}>Grade {grade} · {overall}% overall · DIBELS 8th Edition</div>
         </div>
 
-        {/* Skills */}
+        {/* ── WhatsApp share ── */}
+        <button className="btn-game" onClick={shareOnWhatsApp} style={{
+          width: '100%', background: '#25D366', color: '#fff', border: 'none',
+          borderRadius: 14, padding: '14px', fontSize: 15, fontWeight: 800,
+          cursor: 'pointer', marginBottom: 20, display: 'flex', alignItems: 'center',
+          justifyContent: 'center', gap: 8, fontFamily: "'Baloo 2', sans-serif",
+          boxShadow: '0 4px 14px rgba(37,211,102,0.35)',
+        }}>
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="white"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+          Share {childName}'s Report on WhatsApp
+        </button>
+
+        {/* ── Skills breakdown ── */}
         <h3 style={{ fontFamily: "'Baloo 2', sans-serif", fontSize: 18, fontWeight: 900, color: C.navy, marginBottom: 14 }}>Skills Breakdown</h3>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginBottom: 28 }}>
           {results.map(r => {
@@ -1174,55 +1285,84 @@ function ResultsScreen({ results, childName, grade, onRetake }: {
                 <div style={{ height: 10, background: '#F3F4F6', borderRadius: 99, overflow: 'hidden' }}>
                   <div style={{ height: '100%', width: `${r.pct}%`, background: `linear-gradient(90deg, ${l.color}, ${l.color}BB)`, borderRadius: 99, transition: 'width 1.5s ease' }} />
                 </div>
-                <div style={{ fontSize: 11, color: '#aaa', marginTop: 4 }}>{r.score}/{r.total} correct · {r.pct}%</div>
+                <div style={{ fontSize: 11, color: '#aaa', marginTop: 4 }}>
+                  {r.score}/{r.total} correct · {r.pct}%
+                  {r.module === 'orf' && (() => {
+                    const wcm = Math.round(r.score * 60 / 65);
+                    return <span> · <strong style={{ color: C.navy }}>~{wcm} WCM</strong> (benchmark: {orfBenchmark} WCM)</span>;
+                  })()}
+                </div>
               </div>
             );
           })}
         </div>
 
-        {/* Action items */}
+        {/* ── Weak areas: home activities + resources ── */}
         {weak.length > 0 && <>
-          <h3 style={{ fontFamily: "'Baloo 2', sans-serif", fontSize: 18, fontWeight: 900, color: C.navy, marginBottom: 14 }}>💪 This Week's Actions</h3>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 12, marginBottom: 28 }}>
+          <h3 style={{ fontFamily: "'Baloo 2', sans-serif", fontSize: 18, fontWeight: 900, color: C.navy, marginBottom: 14 }}>💪 This Week's Focus</h3>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 16, marginBottom: 28 }}>
             {weak.map(r => (
-              <div key={r.module} style={{ background: '#FFF8F0', border: `2px solid ${C.saffron}55`, borderRadius: 16, padding: '16px' }}>
-                <div style={{ fontWeight: 900, fontSize: 15, color: C.saffron, marginBottom: 8 }}>📌 {ACTION[r.module].title}</div>
-                <div style={{ fontSize: 14, color: '#444', lineHeight: 1.7 }}>{ACTION[r.module].weak}</div>
+              <div key={r.module} style={{ background: '#fff', border: `2px solid ${C.saffron}33`, borderRadius: 18, overflow: 'hidden', boxShadow: '0 2px 12px rgba(0,0,0,0.06)' }}>
+                <div style={{ background: `${C.saffron}14`, padding: '14px 16px', borderBottom: `1px solid ${C.saffron}22` }}>
+                  <div style={{ fontWeight: 900, fontSize: 15, color: C.saffron }}>📌 {ACTION[r.module].title}</div>
+                  <div style={{ fontSize: 13, color: '#555', lineHeight: 1.7, marginTop: 6 }}>{ACTION[r.module].weak}</div>
+                </div>
+                <div style={{ padding: '12px 16px', display: 'flex', flexDirection: 'column', gap: 10 }}>
+                  <div style={{ fontSize: 11, fontWeight: 800, color: '#aaa', textTransform: 'uppercase', letterSpacing: 1 }}>Resources</div>
+                  {ACTION[r.module].resources.map((res, i) => (
+                    <div key={i} style={{ display: 'flex', gap: 10, alignItems: 'flex-start' }}>
+                      <div style={{
+                        flexShrink: 0, marginTop: 2, fontSize: 10, fontWeight: 800, padding: '2px 7px', borderRadius: 99,
+                        background: res.free ? '#F0FFF4' : '#FFF8F0',
+                        color: res.free ? C.mint : C.gold,
+                        border: `1px solid ${res.free ? C.mint : C.gold}44`,
+                      }}>{res.free ? 'FREE' : 'PAID'}</div>
+                      <div>
+                        {res.url
+                          ? <a href={res.url} target="_blank" rel="noopener noreferrer" style={{ fontWeight: 800, fontSize: 13, color: C.navy, textDecoration: 'underline' }}>{res.label}</a>
+                          : <span style={{ fontWeight: 800, fontSize: 13, color: C.navy }}>{res.label}</span>
+                        }
+                        <div style={{ fontSize: 12, color: '#666', lineHeight: 1.6, marginTop: 2 }}>{res.desc}</div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
               </div>
             ))}
           </div>
         </>}
 
+        {/* ── Strengths ── */}
         {strong.length > 0 && <>
           <h3 style={{ fontFamily: "'Baloo 2', sans-serif", fontSize: 18, fontWeight: 900, color: C.navy, marginBottom: 14 }}>🌟 Celebrate These!</h3>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 12, marginBottom: 28 }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginBottom: 28 }}>
             {strong.map(r => (
-              <div key={r.module} style={{ background: '#F0FFF4', border: `2px solid ${C.mint}55`, borderRadius: 16, padding: '16px' }}>
-                <div style={{ fontWeight: 900, fontSize: 15, color: C.mint, marginBottom: 8 }}>✅ {ACTION[r.module].title}</div>
-                <div style={{ fontSize: 14, color: '#444', lineHeight: 1.7 }}>{ACTION[r.module].strong}</div>
+              <div key={r.module} style={{ background: '#F0FFF4', border: `2px solid ${C.mint}55`, borderRadius: 16, padding: '14px 16px' }}>
+                <div style={{ fontWeight: 900, fontSize: 14, color: C.mint, marginBottom: 4 }}>✅ {ACTION[r.module].title}</div>
+                <div style={{ fontSize: 13, color: '#444', lineHeight: 1.7 }}>{ACTION[r.module].strong}</div>
               </div>
             ))}
           </div>
         </>}
 
-        {/* Book rec */}
-        <div style={{ background: `linear-gradient(135deg, ${C.navy}, #2A5298)`, borderRadius: 20, padding: '22px', color: '#fff', marginBottom: 24, textAlign: 'center' }}>
-          <div style={{ fontSize: 28, marginBottom: 8 }}>📚</div>
-          <div style={{ fontWeight: 900, fontSize: 17, marginBottom: 10 }}>Personalised Book Match</div>
-          <div style={{ fontSize: 14, opacity: 0.9, lineHeight: 1.7 }}>
-            {overall >= 75
-              ? `${childName} is a confident reader! We'd recommend "History of India" or "Growth Mindset" — rich vocabulary stories that challenge and delight.`
-              : overall >= 45
-              ? `${childName} is building great foundations. "Bedtime Routines" or "Sharing & Sorry" would be a perfect match — familiar themes at just the right level.`
-              : `${childName} is on the journey! "Colours & Shapes" or "Numbers & Maths" uses simple, repetitive language that builds reading confidence through joy.`}
-          </div>
+        {/* ── Protago book match ── */}
+        <div style={{ background: `linear-gradient(135deg, ${C.navy}, #2A5298)`, borderRadius: 20, padding: '22px', color: '#fff', marginBottom: 16, textAlign: 'center' }}>
+          <div style={{ fontSize: 13, fontWeight: 700, color: 'rgba(255,255,255,0.6)', textTransform: 'uppercase', letterSpacing: 1.5, marginBottom: 8 }}>Your Personalised Book Match</div>
+          <div style={{ fontSize: 36, marginBottom: 6 }}>{book.emoji}</div>
+          <div style={{ fontWeight: 900, fontSize: 20, marginBottom: 6 }}>{book.name}</div>
+          <div style={{ fontSize: 13, opacity: 0.85, lineHeight: 1.7, marginBottom: 16 }}>{book.desc}</div>
+          <button className="btn-game" onClick={() => onBook(book.slug)} style={{
+            background: `linear-gradient(135deg, ${C.saffron}, #FF8C42)`, color: '#fff',
+            border: 'none', borderRadius: 14, padding: '14px 28px',
+            fontSize: 15, fontWeight: 900, cursor: 'pointer',
+            fontFamily: "'Baloo 2', sans-serif", boxShadow: `0 4px 16px rgba(0,0,0,0.3)`,
+          }}>See {childName}'s Book →</button>
         </div>
 
         <button className="btn-game" onClick={onRetake} style={{
-          width: '100%', background: `linear-gradient(135deg, ${C.saffron}, #FF8C42)`,
-          color: '#fff', border: 'none', borderRadius: 18, padding: '18px',
-          fontSize: 17, fontWeight: 900, cursor: 'pointer',
-          fontFamily: "'Baloo 2', sans-serif", boxShadow: `0 6px 20px ${C.saffron}55`,
+          width: '100%', background: 'none', border: `2px solid ${C.saffron}55`,
+          borderRadius: 14, padding: '14px', fontSize: 15, fontWeight: 800,
+          cursor: 'pointer', color: C.saffron, fontFamily: "'Baloo 2', sans-serif",
         }}>🔄 Try Again / Change Grade</button>
       </div>
     </>
@@ -1233,14 +1373,14 @@ function ResultsScreen({ results, childName, grade, onRetake }: {
 const MODULE_META: Record<Module, { name: string; emoji: string; desc: string; tip: string; color: string }> = {
   lnf: { name: 'Letter Lightning', emoji: '⚡', color: C.gold, desc: 'Name letters as fast as you can!', tip: 'Tap the name of each letter you see.' },
   psf: { name: 'Sound Smasher', emoji: '💥', color: C.purple, desc: 'Smash words into sounds!', tip: 'Tap how many sounds you hear in the word.' },
-  nwf: { name: 'Alien Words', emoji: '👽', color: C.sky, desc: 'Help the alien read its language!', tip: 'Pick the right way to read the made-up word.' },
   wrf: { name: 'Word Flash', emoji: '✨', color: C.saffron, desc: 'Remember the flashing word!', tip: 'A word will flash — then find it from 4 choices.' },
   maze: { name: 'Story Fill', emoji: '📖', color: C.rose, desc: 'Fill in the missing words!', tip: 'Pick the word that makes the most sense in the story.' },
   orf: { name: 'Read Aloud', emoji: '🎤', color: C.mint, desc: 'Read the story out loud!', tip: 'Read clearly — a parent will count any tricky words.' },
 };
 
 function getModules(grade: Grade): Module[] {
-  return grade === 1 ? ['lnf', 'psf', 'nwf', 'wrf', 'orf'] : ['nwf', 'wrf', 'maze', 'orf'];
+  if (grade === 1) return ['lnf', 'psf', 'wrf', 'orf'];
+  return ['wrf', 'maze', 'orf'];
 }
 
 // ── Module intro card ──────────────────────────────────────────────────────
@@ -1274,6 +1414,46 @@ function ModuleIntro({ module, moduleNum, total, onStart }: { module: Module; mo
   );
 }
 
+// ── Parent brief screen ────────────────────────────────────────────────────
+function ParentBriefScreen({ childName, grade, onStart }: { childName: string; grade: Grade; onStart: () => void }) {
+  const audio = useAudio();
+  const modules = getModules(grade);
+  const tips = [
+    { emoji: '🗣️', title: 'What to tell your child', body: `"We're going to play a reading game with Ollie the owl — he needs your help!"` },
+    { emoji: '🪑', title: 'Sit together', body: 'Stay next to them. Cheer when words turn green. Your presence makes all the difference.' },
+    { emoji: '🎤', title: 'For the Read Aloud game', body: 'Tap the big red ✗ button each time your child stumbles or skips a word. The mic tracks the rest.' },
+  ];
+  return (
+    <div style={{ maxWidth: 440, margin: '0 auto', padding: '32px 20px 60px' }}>
+      <div style={{ textAlign: 'center', marginBottom: 24 }}>
+        <div style={{ fontSize: 64, marginBottom: 8 }}>👨‍👩‍👧</div>
+        <h2 style={{ fontFamily: "'Baloo 2', sans-serif", fontSize: 26, fontWeight: 900, color: C.navy, margin: '0 0 6px' }}>
+          Quick note for you
+        </h2>
+        <p style={{ color: '#888', fontSize: 14, margin: 0 }}>Before {childName} starts — 30 seconds</p>
+      </div>
+      {tips.map(({ emoji, title, body }) => (
+        <div key={title} style={{ background: '#fff', borderRadius: 16, padding: '16px 18px', marginBottom: 12, display: 'flex', gap: 14, alignItems: 'flex-start', boxShadow: '0 2px 12px rgba(0,0,0,0.06)' }}>
+          <div style={{ fontSize: 28, flexShrink: 0 }}>{emoji}</div>
+          <div>
+            <div style={{ fontWeight: 800, fontSize: 14, color: C.navy, marginBottom: 4 }}>{title}</div>
+            <div style={{ fontSize: 13, color: '#555', lineHeight: 1.6 }}>{body}</div>
+          </div>
+        </div>
+      ))}
+      <div style={{ background: `${C.saffron}12`, border: `2px solid ${C.saffron}33`, borderRadius: 14, padding: '12px 16px', marginBottom: 24, fontSize: 13, color: '#666', textAlign: 'center' }}>
+        ⏱ About <strong>8 minutes</strong> · {modules.length} games · Grade {grade}
+      </div>
+      <button className="btn-game" onClick={() => { audio.start(); onStart(); }} style={{
+        width: '100%', background: `linear-gradient(135deg, ${C.saffron}, #FF8C42)`, color: '#fff',
+        border: 'none', borderRadius: 18, padding: '18px', fontSize: 20, fontWeight: 900,
+        cursor: 'pointer', fontFamily: "'Baloo 2', sans-serif", boxShadow: `0 8px 24px ${C.saffron}55`,
+        animation: 'glow 2s infinite',
+      }}>Ready — Let's Go! 🚀</button>
+    </div>
+  );
+}
+
 // ── Landing ────────────────────────────────────────────────────────────────
 function LandingScreen({ onStart }: { onStart: (grade: Grade, name: string) => void }) {
   const [grade, setGrade] = useState<Grade>(1);
@@ -1287,8 +1467,8 @@ function LandingScreen({ onStart }: { onStart: (grade: Grade, name: string) => v
         Reading Quest
       </h1>
       <p style={{ color: '#666', fontSize: 15, marginBottom: 28, lineHeight: 1.7 }}>
-        A fun 8-minute reading adventure.<br />
-        Discover exactly what your child knows — and what to do next!
+        Find your child's perfect book —<br />
+        and exactly what they need to read better.
       </p>
 
       <div style={{ background: '#fff', borderRadius: 20, padding: '24px', boxShadow: '0 4px 24px rgba(0,0,0,0.08)', marginBottom: 20, textAlign: 'left' }}>
@@ -1307,10 +1487,10 @@ function LandingScreen({ onStart }: { onStart: (grade: Grade, name: string) => v
         <label style={{ fontWeight: 800, fontSize: 14, color: C.navy, display: 'block', margin: '20px 0 12px' }}>
           🎓 School Grade
         </label>
-        <div style={{ display: 'flex', gap: 10 }}>
-          {([1,2,3] as Grade[]).map(g => (
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10 }}>
+          {([1,2,3,4,5] as Grade[]).map(g => (
             <button key={g} className="btn-game" onClick={() => { setGrade(g); audio.click(); }} style={{
-              flex: 1, padding: '16px 0', fontSize: 17, fontWeight: 900,
+              flex: '1 1 auto', padding: '14px 0', fontSize: 17, fontWeight: 900,
               border: `3px solid ${grade === g ? C.saffron : '#E5E7EB'}`,
               borderRadius: 16, cursor: 'pointer',
               background: grade === g ? `linear-gradient(135deg, ${C.saffron}22, ${C.saffron}0A)` : '#F9FAFB',
@@ -1355,7 +1535,7 @@ export function ReadingQuestPage() {
   const params = new URLSearchParams(window.location.search);
   const testModule = params.get('module') as Module | null;
 
-  const [phase, setPhase] = useState<'landing' | 'intro' | 'game' | 'celebrate' | 'results'>(
+  const [phase, setPhase] = useState<'landing' | 'brief' | 'intro' | 'game' | 'celebrate' | 'results'>(
     testModule ? 'game' : 'landing'
   );
   const [grade, setGrade] = useState<Grade>((parseInt(params.get('grade') || '1') as Grade) || 1);
@@ -1370,7 +1550,7 @@ export function ReadingQuestPage() {
   const handleStart = (g: Grade, name: string) => {
     setGrade(g); setChildName(name);
     setModules(getModules(g)); setModIdx(0); setResults([]);
-    setPhase('intro');
+    setPhase('brief');
   };
 
   const handleModuleDone = (r: ModuleResult) => {
@@ -1385,10 +1565,15 @@ export function ReadingQuestPage() {
     else { setModIdx(next); setPhase('intro'); }
   };
 
+  const handleRetryModule = () => {
+    setResults(prev => prev.slice(0, -1)); // remove the last (current module's) result
+    setPhase('intro');
+  };
+
   return (
     <div style={{ minHeight: '100vh', background: C.bg, fontFamily: "'Baloo 2', Nunito, sans-serif" }}>
       {/* Top bar */}
-      {phase !== 'landing' && phase !== 'results' && (
+      {phase !== 'landing' && phase !== 'brief' && phase !== 'results' && (
         <div style={{
           background: '#fff', borderBottom: '1px solid #F0F0F0', padding: '10px 20px',
           display: 'flex', justifyContent: 'space-between', alignItems: 'center',
@@ -1410,20 +1595,20 @@ export function ReadingQuestPage() {
       )}
 
       {phase === 'landing' && <LandingScreen onStart={handleStart} />}
+      {phase === 'brief' && <ParentBriefScreen childName={childName} grade={grade} onStart={() => setPhase('intro')} />}
       {phase === 'intro' && currentMod && (
         <ModuleIntro module={currentMod} moduleNum={modIdx + 1} total={modules.length} onStart={() => setPhase('game')} />
       )}
       {phase === 'game' && currentMod === 'lnf' && <LNFGame grade={grade} onDone={handleModuleDone} />}
       {phase === 'game' && currentMod === 'psf' && <PSFGame grade={grade} onDone={handleModuleDone} />}
-      {phase === 'game' && currentMod === 'nwf' && <NWFGame grade={grade} onDone={handleModuleDone} />}
       {phase === 'game' && currentMod === 'wrf' && <WRFGame grade={grade} onDone={handleModuleDone} />}
       {phase === 'game' && currentMod === 'maze' && <MazeGame grade={grade} onDone={handleModuleDone} />}
       {phase === 'game' && currentMod === 'orf' && <ORFGame grade={grade} onDone={handleModuleDone} />}
       {phase === 'celebrate' && lastResult && (
-        <ModuleCelebration result={lastResult} onNext={handleNextModule} isLast={modIdx + 1 >= modules.length} />
+        <ModuleCelebration result={lastResult} onNext={handleNextModule} onRetry={handleRetryModule} isLast={modIdx + 1 >= modules.length} />
       )}
       {phase === 'results' && (
-        <ResultsScreen results={results} childName={childName} grade={grade} onRetake={() => setPhase('landing')} />
+        <ResultsScreen results={results} childName={childName} grade={grade} onRetake={() => setPhase('landing')} onBook={slug => { window.location.href = `/theme/${slug}`; }} />
       )}
     </div>
   );
