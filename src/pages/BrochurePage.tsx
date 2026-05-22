@@ -324,7 +324,43 @@ function FaceToSceneAnimation() {
 
 const FACE_SIZE_BROCHURE = 72;
 
-function BrochureThemeCard({ slug, icon, name, badge, description, ageRange, comingSoon, onClick, onOrder, onPreview }: { slug: string; icon: string; name: string; badge?: string; description?: string; ageRange?: string; comingSoon?: boolean; onClick: () => void; onOrder?: () => void; onPreview?: () => void }) {
+const BINDING_OPTIONS = [
+  { key: 'paperback', label: 'Paperback', price: 974,  mrp: 1499, pct: 35 },
+  { key: 'hardcover', label: 'Hardcover', price: 1595, mrp: 1899, pct: 16 },
+] as const;
+
+function FormatPicker({ selected, onChange }: { selected: 'paperback' | 'hardcover'; onChange: (v: 'paperback' | 'hardcover') => void }) {
+  const fmt = BINDING_OPTIONS.find(f => f.key === selected)!;
+  return (
+    <div style={{ marginBottom: 10 }}>
+      {/* Format tabs */}
+      <div style={{ display: 'flex', gap: 6, marginBottom: 8 }}>
+        {BINDING_OPTIONS.map(f => (
+          <button key={f.key} onClick={e => { e.stopPropagation(); onChange(f.key); }}
+            style={{
+              flex: 1, padding: '6px 4px', borderRadius: 8, cursor: 'pointer', textAlign: 'center',
+              border: selected === f.key ? `2px solid ${C.navy}` : '2px solid #E5E7EB',
+              background: selected === f.key ? '#EEF2FF' : '#fff',
+              transition: 'all 0.15s',
+            }}>
+            <div style={{ fontSize: 11, fontWeight: 700, color: selected === f.key ? C.navy : '#6B7280' }}>{f.label}</div>
+            <div style={{ fontSize: 13, fontWeight: 800, color: selected === f.key ? C.navy : '#9CA3AF', fontFamily: "'Baloo 2', sans-serif" }}>₹{f.price.toLocaleString('en-IN')}</div>
+          </button>
+        ))}
+      </div>
+      {/* Price detail */}
+      <div style={{ display: 'flex', alignItems: 'baseline', gap: 6 }}>
+        <span style={{ fontSize: 13, fontWeight: 700, color: '#B91C1C' }}>-{fmt.pct}%</span>
+        <span style={{ fontSize: 22, fontWeight: 800, color: C.navy, fontFamily: "'Baloo 2', sans-serif" }}>₹{fmt.price.toLocaleString('en-IN')}</span>
+      </div>
+      <div style={{ fontSize: 12, color: '#6B7280' }}>M.R.P.: <span style={{ textDecoration: 'line-through' }}>₹{fmt.mrp.toLocaleString('en-IN')}</span></div>
+      <div style={{ fontSize: 11, color: '#6B7280', marginTop: 1 }}>Inclusive of all taxes</div>
+      <div style={{ fontSize: 12, fontWeight: 600, color: '#15803D', marginTop: 2 }}>FREE delivery across India</div>
+    </div>
+  );
+}
+
+function BrochureThemeCard({ slug, icon, name, badge, description, ageRange, comingSoon, onClick, onOrder, onPreview }: { slug: string; icon: string; name: string; badge?: string; description?: string; ageRange?: string; comingSoon?: boolean; onClick: () => void; onOrder?: (binding: 'paperback' | 'hardcover') => void; onPreview?: () => void }) {
   const faceSamples = getFaceSamples(slug);
   const arrowTarget = getArrowTarget(slug);
   const useScenes = comingSoon && !(slug in THEME_FACE_SAMPLES);
@@ -333,6 +369,7 @@ function BrochureThemeCard({ slug, icon, name, badge, description, ageRange, com
     : ['scene_01', 'scene_03', 'scene_05', 'scene_07', 'scene_09'];
   const [activeIdx, setActiveIdx] = useState(0);
   const [hasLoaded, setHasLoaded] = useState(false);
+  const [binding, setBinding] = useState<'paperback' | 'hardcover'>('paperback');
   const cardRef = useRef<HTMLDivElement>(null);
   const inView = useInView(cardRef, { margin: '300px 0px' });
 
@@ -457,16 +494,12 @@ function BrochureThemeCard({ slug, icon, name, badge, description, ageRange, com
             {description}
           </p>
         )}
-        {/* Price */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 10 }}>
-          <span style={{ fontSize: 22, fontWeight: 800, color: C.navy, fontFamily: "'Baloo 2', sans-serif" }}>₹974</span>
-          <span style={{ fontSize: 11, fontWeight: 700, color: '#92400E', background: '#FEF3C7', borderRadius: 20, padding: '2px 8px' }}>35% off</span>
-          <span style={{ fontSize: 13, color: '#9CA3AF', textDecoration: 'line-through', fontWeight: 500 }}>₹1,499</span>
-        </div>
+        {/* Format picker — Amazon style */}
+        <FormatPicker selected={binding} onChange={setBinding} />
         {/* Buttons */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
           <button
-            onClick={e => { e.stopPropagation(); onOrder?.(); }}
+            onClick={e => { e.stopPropagation(); onOrder?.(binding); }}
             style={{ width: '100%', padding: '13px 0', borderRadius: 12, background: `linear-gradient(135deg, ${C.navy} 0%, #2a2a4a 100%)`, color: '#fff', border: 'none', fontWeight: 800, fontSize: 15, cursor: 'pointer', fontFamily: "'Baloo 2', sans-serif", boxShadow: '0 4px 16px rgba(26,26,46,0.3)', letterSpacing: 0.2 }}>
             Order Now →
           </button>
@@ -1846,7 +1879,7 @@ export function BrochurePage() {
   const [openFaq, setOpenFaq]         = useState<number | null>(null);
   const [themesTab, setThemesTab]     = useState<'All' | '0–3' | '3–5' | '6–8' | '9–12'>('All');
   const [heroSlide, setHeroSlide]     = useState(0);
-  const price = Number(import.meta.env.VITE_STORYBOOK_PRICE) || 499;
+  const price = Number(import.meta.env.VITE_STORYBOOK_PRICE) || 974;
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
 
@@ -2013,7 +2046,7 @@ export function BrochurePage() {
                     exit={{ opacity: 0, y: -10 }} transition={{ duration: 0.2 }}
                     style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: 20 }}>
                     {tabThemes.map(t => (
-                      <BrochureThemeCard key={t.slug} slug={t.slug} icon={t.icon} name={t.name} description={t.description} ageRange={Array.isArray(t.ageRange) ? t.ageRange.join(', ') : t.ageRange} badge={['abc', 'colours-shapes', 'bedtime-routines', 'numbers-maths', 'sharing-sorry', 'first-day-school', 'managing-emotions', 'indian-festivals', 'history-india', 'financial-literacy', 'growth-mindset', 'professions', 'internet-safety', 'body-safety'].includes(t.slug) ? '✨ 9-Page Preview' : undefined} comingSoon={t.comingSoon} onClick={() => navigate(`/theme/${t.slug}`)} onOrder={() => navigate(`/theme/${t.slug}?order=1`)} onPreview={() => navigate(`/theme/${t.slug}?preview=1`)} />
+                      <BrochureThemeCard key={t.slug} slug={t.slug} icon={t.icon} name={t.name} description={t.description} ageRange={Array.isArray(t.ageRange) ? t.ageRange.join(', ') : t.ageRange} badge={['abc', 'colours-shapes', 'bedtime-routines', 'numbers-maths', 'sharing-sorry', 'first-day-school', 'managing-emotions', 'indian-festivals', 'history-india', 'financial-literacy', 'growth-mindset', 'professions', 'internet-safety', 'body-safety'].includes(t.slug) ? '✨ 9-Page Preview' : undefined} comingSoon={t.comingSoon} onClick={() => navigate(`/theme/${t.slug}`)} onOrder={(b) => navigate(`/theme/${t.slug}?order=1&binding=${b}`)} onPreview={() => navigate(`/theme/${t.slug}?preview=1`)} />
                     ))}
 
                     {/* ── Custom story card — last slot ── */}
@@ -2052,7 +2085,7 @@ export function BrochurePage() {
                     </div>
                     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: 20 }}>
                       {mythologyThemes.map(t => (
-                        <BrochureThemeCard key={t.slug} slug={t.slug} icon={t.icon} name={t.name} description={t.description} ageRange={Array.isArray(t.ageRange) ? t.ageRange.join(', ') : t.ageRange} badge={['abc', 'colours-shapes', 'bedtime-routines', 'numbers-maths', 'sharing-sorry', 'first-day-school', 'managing-emotions', 'indian-festivals', 'history-india', 'financial-literacy', 'growth-mindset', 'professions', 'internet-safety', 'body-safety'].includes(t.slug) ? '✨ 9-Page Preview' : undefined} onClick={() => navigate(`/theme/${t.slug}`)} onOrder={() => navigate(`/theme/${t.slug}?order=1`)} onPreview={() => navigate(`/theme/${t.slug}?preview=1`)} />
+                        <BrochureThemeCard key={t.slug} slug={t.slug} icon={t.icon} name={t.name} description={t.description} ageRange={Array.isArray(t.ageRange) ? t.ageRange.join(', ') : t.ageRange} badge={['abc', 'colours-shapes', 'bedtime-routines', 'numbers-maths', 'sharing-sorry', 'first-day-school', 'managing-emotions', 'indian-festivals', 'history-india', 'financial-literacy', 'growth-mindset', 'professions', 'internet-safety', 'body-safety'].includes(t.slug) ? '✨ 9-Page Preview' : undefined} onClick={() => navigate(`/theme/${t.slug}`)} onOrder={(b) => navigate(`/theme/${t.slug}?order=1&binding=${b}`)} onPreview={() => navigate(`/theme/${t.slug}?preview=1`)} />
                       ))}
                     </div>
                   </motion.div>

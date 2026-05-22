@@ -119,11 +119,11 @@ const SAMPLE_PAGES: Record<string, SamplePage[]> = {
     { imageUrl: `${GCS_SCENES}/growth-mindset/young_girl/scene_05_spread.png`, title: 'I Believed I Could', text: 'Your child raised both arms and shouted: "I believed I could — and I did!" With a growth mindset, every summit is reachable. Every challenge your child faces from this day forward is just another mountain. The only real limit is the one you place on yourself.' },
   ],
   'professions': [
-    { imageUrl: `${GCS_SCENES}/professions/young_girl/scene_01_spread.png`, title: 'Dream Big', text: 'Your child floated completely weightless — the Earth glowing far below. Stars stretched out in every direction: quiet, endless, and magnificent. Astronauts train for years to explore the final frontier of human knowledge. The world below is full of people your child might one day serve.' },
-    { imageUrl: `${GCS_SCENES}/professions/young_girl/scene_02_spread.png`, title: 'The Healer', text: '"Are you okay?" your child asked, checking each patient with the greatest care. Every diagnosis was a puzzle. Every recovery was a reason to celebrate. Doctors combine deep knowledge with deep compassion every single day. Medicine is one of the most honoured callings in human history.' },
-    { imageUrl: `${GCS_SCENES}/professions/young_girl/scene_03_spread.png`, title: 'The Builder', text: 'Your child pointed to the blueprints: "We build it here." Bridges, hospitals, schools, rockets — engineers bring imagination to life. Engineering is applied problem-solving at the grandest possible scale. The buildings of tomorrow are being dreamed up by children today.' },
-    { imageUrl: `${GCS_SCENES}/professions/young_girl/scene_04_spread.png`, title: 'The Pilot', text: 'Your child gripped the controls — and the whole vast sky was theirs to explore. Below: cities, rivers, mountains, and oceans passing in a breathtaking blur. Every profession is a way of serving the world with your unique gifts and talents.' },
-    { imageUrl: `${GCS_SCENES}/professions/young_girl/scene_05_spread.png`, title: 'Whatever You Become', text: 'Your child set the course ahead: "Whatever I become — I will give it everything." The world needs doctors, engineers, pilots, teachers, artists, and dreamers. Every profession your child can imagine is a path waiting to be walked. Dream big — then work with everything you have.' },
+    { imageUrl: `${GCS_SCENES}/professions/young_girl/scene_01_spread.png`, title: 'Dream Careers', text: 'The world needs astronauts, doctors, scientists, chefs, engineers, pilots, and so much more. Every profession is a way of giving your unique gifts to the world. Your child can be anything — and this is the story of all the incredible things they might become.' },
+    { imageUrl: `${GCS_SCENES}/professions/young_girl/scene_02_spread.png`, title: 'The Astronaut', text: 'Your child floated completely weightless — the Earth glowing far below. Stars stretched out in every direction: quiet, endless, and magnificent. Astronauts train for years to explore the final frontier of human knowledge. The world below is full of people your child might one day serve.' },
+    { imageUrl: `${GCS_SCENES}/professions/young_girl/scene_03_spread.png`, title: 'The Healer', text: '"Are you okay?" your child asked, checking each patient with the greatest care. Every diagnosis was a puzzle. Every recovery was a reason to celebrate. Doctors combine deep knowledge with deep compassion every single day. Medicine is one of the most honoured callings in human history.' },
+    { imageUrl: `${GCS_SCENES}/professions/young_girl/scene_04_spread.png`, title: 'The Scientist', text: 'Your child held up the glowing flask — and the whole lab shimmered with possibility. Every experiment is a question asked to the universe. Scientists observe, wonder, test, and discover. The greatest inventions in history began with a curious child asking: "What if?"' },
+    { imageUrl: `${GCS_SCENES}/professions/young_girl/scene_05_spread.png`, title: 'The Chef', text: 'Your child stood tall in the kitchen, wooden spoon in hand, filling the air with the most wonderful aromas. Chefs are artists who create with flavour, texture, and love. Every great dish is a story — and your child is already writing theirs.' },
   ],
   'internet-safety': [
     { imageUrl: `${GCS_SCENES}/internet-safety/older_girl/scene_01_spread.png`, title: 'Safe in the Digital World', text: 'The internet is an incredible place — full of learning and fun. But everything you do online is real, just like the real world. Real people are on the other side of every screen. Real feelings get hurt. Real words leave real marks. Use the digital world with care.' },
@@ -323,29 +323,11 @@ export function ThemePage() {
   const [orderSubmitting, setOrderSubmitting] = useState(false);
   const [orderSubmitted, setOrderSubmitted] = useState(false);
   const [orderError, setOrderError] = useState('');
-  const [couponInput, setCouponInput] = useState('PROTAGO50');
+  const [couponInput, setCouponInput] = useState('');
   const [couponApplied, setCouponApplied] = useState<{ code: string; discountAmount: number; finalPrice: number; discountType: string; discountValue: number } | null>(null);
   const [couponError, setCouponError] = useState('');
   const [couponLoading, setCouponLoading] = useState(false);
 
-  useEffect(() => {
-    const autoApply = async () => {
-      const code = 'PROTAGO50';
-      setCouponLoading(true);
-      try {
-        const res = await fetch(`${API_BASE}/api/validate-coupon`, {
-          method: 'POST', headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ code }),
-        });
-        const data = await res.json();
-        if (res.ok && data.valid) {
-          setCouponApplied({ code, discountAmount: data.discountAmount, finalPrice: data.finalPrice, discountType: data.discountType, discountValue: data.discountValue });
-        }
-      } catch { /* ignore */ }
-      setCouponLoading(false);
-    };
-    autoApply();
-  }, []);
 
   const [generating, setGenerating] = useState(false);
   const [gender, setGender] = useState<'boy' | 'girl' | null>(null);
@@ -432,6 +414,8 @@ export function ThemePage() {
   // Auto-open order form when arriving via ?order=1
   useEffect(() => {
     if (searchParams.get('order') === '1') {
+      const b = searchParams.get('binding');
+      if (b === 'hardcover' || b === 'paperback') setOf('bindingType', b === 'paperback' ? 'perfect' : 'hardcover');
       setShowOrder(true);
       setTimeout(() => document.getElementById('inline-order')?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 300);
     }
@@ -848,12 +832,16 @@ export function ThemePage() {
             </div>
 
             {/* Price + promo strip */}
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, padding: '10px 16px', background: '#FFF7ED', borderTop: '1px solid #FFE4CC', borderBottom: '1px solid #FFE4CC' }}>
-              <span style={{ fontSize: 11, fontWeight: 800, color: '#fff', background: '#22C55E', borderRadius: 50, padding: '2px 8px' }}>35% OFF</span>
-              <span style={{ fontSize: 13, color: '#9CA3AF', textDecoration: 'line-through', fontWeight: 600 }}>₹1,499</span>
-              <span style={{ fontSize: 18, fontWeight: 800, color: C.navy, fontFamily: "'Baloo 2', sans-serif" }}>₹974</span>
-              <span style={{ fontSize: 11, color: C.saffron, fontWeight: 700 }}>· Use code <strong>PROTAGO50</strong></span>
-            </div>
+            {(() => {
+              const isHC = orderForm.bindingType === 'hardcover';
+              return (
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, padding: '10px 16px', background: '#FFF7ED', borderTop: '1px solid #FFE4CC', borderBottom: '1px solid #FFE4CC' }}>
+                  <span style={{ fontSize: 11, fontWeight: 800, color: '#fff', background: '#22C55E', borderRadius: 50, padding: '2px 8px' }}>{isHC ? '16% OFF' : '35% OFF'}</span>
+                  <span style={{ fontSize: 13, color: '#9CA3AF', textDecoration: 'line-through', fontWeight: 600 }}>{isHC ? '₹1,899' : '₹1,499'}</span>
+                  <span style={{ fontSize: 18, fontWeight: 800, color: C.navy, fontFamily: "'Baloo 2', sans-serif" }}>{isHC ? '₹1,595' : '₹974'}</span>
+                </div>
+              );
+            })()}
 
             {/* Info */}
             <div style={{ padding: '18px 20px 22px', display: 'flex', flexDirection: 'column', gap: 10 }}>
@@ -897,11 +885,16 @@ export function ThemePage() {
             <div style={{ background: `linear-gradient(135deg, ${C.saffron} 0%, #FF8C42 100%)`, padding: '24px 28px 20px' }}>
               <p style={{ fontSize: 11, fontWeight: 700, color: 'rgba(255,255,255,0.75)', textTransform: 'uppercase', letterSpacing: 1.8, margin: '0 0 4px' }}>Order your book</p>
               <h2 style={{ fontFamily: "'Baloo 2', sans-serif", fontWeight: 800, fontSize: 20, color: '#fff', margin: '0 0 4px' }}>{theme.icon} {theme.name}</h2>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                <span style={{ fontSize: 11, fontWeight: 700, color: '#22C55E', background: 'rgba(255,255,255,0.15)', borderRadius: 50, padding: '2px 8px' }}>35% OFF</span>
-                <span style={{ fontSize: 13, color: 'rgba(255,255,255,0.55)', textDecoration: 'line-through', fontWeight: 600 }}>₹1,499</span>
-                <span style={{ fontSize: 18, fontWeight: 800, color: '#fff', fontFamily: "'Baloo 2', sans-serif" }}>₹974</span>
-              </div>
+              {(() => {
+                const isHC = orderForm.bindingType === 'hardcover';
+                return (
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                    <span style={{ fontSize: 11, fontWeight: 700, color: '#22C55E', background: 'rgba(255,255,255,0.15)', borderRadius: 50, padding: '2px 8px' }}>{isHC ? '16% OFF' : '35% OFF'}</span>
+                    <span style={{ fontSize: 13, color: 'rgba(255,255,255,0.55)', textDecoration: 'line-through', fontWeight: 600 }}>{isHC ? '₹1,899' : '₹1,499'}</span>
+                    <span style={{ fontSize: 18, fontWeight: 800, color: '#fff', fontFamily: "'Baloo 2', sans-serif" }}>{isHC ? '₹1,595' : '₹974'}</span>
+                  </div>
+                );
+              })()}
             </div>
 
             <style>{`
@@ -980,8 +973,8 @@ export function ThemePage() {
                   <label style={{ fontSize: 10, fontWeight: 700, color: '#9CA3AF', display: 'block', marginBottom: 8, textTransform: 'uppercase', letterSpacing: '0.07em' }}>Binding type</label>
                   <div style={{ display: 'flex', gap: 10 }}>
                     {[
-                      { value: 'perfect', icon: '📖', label: 'Perfect Binding', desc: 'Premium 300GSM · Lay-flat pages · Vivid print', price: 'Included', available: true },
-                      { value: 'hardcover', icon: '📚', label: 'Hardcover', desc: 'Rigid boards · Extra durable', price: 'Coming soon', available: false },
+                      { value: 'perfect', icon: '📖', label: 'Paperback', desc: 'Premium 300GSM · Lay-flat pages · Vivid print', price: '₹974', available: true },
+                      { value: 'hardcover', icon: '📚', label: 'Hardcover', desc: 'Rigid boards · Durable cover · Long lasting', price: '₹1,595', available: true },
                     ].map(({ value, icon, label, desc, price, available }) => {
                       const selected = orderForm.bindingType === value;
                       return (
@@ -1178,7 +1171,7 @@ export function ThemePage() {
                 )}
                 <button type="submit" disabled={orderSubmitting || !orderConsent || !orderPhoto?.uploadedPath}
                   style={{ background: (!orderConsent || orderSubmitting || !orderPhoto?.uploadedPath) ? '#E5E7EB' : `linear-gradient(135deg, ${C.saffron} 0%, #FF8C42 100%)`, color: (!orderConsent || orderSubmitting || !orderPhoto?.uploadedPath) ? '#9CA3AF' : '#fff', border: 'none', borderRadius: 12, padding: '14px 20px', fontWeight: 800, fontSize: 16, cursor: (!orderConsent || orderSubmitting || !orderPhoto?.uploadedPath) ? 'default' : 'pointer', fontFamily: "'Baloo 2', sans-serif", boxShadow: (!orderConsent || orderSubmitting || !orderPhoto?.uploadedPath) ? 'none' : '0 4px 16px rgba(255,107,53,0.4)' }}>
-                  {orderSubmitting ? 'Processing…' : `Pay ₹${couponApplied ? couponApplied.finalPrice : (Number(import.meta.env.VITE_STORYBOOK_PRICE) || 499)} & Order →`}
+                  {orderSubmitting ? 'Processing…' : `Pay ₹${couponApplied ? couponApplied.finalPrice : (orderForm.bindingType === 'hardcover' ? 1595 : 974)} & Order →`}
                 </button>
                 <p style={{ fontSize: 11, color: C.lgray, textAlign: 'center', margin: '-4px 0 0' }}>Delivered in 5–7 business days</p>
 

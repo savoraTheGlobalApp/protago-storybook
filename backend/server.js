@@ -1288,6 +1288,7 @@ app.post('/api/order-inquiry', async (req, res) => {
             parentName, email, phone,
             childName, childAge, childGender,
             theme, storyTheme, artStyle, storyFormat,
+            bindingType,
             deliveryType, address, addressLine1, addressLine2, city, state, pincode,
             photoPath, photoSignedUrl, additionalPhotoPaths, additionalPhotoSignedUrls, couponCode, referralSource,
             isCustomStory, customStoryBrief, dedicationMessage,
@@ -1299,7 +1300,9 @@ app.post('/api/order-inquiry', async (req, res) => {
 
         const basePrice = isCustomStory
             ? (parseInt(process.env.CUSTOM_STORY_PRICE, 10) || 1980)
-            : (parseInt(process.env.STORYBOOK_PRICE, 10) || 499);
+            : bindingType === 'hardcover'
+            ? (parseInt(process.env.HARDCOVER_PRICE, 10) || 1595)
+            : (parseInt(process.env.STORYBOOK_PRICE, 10) || 974);
 
         // Validate coupon server-side
         const coupon = couponCode ? await validateCouponCode(couponCode) : null;
@@ -1351,6 +1354,7 @@ app.post('/api/order-inquiry', async (req, res) => {
                     story_theme: storyTheme || null,
                     art_style: artStyle || null,
                     story_format: storyFormat || null,
+                    binding_type: bindingType || null,
                     delivery_type: deliveryType || null,
                     address_line1: addressLine1 || address || null,
                     address_line2: addressLine2 || null,
