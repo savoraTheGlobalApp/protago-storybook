@@ -784,6 +784,10 @@ function MazeGame({ grade, onDone }: { grade: Grade; onDone: (r: ModuleResult) =
 
   const timeLeft = useGameTimer(maxTime, () => finish(score, idx), !done);
   const current = items[idx];
+  const shuffledChoices = useRef<string[]>([]);
+  if (shuffledChoices.current.length === 0 || !shuffledChoices.current.includes(current.answer)) {
+    shuffledChoices.current = shuffle(current.choices);
+  }
 
   const handlePick = (w: string) => {
     if (feedback || done) return;
@@ -792,6 +796,7 @@ function MazeGame({ grade, onDone }: { grade: Grade; onDone: (r: ModuleResult) =
     if (correct) { setScore(ns); audio.correct(); spawn('📖'); setMascot('happy'); }
     else { audio.wrong(); setMascot('sad'); }
     setFeedback(correct ? 'correct' : 'wrong');
+    shuffledChoices.current = [];
     setTimeout(() => {
       setFeedback(null); setMascot('idle');
       if (idx + 1 >= items.length) finish(ns, idx + 1);
@@ -816,7 +821,7 @@ function MazeGame({ grade, onDone }: { grade: Grade; onDone: (r: ModuleResult) =
           {current.passage}
         </div>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-          {current.choices.map(w => (
+          {shuffledChoices.current.map(w => (
             <button key={w} className="btn-game" onClick={() => handlePick(w)} style={{
               padding: '16px 20px', fontSize: 22, fontWeight: 800, textAlign: 'left',
               border: `3px solid ${C.rose}33`, borderRadius: 14, color: C.navy,
