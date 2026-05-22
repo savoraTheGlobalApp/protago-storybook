@@ -1240,6 +1240,23 @@ function ResultsScreen({ results, childName, grade, onRetake, onBook }: {
   const strong = results.filter(r => r.pct >= 75);
   const book = getBookRec(grade, overall);
 
+  const [emailVal, setEmailVal] = useState('');
+  const [phoneVal, setPhoneVal] = useState('');
+  const [leadState, setLeadState] = useState<'form' | 'saving' | 'unlocked' | 'error'>('form');
+
+  const saveLead = async () => {
+    if (!emailVal.trim()) return;
+    setLeadState('saving');
+    try {
+      const res = await fetch('/api/reading-quest/save-lead', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: emailVal.trim(), phone: phoneVal.trim() || null, childName, grade, overall, level: lvl.label, results }),
+      });
+      setLeadState(res.ok ? 'unlocked' : 'error');
+    } catch { setLeadState('error'); }
+  };
+
   const shareOnWhatsApp = () => {
     const text = `${childName} just completed a Reading Quest! 📚\n\n${lvl.emoji} ${lvl.label} · Grade ${grade} · ${overall}% overall\n\nDiscover your child's reading level free at protago.in/reading-quest`;
     window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, '_blank');
@@ -1267,17 +1284,59 @@ function ResultsScreen({ results, childName, grade, onRetake, onBook }: {
           <div style={{ fontSize: 13, color: '#777' }}>Grade {grade} · {overall}% overall · DIBELS 8th Edition</div>
         </div>
 
-        {/* ── WhatsApp share ── */}
-        <button className="btn-game" onClick={shareOnWhatsApp} style={{
-          width: '100%', background: '#25D366', color: '#fff', border: 'none',
-          borderRadius: 14, padding: '14px', fontSize: 15, fontWeight: 800,
-          cursor: 'pointer', marginBottom: 20, display: 'flex', alignItems: 'center',
-          justifyContent: 'center', gap: 8, fontFamily: "'Baloo 2', sans-serif",
-          boxShadow: '0 4px 14px rgba(37,211,102,0.35)',
-        }}>
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="white"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
-          Share {childName}'s Report on WhatsApp
-        </button>
+        {/* ── Unlock: email + phone gate ── */}
+        {leadState !== 'unlocked' ? (
+          <div style={{ background: '#fff', border: `2px solid ${C.saffron}55`, borderRadius: 20, padding: '22px', marginBottom: 20 }}>
+            <div style={{ textAlign: 'center', marginBottom: 16 }}>
+              <div style={{ fontSize: 32, marginBottom: 6 }}>🔓</div>
+              <div style={{ fontWeight: 900, fontSize: 16, color: C.navy, marginBottom: 4 }}>Save & share {childName}'s report</div>
+              <div style={{ fontSize: 13, color: '#888' }}>Enter your details to download or share on WhatsApp</div>
+            </div>
+            <input
+              type="email" value={emailVal} onChange={e => setEmailVal(e.target.value)}
+              placeholder="Your email" autoComplete="email"
+              style={{
+                width: '100%', boxSizing: 'border-box', padding: '12px 14px', fontSize: 15,
+                border: `2px solid ${leadState === 'error' ? '#F87171' : '#E5E7EB'}`, borderRadius: 12,
+                outline: 'none', fontFamily: 'inherit', marginBottom: 10,
+              }}
+            />
+            <input
+              type="tel" value={phoneVal} onChange={e => setPhoneVal(e.target.value)}
+              placeholder="WhatsApp number (optional)" autoComplete="tel"
+              style={{
+                width: '100%', boxSizing: 'border-box', padding: '12px 14px', fontSize: 15,
+                border: '2px solid #E5E7EB', borderRadius: 12,
+                outline: 'none', fontFamily: 'inherit', marginBottom: 14,
+              }}
+            />
+            <button className="btn-game" onClick={saveLead} disabled={leadState === 'saving' || !emailVal.trim()} style={{
+              width: '100%', background: emailVal.trim() ? `linear-gradient(135deg, ${C.saffron}, #FF8C42)` : '#E5E7EB',
+              color: emailVal.trim() ? '#fff' : '#aaa', border: 'none', borderRadius: 14,
+              padding: '14px', fontSize: 16, fontWeight: 900, cursor: emailVal.trim() ? 'pointer' : 'default',
+              fontFamily: "'Baloo 2', sans-serif", opacity: leadState === 'saving' ? 0.7 : 1,
+            }}>{leadState === 'saving' ? 'Saving…' : 'Unlock Report 🔓'}</button>
+            {leadState === 'error' && <div style={{ fontSize: 12, color: '#F87171', marginTop: 8, textAlign: 'center' }}>Something went wrong — please try again.</div>}
+          </div>
+        ) : (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginBottom: 20 }}>
+            <button className="btn-game" onClick={shareOnWhatsApp} style={{
+              width: '100%', background: '#25D366', color: '#fff', border: 'none',
+              borderRadius: 14, padding: '14px', fontSize: 15, fontWeight: 800,
+              cursor: 'pointer', display: 'flex', alignItems: 'center',
+              justifyContent: 'center', gap: 8, fontFamily: "'Baloo 2', sans-serif",
+              boxShadow: '0 4px 14px rgba(37,211,102,0.35)',
+            }}>
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="white"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+              Share {childName}'s Report on WhatsApp
+            </button>
+            <button className="btn-game" onClick={() => window.print()} style={{
+              width: '100%', background: C.navy, color: '#fff', border: 'none',
+              borderRadius: 14, padding: '14px', fontSize: 15, fontWeight: 800,
+              cursor: 'pointer', fontFamily: "'Baloo 2', sans-serif",
+            }}>🖨️ Print / Save as PDF</button>
+          </div>
+        )}
 
         {/* ── Skills breakdown ── */}
         <h3 style={{ fontFamily: "'Baloo 2', sans-serif", fontSize: 18, fontWeight: 900, color: C.navy, marginBottom: 14 }}>Skills Breakdown</h3>
@@ -1476,10 +1535,31 @@ function LandingScreen({ onStart }: { onStart: (grade: Grade, name: string) => v
       <h1 style={{ fontFamily: "'Baloo 2', sans-serif", fontSize: 34, fontWeight: 900, color: C.navy, margin: '0 0 8px' }}>
         Reading Quest
       </h1>
-      <p style={{ color: '#666', fontSize: 15, marginBottom: 28, lineHeight: 1.7 }}>
-        Find your child's perfect book —<br />
-        and exactly what they need to read better.
+      <p style={{ color: '#444', fontSize: 15, marginBottom: 16, lineHeight: 1.7 }}>
+        Discover exactly where your child is —<br />and what to do next.
       </p>
+
+      {/* Social proof strip */}
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, marginBottom: 20 }}>
+        <div style={{ display: 'flex' }}>
+          {['👩','👨','👩🏽','👨🏾','👩🏻'].map((e, i) => (
+            <span key={i} style={{ fontSize: 18, marginLeft: i === 0 ? 0 : -6, filter: 'drop-shadow(0 1px 2px rgba(0,0,0,0.15))' }}>{e}</span>
+          ))}
+        </div>
+        <span style={{ fontSize: 13, color: '#555', fontWeight: 600 }}>
+          Joined by <strong style={{ color: C.navy }}>5,000+ parents</strong> across India
+        </span>
+      </div>
+
+      {/* Stat pills */}
+      <div style={{ display: 'flex', justifyContent: 'center', gap: 8, marginBottom: 28, flexWrap: 'wrap' }}>
+        {[['⏱', '8 minutes'], ['📊', 'DIBELS-based'], ['🆓', 'Always free']].map(([icon, label]) => (
+          <div key={label} style={{
+            background: '#F3F4F6', borderRadius: 99, padding: '5px 14px',
+            fontSize: 12, fontWeight: 700, color: '#555', display: 'flex', alignItems: 'center', gap: 5,
+          }}>{icon} {label}</div>
+        ))}
+      </div>
 
       <div style={{ background: '#fff', borderRadius: 20, padding: '24px', boxShadow: '0 4px 24px rgba(0,0,0,0.08)', marginBottom: 20, textAlign: 'left' }}>
         <label style={{ fontWeight: 800, fontSize: 14, color: C.navy, display: 'block', marginBottom: 8 }}>

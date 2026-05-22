@@ -2178,6 +2178,48 @@ app.delete('/api/blog/:id', async (req, res) => {
 // Serve static files from the React app
 app.use(express.static(path.join(__dirname, '../build')));
 
+// ── Reading Quest: email report ───────────────────────────────────────────────
+app.post('/api/reading-quest/save-lead', async (req, res) => {
+  try {
+    const { email, phone, childName, grade, overall, level, results } = req.body;
+    if (!email || !EMAIL_REGEX.test(email)) return res.status(400).json({ error: 'Valid email required' });
+    if (!childName || !grade || overall == null) return res.status(400).json({ error: 'Missing report data' });
+
+    const SUPABASE_URL = process.env.SUPABASE_URL_STORY;
+    const SUPABASE_KEY = process.env.SUPABASE_SERVICE_KEY_STORY;
+
+    const insertRes = await fetch(`${SUPABASE_URL}/rest/v1/reading_quest_leads`, {
+      method: 'POST',
+      headers: {
+        'apikey': SUPABASE_KEY,
+        'Authorization': `Bearer ${SUPABASE_KEY}`,
+        'Content-Type': 'application/json',
+        'Prefer': 'return=minimal',
+      },
+      body: JSON.stringify({
+        email,
+        phone: phone || null,
+        child_name: childName,
+        grade,
+        overall_pct: overall,
+        level,
+        results,
+      }),
+    });
+
+    if (!insertRes.ok) {
+      const err = await insertRes.text();
+      console.error('reading-quest lead insert error:', err);
+      return res.status(500).json({ error: 'Failed to save' });
+    }
+
+    res.json({ ok: true });
+  } catch (err) {
+    console.error('reading-quest save-lead error:', err);
+    res.status(500).json({ error: 'Failed to save' });
+  }
+});
+
 // The "catchall" handler: for any request that doesn't
 // match one above, send back React's index.html file.
 app.get('*', (req, res) => {
