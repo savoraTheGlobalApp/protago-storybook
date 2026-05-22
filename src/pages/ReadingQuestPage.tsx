@@ -745,16 +745,21 @@ function WRFGame({ grade, onDone }: { grade: Grade; onDone: (r: ModuleResult) =>
             }}>{showWord ? current : '?'}</span>
           </div>
         </div>
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
-          {opts.current.map(w => (
-            <button key={w} className="btn-game" onClick={() => handlePick(w)} style={{
-              padding: '16px 8px', fontSize: 20, fontWeight: 800, color: C.navy,
-              border: `3px solid ${C.saffron}44`, borderRadius: 14,
-              background: 'linear-gradient(135deg, #fff, #FFFBF5)',
-              cursor: 'pointer', boxShadow: '0 4px 10px rgba(255,107,53,0.1)',
-            }}>{w}</button>
-          ))}
-        </div>
+        {showWord
+          ? <div style={{ textAlign: 'center', fontSize: 13, color: '#aaa', marginTop: 8 }}>Read it carefully…</div>
+          : (
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, animation: 'pop 0.25s ease-out' }}>
+              {opts.current.map(w => (
+                <button key={w} className="btn-game" onClick={() => handlePick(w)} style={{
+                  padding: '16px 8px', fontSize: 20, fontWeight: 800, color: C.navy,
+                  border: `3px solid ${C.saffron}44`, borderRadius: 14,
+                  background: 'linear-gradient(135deg, #fff, #FFFBF5)',
+                  cursor: 'pointer', boxShadow: '0 4px 10px rgba(255,107,53,0.1)',
+                }}>{w}</button>
+              ))}
+            </div>
+          )
+        }
       </GameShell>
     </>
   );
