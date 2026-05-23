@@ -481,7 +481,7 @@ const ORF_BENCHMARK: Record<number, number> = { 1: 47, 2: 87, 3: 107, 4: 123, 5:
 
 // ── Types ──────────────────────────────────────────────────────────────────
 type Grade = 1 | 2 | 3 | 4 | 5;
-type Module = 'lnf' | 'psf' | 'wrf' | 'maze' | 'orf';
+type Module = 'lnf' | 'psf' | 'wrf' | 'maze';
 interface ModuleResult { module: Module; score: number; total: number; pct: number }
 
 function shuffle<T>(arr: T[]): T[] { return [...arr].sort(() => Math.random() - 0.5) }
@@ -876,7 +876,8 @@ function MazeGame({ grade, onDone }: { grade: Grade; onDone: (r: ModuleResult) =
 }
 
 // ── Read Aloud (ORF) ───────────────────────────────────────────────────────
-function ORFGame({ grade, onDone }: { grade: Grade; onDone: (r: ModuleResult) => void }) {
+// ORFGame removed — Read Aloud module temporarily disabled
+function ORFGame_DISABLED({ grade, onDone }: { grade: Grade; onDone: (r: ModuleResult) => void }) {
   const passage = ORF_PASSAGES[grade] ?? ORF_PASSAGES[5];
   const stt = useSTT();
   const [phase, setPhase] = useState<'intro' | 'reading' | 'done'>('intro');
@@ -928,10 +929,10 @@ function ORFGame({ grade, onDone }: { grade: Grade; onDone: (r: ModuleResult) =>
       const err = parseInt(errorsInput) || 0;
       const wrc = Math.max(0, wr - err);
       audio.fanfare();
-      onDone({ module: 'orf', score: wrc, total: totalWords, pct: Math.min(100, Math.round((wrc / totalWords) * 100)) });
+      onDone({ module: 'wrf' as Module, score: wrc, total: totalWords, pct: Math.min(100, Math.round((wrc / totalWords) * 100)) });
     } else {
       audio.fanfare();
-      onDone({ module: 'orf', score: liveCorrect, total: totalWords, pct: Math.min(100, Math.round((liveCorrect / totalWords) * 100)) });
+      onDone({ module: 'wrf' as Module, score: liveCorrect, total: totalWords, pct: Math.min(100, Math.round((liveCorrect / totalWords) * 100)) });
     }
   };
 
@@ -985,22 +986,33 @@ function ORFGame({ grade, onDone }: { grade: Grade; onDone: (r: ModuleResult) =>
       {phase === 'reading' && (
         <>
           {/* Passage with live word highlighting */}
-          <div style={{
-            background: '#fff', border: `2px solid ${C.mint}44`,
-            borderRadius: 18, padding: '18px 20px', fontSize: 18, marginBottom: 12,
-            display: 'flex', flexWrap: 'wrap', gap: '0.35em', alignItems: 'baseline',
-            lineHeight: 2,
-          }}>
-            {passageWords.map((word, i) => (
-              <span key={i} style={{
-                borderRadius: 4, padding: '2px 4px',
-                background: matched.has(i) ? '#DCFCE7' : 'transparent',
-                color: matched.has(i) ? '#16A34A' : C.navy,
-                fontWeight: matched.has(i) ? 800 : 500,
-                transition: 'background 0.25s, color 0.25s',
-              }}>{word}</span>
-            ))}
-          </div>
+          {(() => {
+            const lastMatched = matched.size > 0 ? Math.max(...matched) : -1;
+            const currentIdx = lastMatched + 1 < passageWords.length ? lastMatched + 1 : -1;
+            return (
+              <div style={{
+                background: '#fff', border: `2px solid ${C.mint}44`,
+                borderRadius: 18, padding: '14px 16px', fontSize: 15, marginBottom: 12,
+                display: 'flex', flexWrap: 'wrap', gap: '0.3em', alignItems: 'baseline',
+                lineHeight: 1.85,
+              }}>
+                {passageWords.map((word, i) => {
+                  const done    = matched.has(i);
+                  const current = i === currentIdx;
+                  return (
+                    <span key={i} style={{
+                      borderRadius: 5, padding: '2px 5px',
+                      background: done ? '#DCFCE7' : current ? '#FEF3C7' : 'transparent',
+                      color:      done ? '#16A34A' : current ? '#92400E'  : C.navy,
+                      fontWeight: done || current ? 800 : 500,
+                      outline:    current ? '2px solid #F59E0B' : 'none',
+                      transition: 'background 0.2s, color 0.2s',
+                    }}>{word}</span>
+                  );
+                })}
+              </div>
+            );
+          })()}
 
           {/* Mic status bar */}
           {!manualMode && (
@@ -1250,16 +1262,6 @@ const ACTION: Record<Module, {
       { label: '"5-finger retell" technique', desc: 'After reading, child holds up one finger per point: Who? Where? Problem? Events? Solution? No app needed — just a hand.', free: true },
     ],
   },
-  orf: {
-    title: 'Reading Fluency',
-    weak: '"Repeated reading" works best — same short passage 3 times in a row. Echo reading (parent reads a sentence, child repeats) builds rhythm and confidence fast.',
-    strong: 'Fluent reader! Focus on expression and pace. Try reader\'s theatre — acting out stories with different voices builds advanced fluency and comprehension together.',
-    resources: [
-      { label: 'Repeated reading (no app needed)', desc: 'Pick any passage. Child reads it 3 times in a row. Time them. Celebrate the improvement — usually 10–20% faster by the third read.', free: true },
-      { label: 'Librivox / YouTube read-alouds', desc: 'Free audiobooks. Play while child follows the text. The model of fluent reading trains their internal voice.', url: 'https://librivox.org', free: true },
-      { label: 'Pratham Storyweaver (read-aloud mode)', desc: 'Free Indian stories with audio narration — child can listen first, then read along independently.', url: 'https://storyweaver.org.in', free: true },
-    ],
-  },
 };
 
 function getLevel(pct: number) {
@@ -1271,7 +1273,6 @@ function getLevel(pct: number) {
 function ResultsScreen({ results, childName, grade, onRetake, onBook }: {
   results: ModuleResult[]; childName: string; grade: Grade; onRetake: () => void; onBook: (slug: string) => void;
 }) {
-  const orfBenchmark = ORF_BENCHMARK[grade] ?? 139;
   const audio = useAudio();
   useEffect(() => { setTimeout(() => audio.fanfare(), 400); }, []);
   const overall = Math.round(results.reduce((s, r) => s + r.pct, 0) / results.length);
@@ -1396,10 +1397,6 @@ function ResultsScreen({ results, childName, grade, onRetake, onBook }: {
                 </div>
                 <div style={{ fontSize: 11, color: '#aaa', marginTop: 4 }}>
                   {r.score}/{r.total} correct · {r.pct}%
-                  {r.module === 'orf' && (() => {
-                    const wcm = Math.round(r.score * 60 / 65);
-                    return <span> · <strong style={{ color: C.navy }}>~{wcm} WCM</strong> (benchmark: {orfBenchmark} WCM)</span>;
-                  })()}
                 </div>
               </div>
             );
@@ -1479,47 +1476,48 @@ function ResultsScreen({ results, childName, grade, onRetake, onBook }: {
 }
 
 // ── Module config ──────────────────────────────────────────────────────────
-const MODULE_META: Record<Module, { name: string; emoji: string; desc: string; tip: string; color: string; childSpeak: string; parentSpeak: string }> = {
+const MODULE_META: Record<Module, { name: string; emoji: string; desc: string; tip: string; color: string; childLine: string; parentLine: string; childSpeak: string; parentSpeak: string }> = {
   lnf: {
     name: 'Letter Lightning', emoji: '⚡', color: C.gold,
     desc: 'Name letters as fast as you can!',
     tip: 'Tap the name of each letter you see.',
-    childSpeak: "Hi! I am Ollie the owl. Ready to play Letter Lightning? You will see letters appear one by one. Say the name of each letter out loud as fast as you can. Not the sound. Just the name. Ready? Here we go!",
-    parentSpeak: "Letter Lightning is starting. Your child will see letters one at a time and say the name of each one. Just watch and cheer. The timer runs automatically. Tap Let's Go when you are both ready.",
+    childLine:  '🧒 Say the name of each letter out loud — as fast as you can!',
+    parentLine: '👨‍👩‍👧 Watch and cheer. Timer runs automatically.',
+    childSpeak: "Say the name of each letter out loud as fast as you can. Ready? Here we go!",
+    parentSpeak: "Watch and cheer. The timer runs automatically.",
   },
   psf: {
     name: 'Sound Smasher', emoji: '💥', color: C.purple,
     desc: 'Smash words into sounds!',
     tip: 'Tap how many sounds you hear in the word.',
-    childSpeak: "Listen carefully! You will hear a word. Your job is to count the sounds inside it. For example, the word cat has three sounds. C. A. T. That is three. Listen for the sounds, not the letters. You can do this!",
-    parentSpeak: "Sound Smasher next. Your child will hear a word and tap how many sounds are in it. This tests phoneme awareness. For example, the word ship has three sounds. Just listen along and encourage them.",
+    childLine:  '🧒 Listen to the word, then tap how many sounds are inside it.',
+    parentLine: '👨‍👩‍👧 Listen along. Do not help — let them count on their own.',
+    childSpeak: "Listen to the word, then tap how many sounds you hear inside it.",
+    parentSpeak: "Listen along. Do not help. Let them count on their own.",
   },
   wrf: {
     name: 'Word Flash', emoji: '✨', color: C.saffron,
     desc: 'Remember the flashing word!',
     tip: 'A word will flash — then find it from 4 choices.',
-    childSpeak: "Get ready! A word will flash on the screen for just a moment. Look at it carefully. Remember it. Then it disappears, and you pick the same word from four choices. Quick eyes! You have got this.",
-    parentSpeak: "Word Flash is up. A word appears briefly, then disappears. Your child picks it from four options. This checks sight word recognition. No help needed from you. Just sit back and watch.",
+    childLine:  '🧒 A word will flash. Remember it, then find it in the list.',
+    parentLine: '👨‍👩‍👧 Just watch. No help needed.',
+    childSpeak: "A word will flash on screen. Remember it, then find it in the list.",
+    parentSpeak: "Just watch. No help needed.",
   },
   maze: {
     name: 'Story Fill', emoji: '📖', color: C.rose,
     desc: 'Fill in the missing words!',
     tip: 'Pick the word that makes the most sense in the story.',
-    childSpeak: "Time for Story Fill! You will read a sentence with a missing word. Three choices will appear. Pick the word that makes the most sense in the story. Read the whole sentence first, then choose. Take your time.",
-    parentSpeak: "Story Fill is next. Your child reads a sentence with a blank and picks the word that fits best. This tests reading comprehension. Please let them read on their own. Do not help even if they pause.",
-  },
-  orf: {
-    name: 'Read Aloud', emoji: '🎤', color: C.mint,
-    desc: 'Read the story out loud!',
-    tip: 'Read clearly — a parent will count any tricky words.',
-    childSpeak: "This is the Read Aloud game. You will see a story on screen. Read it out loud, clearly and smoothly, from the very beginning. Your parent is right beside you. Take a breath, and when you are ready, begin.",
-    parentSpeak: "Read Aloud is starting now. Your child will read a passage for 65 seconds. Your only job is to tap the red button each time they misread, skip, or stumble on a word. The microphone handles the rest. Sit close and follow along carefully.",
+    childLine:  '🧒 Read the sentence and pick the word that fits the story.',
+    parentLine: '👨‍👩‍👧 Let them read alone — do not help even if they pause.',
+    childSpeak: "Read the sentence and pick the word that fits the story best.",
+    parentSpeak: "Let them read alone. Do not help, even if they pause.",
   },
 };
 
 function getModules(grade: Grade): Module[] {
-  if (grade === 1) return ['lnf', 'psf', 'wrf', 'orf'];
-  return ['wrf', 'maze', 'orf'];
+  if (grade === 1) return ['lnf', 'psf', 'wrf'];
+  return ['wrf', 'maze'];
 }
 
 // ── Module intro card ──────────────────────────────────────────────────────
@@ -1527,57 +1525,25 @@ function ModuleIntro({ module, moduleNum, total, onStart }: { module: Module; mo
   const m = MODULE_META[module];
   const audio = useAudio();
   const tts = useTTS();
-  const [tab, setTab] = useState<'child' | 'parent'>('child');
 
   useEffect(() => {
-    const t = setTimeout(() => tts.speakChild(m.childSpeak), 600);
+    const t = setTimeout(() => { tts.speakChild(m.childSpeak); }, 600);
     return () => { clearTimeout(t); tts.stop(); };
   }, [module]);
 
-  const speakCurrent = () => tab === 'child' ? tts.speakChild(m.childSpeak) : tts.speakParent(m.parentSpeak);
-
   return (
-    <div style={{ maxWidth: 440, margin: '0 auto', padding: '32px 20px', textAlign: 'center' }}>
-      <div style={{ fontSize: 13, color: '#aaa', marginBottom: 16 }}>Game {moduleNum} of {total}</div>
-      <div style={{
-        fontSize: 80, marginBottom: 12,
-        animation: 'bounce-in 0.5s ease-out',
-        filter: `drop-shadow(0 8px 16px ${m.color}55)`,
-      }}>{m.emoji}</div>
-      <h2 style={{ fontFamily: "'Baloo 2', sans-serif", fontSize: 28, fontWeight: 900, color: C.navy, margin: '0 0 4px' }}>
-        {m.name}
-      </h2>
-      <div style={{ fontSize: 15, color: '#666', marginBottom: 16 }}>{m.desc}</div>
+    <div style={{ maxWidth: 440, margin: '0 auto', padding: '40px 20px 32px', textAlign: 'center' }}>
+      <div style={{ fontSize: 13, color: '#aaa', marginBottom: 12 }}>Game {moduleNum} of {total}</div>
+      <div style={{ fontSize: 80, marginBottom: 12, animation: 'bounce-in 0.5s ease-out', filter: `drop-shadow(0 8px 16px ${m.color}55)` }}>{m.emoji}</div>
+      <h2 style={{ fontFamily: "'Baloo 2', sans-serif", fontSize: 28, fontWeight: 900, color: C.navy, margin: '0 0 4px' }}>{m.name}</h2>
+      <div style={{ fontSize: 15, color: '#666', marginBottom: 24 }}>{m.desc}</div>
 
-      {/* Child / Parent tab toggle */}
-      <div style={{ display: 'flex', background: '#F3F4F6', borderRadius: 12, padding: 4, marginBottom: 14, gap: 4 }}>
-        {(['child', 'parent'] as const).map(t => (
-          <button key={t} onClick={() => { setTab(t); t === 'child' ? tts.speakChild(m.childSpeak) : tts.speakParent(m.parentSpeak); }} style={{
-            flex: 1, padding: '8px', borderRadius: 9, border: 'none', cursor: 'pointer',
-            background: tab === t ? '#fff' : 'transparent',
-            fontWeight: tab === t ? 800 : 600,
-            color: tab === t ? C.navy : '#999',
-            fontSize: 13,
-            boxShadow: tab === t ? '0 1px 4px rgba(0,0,0,0.1)' : 'none',
-            transition: 'all 0.15s',
-          }}>{t === 'child' ? '🧒 For your child' : '👨‍👩‍👧 For the parent'}</button>
-        ))}
+      {/* Two-line instructions */}
+      <div style={{ background: '#FAFAFA', border: '1.5px solid #E5E7EB', borderRadius: 16, padding: '14px 18px', marginBottom: 28, textAlign: 'left', display: 'flex', flexDirection: 'column', gap: 10 }}>
+        <div style={{ fontSize: 14, fontWeight: 700, color: C.navy, lineHeight: 1.5 }}>{m.childLine}</div>
+        <div style={{ width: '100%', height: 1, background: '#E5E7EB' }} />
+        <div style={{ fontSize: 13, color: '#666', lineHeight: 1.5 }}>{m.parentLine}</div>
       </div>
-
-      {/* Instruction box */}
-      <div style={{
-        background: `${m.color}12`, border: `2px solid ${m.color}44`, borderRadius: 14,
-        padding: '14px 18px', fontSize: 14, color: '#444', marginBottom: 10, lineHeight: 1.7, textAlign: 'left',
-      }}>
-        {tab === 'child' ? m.childSpeak : m.parentSpeak}
-      </div>
-
-      {/* Hear again */}
-      <button onClick={speakCurrent} style={{
-        background: 'none', border: `1.5px solid ${m.color}55`, borderRadius: 99,
-        padding: '6px 16px', fontSize: 13, color: m.color, fontWeight: 700,
-        cursor: 'pointer', marginBottom: 24,
-      }}>🔊 Hear again</button>
 
       <button className="btn-game" onClick={() => { tts.stop(); audio.start(); onStart(); }} style={{
         width: '100%', background: `linear-gradient(135deg, ${m.color}, ${m.color}BB)`, color: '#fff',
@@ -1595,45 +1561,32 @@ function ParentBriefScreen({ childName, grade, onStart }: { childName: string; g
   const audio = useAudio();
   const tts = useTTS();
   const modules = getModules(grade);
-
-  const briefText = `Quick note before ${childName} starts. Tell your child this: We are going to play some fun reading games with Ollie the owl. He needs your help! Then sit beside them and keep things calm. The assessment has ${modules.length} short games and takes about 8 minutes. For the Read Aloud game at the end, tap the red button each time your child stumbles or skips a word. The microphone does the rest. Ready? Tap the button below to begin.`;
+  const briefText = `Tell ${childName}: we are going to play some fun reading games with Ollie the owl. Sit beside them and cheer them on.`;
 
   useEffect(() => {
     const t = setTimeout(() => tts.speakParent(briefText), 500);
     return () => { clearTimeout(t); tts.stop(); };
   }, []);
 
-  const tips = [
-    { emoji: '🗣️', title: 'What to tell your child', body: `"We're going to play a reading game with Ollie the owl — he needs your help!"` },
-    { emoji: '🪑', title: 'Sit together', body: 'Stay next to them. Cheer when words turn green. Your presence makes all the difference.' },
-    { emoji: '🎤', title: 'For the Read Aloud game', body: 'Tap the big red ✗ button each time your child stumbles or skips a word. The mic tracks the rest.' },
-  ];
-
   return (
-    <div style={{ maxWidth: 440, margin: '0 auto', padding: '32px 20px 60px' }}>
-      <div style={{ textAlign: 'center', marginBottom: 20 }}>
-        <div style={{ fontSize: 64, marginBottom: 8 }}>👨‍👩‍👧</div>
-        <h2 style={{ fontFamily: "'Baloo 2', sans-serif", fontSize: 26, fontWeight: 900, color: C.navy, margin: '0 0 6px' }}>
-          Quick note for you
-        </h2>
-        <p style={{ color: '#888', fontSize: 14, margin: '0 0 10px' }}>Before {childName} starts — 30 seconds</p>
-        <button onClick={() => tts.speakParent(briefText)} style={{
-          background: 'none', border: `1.5px solid ${C.saffron}66`, borderRadius: 99,
-          padding: '6px 16px', fontSize: 13, color: C.saffron, fontWeight: 700, cursor: 'pointer',
-        }}>🔊 Hear again</button>
-      </div>
-      {tips.map(({ emoji, title, body }) => (
-        <div key={title} style={{ background: '#fff', borderRadius: 16, padding: '16px 18px', marginBottom: 12, display: 'flex', gap: 14, alignItems: 'flex-start', boxShadow: '0 2px 12px rgba(0,0,0,0.06)' }}>
-          <div style={{ fontSize: 28, flexShrink: 0 }}>{emoji}</div>
-          <div>
-            <div style={{ fontWeight: 800, fontSize: 14, color: C.navy, marginBottom: 4 }}>{title}</div>
-            <div style={{ fontSize: 13, color: '#555', lineHeight: 1.6 }}>{body}</div>
-          </div>
+    <div style={{ maxWidth: 440, margin: '0 auto', padding: '40px 20px 60px', textAlign: 'center' }}>
+      <div style={{ fontSize: 56, marginBottom: 10 }}>👨‍👩‍👧</div>
+      <h2 style={{ fontFamily: "'Baloo 2', sans-serif", fontSize: 24, fontWeight: 900, color: C.navy, margin: '0 0 4px' }}>
+        Before {childName} starts
+      </h2>
+      <p style={{ color: '#888', fontSize: 13, margin: '0 0 24px' }}>⏱ ~{modules.length === 4 ? 10 : 8} minutes · {modules.length} games · Grade {grade}</p>
+
+      {/* Two-line brief */}
+      <div style={{ background: '#FAFAFA', border: '1.5px solid #E5E7EB', borderRadius: 16, padding: '14px 18px', marginBottom: 28, textAlign: 'left', display: 'flex', flexDirection: 'column', gap: 10 }}>
+        <div style={{ fontSize: 14, fontWeight: 700, color: C.navy, lineHeight: 1.5 }}>
+          🗣️ Tell {childName}: <em>"We're playing reading games with Ollie the owl — he needs your help!"</em>
         </div>
-      ))}
-      <div style={{ background: `${C.saffron}12`, border: `2px solid ${C.saffron}33`, borderRadius: 14, padding: '12px 16px', marginBottom: 24, fontSize: 13, color: '#666', textAlign: 'center' }}>
-        ⏱ About <strong>8 minutes</strong> · {modules.length} games · Grade {grade}
+        <div style={{ width: '100%', height: 1, background: '#E5E7EB' }} />
+        <div style={{ fontSize: 13, color: '#666', lineHeight: 1.5 }}>
+          🪑 Sit beside them, keep it calm, and cheer when they get things right.
+        </div>
       </div>
+
       <button className="btn-game" onClick={() => { tts.stop(); audio.start(); onStart(); }} style={{
         width: '100%', background: `linear-gradient(135deg, ${C.saffron}, #FF8C42)`, color: '#fff',
         border: 'none', borderRadius: 18, padding: '18px', fontSize: 20, fontWeight: 900,
@@ -1814,7 +1767,6 @@ export function ReadingQuestPage() {
       {phase === 'game' && currentMod === 'psf' && <PSFGame grade={grade} onDone={handleModuleDone} />}
       {phase === 'game' && currentMod === 'wrf' && <WRFGame grade={grade} onDone={handleModuleDone} />}
       {phase === 'game' && currentMod === 'maze' && <MazeGame grade={grade} onDone={handleModuleDone} />}
-      {phase === 'game' && currentMod === 'orf' && <ORFGame grade={grade} onDone={handleModuleDone} />}
       {phase === 'celebrate' && lastResult && (
         <ModuleCelebration result={lastResult} onNext={handleNextModule} onRetry={handleRetryModule} isLast={modIdx + 1 >= modules.length} />
       )}
