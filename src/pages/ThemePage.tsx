@@ -393,6 +393,14 @@ export function ThemePage() {
     return null;
   }
 
+  const _tp = theme.pricing;
+  const pbPrice = _tp?.paperback.price ?? 974;
+  const hcPrice = _tp?.hardcover.price ?? 1595;
+  const pbMrp   = _tp?.paperback.mrp   ?? 1499;
+  const hcMrp   = _tp?.hardcover.mrp   ?? 1899;
+  const pbPct   = Math.round((pbMrp - pbPrice) / pbMrp * 100);
+  const hcPct   = Math.round((hcMrp - hcPrice) / hcMrp * 100);
+
   const AGE_COLOR: Record<string, string> = { '0–3': '#7C3AED', '3–5': C.saffron, '6–8': C.gold, '9–12': C.navy };
   const color = AGE_COLOR[Array.isArray(theme.ageRange) ? theme.ageRange[0] : theme.ageRange] || C.saffron;
   const ageLabel = Array.isArray(theme.ageRange)
@@ -836,9 +844,9 @@ export function ThemePage() {
               const isHC = orderForm.bindingType === 'hardcover';
               return (
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, padding: '10px 16px', background: '#FFF7ED', borderTop: '1px solid #FFE4CC', borderBottom: '1px solid #FFE4CC' }}>
-                  <span style={{ fontSize: 11, fontWeight: 800, color: '#fff', background: '#22C55E', borderRadius: 50, padding: '2px 8px' }}>{isHC ? '16% OFF' : '35% OFF'}</span>
-                  <span style={{ fontSize: 13, color: '#9CA3AF', textDecoration: 'line-through', fontWeight: 600 }}>{isHC ? '₹1,899' : '₹1,499'}</span>
-                  <span style={{ fontSize: 18, fontWeight: 800, color: C.navy, fontFamily: "'Baloo 2', sans-serif" }}>{isHC ? '₹1,595' : '₹974'}</span>
+                  <span style={{ fontSize: 11, fontWeight: 800, color: '#fff', background: '#22C55E', borderRadius: 50, padding: '2px 8px' }}>{isHC ? `${hcPct}% OFF` : `${pbPct}% OFF`}</span>
+                  <span style={{ fontSize: 13, color: '#9CA3AF', textDecoration: 'line-through', fontWeight: 600 }}>{isHC ? `₹${hcMrp.toLocaleString('en-IN')}` : `₹${pbMrp.toLocaleString('en-IN')}`}</span>
+                  <span style={{ fontSize: 18, fontWeight: 800, color: C.navy, fontFamily: "'Baloo 2', sans-serif" }}>{isHC ? `₹${hcPrice.toLocaleString('en-IN')}` : `₹${pbPrice.toLocaleString('en-IN')}`}</span>
                 </div>
               );
             })()}
@@ -890,9 +898,9 @@ export function ThemePage() {
                 const isHC = orderForm.bindingType === 'hardcover';
                 return (
                   <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                    <span style={{ fontSize: 11, fontWeight: 700, color: '#22C55E', background: 'rgba(255,255,255,0.15)', borderRadius: 50, padding: '2px 8px' }}>{isHC ? '16% OFF' : '35% OFF'}</span>
-                    <span style={{ fontSize: 13, color: 'rgba(255,255,255,0.55)', textDecoration: 'line-through', fontWeight: 600 }}>{isHC ? '₹1,899' : '₹1,499'}</span>
-                    <span style={{ fontSize: 18, fontWeight: 800, color: '#fff', fontFamily: "'Baloo 2', sans-serif" }}>{isHC ? '₹1,595' : '₹974'}</span>
+                    <span style={{ fontSize: 11, fontWeight: 700, color: '#22C55E', background: 'rgba(255,255,255,0.15)', borderRadius: 50, padding: '2px 8px' }}>{isHC ? `${hcPct}% OFF` : `${pbPct}% OFF`}</span>
+                    <span style={{ fontSize: 13, color: 'rgba(255,255,255,0.55)', textDecoration: 'line-through', fontWeight: 600 }}>{isHC ? `₹${hcMrp.toLocaleString('en-IN')}` : `₹${pbMrp.toLocaleString('en-IN')}`}</span>
+                    <span style={{ fontSize: 18, fontWeight: 800, color: '#fff', fontFamily: "'Baloo 2', sans-serif" }}>{isHC ? `₹${hcPrice.toLocaleString('en-IN')}` : `₹${pbPrice.toLocaleString('en-IN')}`}</span>
                   </div>
                 );
               })()}
@@ -974,8 +982,8 @@ export function ThemePage() {
                   <label style={{ fontSize: 10, fontWeight: 700, color: '#9CA3AF', display: 'block', marginBottom: 8, textTransform: 'uppercase', letterSpacing: '0.07em' }}>Binding type</label>
                   <div style={{ display: 'flex', gap: 10 }}>
                     {[
-                      { value: 'perfect', icon: '📖', label: 'Paperback', desc: 'Premium 300GSM · Lay-flat pages · Vivid print', price: '₹974', available: true },
-                      { value: 'hardcover', icon: '📚', label: 'Hardcover', desc: 'Rigid boards · Durable cover · Long lasting', price: '₹1,595', available: true },
+                      { value: 'perfect', icon: '📖', label: 'Paperback', desc: 'Premium 300GSM · Lay-flat pages · Vivid print', price: `₹${pbPrice.toLocaleString('en-IN')}`, available: true },
+                      { value: 'hardcover', icon: '📚', label: 'Hardcover', desc: 'Rigid boards · Durable cover · Long lasting', price: `₹${hcPrice.toLocaleString('en-IN')}`, available: true },
                     ].map(({ value, icon, label, desc, price, available }) => {
                       const selected = orderForm.bindingType === value;
                       return (
@@ -1172,7 +1180,7 @@ export function ThemePage() {
                 )}
                 <button type="submit" disabled={orderSubmitting || !orderConsent || !orderPhoto?.uploadedPath}
                   style={{ background: (!orderConsent || orderSubmitting || !orderPhoto?.uploadedPath) ? '#E5E7EB' : `linear-gradient(135deg, ${C.saffron} 0%, #FF8C42 100%)`, color: (!orderConsent || orderSubmitting || !orderPhoto?.uploadedPath) ? '#9CA3AF' : '#fff', border: 'none', borderRadius: 12, padding: '14px 20px', fontWeight: 800, fontSize: 16, cursor: (!orderConsent || orderSubmitting || !orderPhoto?.uploadedPath) ? 'default' : 'pointer', fontFamily: "'Baloo 2', sans-serif", boxShadow: (!orderConsent || orderSubmitting || !orderPhoto?.uploadedPath) ? 'none' : '0 4px 16px rgba(255,107,53,0.4)' }}>
-                  {orderSubmitting ? 'Processing…' : `Pay ₹${couponApplied ? couponApplied.finalPrice : (orderForm.bindingType === 'hardcover' ? 1595 : 974)} & Order →`}
+                  {orderSubmitting ? 'Processing…' : `Pay ₹${couponApplied ? couponApplied.finalPrice : (orderForm.bindingType === 'hardcover' ? hcPrice : pbPrice)} & Order →`}
                 </button>
                 <p style={{ fontSize: 11, color: C.lgray, textAlign: 'center', margin: '-4px 0 0' }}>Delivered in 7–9 business days</p>
 
