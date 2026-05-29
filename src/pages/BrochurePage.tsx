@@ -324,18 +324,35 @@ function FaceToSceneAnimation() {
 
 const FACE_SIZE_BROCHURE = 72;
 
-const BINDING_OPTIONS = [
+type BindingOption = { key: 'paperback' | 'hardcover'; label: string; price: number; mrp: number; pct: number };
+
+const BINDING_OPTIONS: BindingOption[] = [
   { key: 'paperback', label: 'Paperback', price: 974,  mrp: 1499, pct: 35 },
   { key: 'hardcover', label: 'Hardcover', price: 1595, mrp: 1899, pct: 16 },
-] as const;
+];
 
-function FormatPicker({ selected, onChange }: { selected: 'paperback' | 'hardcover'; onChange: (v: 'paperback' | 'hardcover') => void }) {
-  const fmt = BINDING_OPTIONS.find(f => f.key === selected)!;
+const THEME_BINDING_OPTIONS: Record<string, BindingOption[]> = {
+  'abc': [
+    { key: 'paperback', label: 'Paperback', price: 849,  mrp: 1499, pct: 43 },
+    { key: 'hardcover', label: 'Hardcover', price: 1449, mrp: 1899, pct: 24 },
+  ],
+  'hindi-alphabet': [
+    { key: 'paperback', label: 'Paperback', price: 849,  mrp: 1499, pct: 43 },
+    { key: 'hardcover', label: 'Hardcover', price: 1449, mrp: 1899, pct: 24 },
+  ],
+};
+
+function getBindingOptions(slug: string): BindingOption[] {
+  return THEME_BINDING_OPTIONS[slug] ?? BINDING_OPTIONS;
+}
+
+function FormatPicker({ selected, onChange, options = BINDING_OPTIONS }: { selected: 'paperback' | 'hardcover'; onChange: (v: 'paperback' | 'hardcover') => void; options?: BindingOption[] }) {
+  const fmt = options.find(f => f.key === selected)!;
   return (
     <div style={{ marginBottom: 10 }}>
       {/* Format tabs */}
       <div style={{ display: 'flex', gap: 6, marginBottom: 8 }}>
-        {BINDING_OPTIONS.map(f => (
+        {options.map(f => (
           <button key={f.key} onClick={e => { e.stopPropagation(); onChange(f.key); }}
             style={{
               flex: 1, padding: '6px 4px', borderRadius: 8, cursor: 'pointer', textAlign: 'center',
@@ -495,7 +512,7 @@ function BrochureThemeCard({ slug, icon, name, badge, description, ageRange, com
           </p>
         )}
         {/* Format picker — Amazon style */}
-        <FormatPicker selected={binding} onChange={setBinding} />
+        <FormatPicker selected={binding} onChange={setBinding} options={getBindingOptions(slug)} />
         {/* Buttons */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
           <button

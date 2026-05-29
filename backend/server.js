@@ -1298,8 +1298,16 @@ app.post('/api/order-inquiry', async (req, res) => {
             return res.status(400).json({ error: 'Name, email and phone are required' });
         }
 
+        const THEME_PRICE_OVERRIDES = {
+            'abc':            { paperback: 849, hardcover: 1449 },
+            'hindi-alphabet': { paperback: 849, hardcover: 1449 },
+        };
+        const themeSlug = storyTheme || theme;
+        const themeOverride = themeSlug ? THEME_PRICE_OVERRIDES[themeSlug] : null;
         const basePrice = isCustomStory
             ? (parseInt(process.env.CUSTOM_STORY_PRICE, 10) || 1980)
+            : themeOverride
+            ? (bindingType === 'hardcover' ? themeOverride.hardcover : themeOverride.paperback)
             : bindingType === 'hardcover'
             ? (parseInt(process.env.HARDCOVER_PRICE, 10) || 1595)
             : (parseInt(process.env.STORYBOOK_PRICE, 10) || 974);
