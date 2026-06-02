@@ -571,6 +571,9 @@ const CUSTOMER_VIDEOS = [
   { permalink: 'https://www.instagram.com/reel/DYZhLw6TZ8E/' },
   { permalink: 'https://www.instagram.com/reel/DWvGPa8j5g8/' },
   { permalink: 'https://www.instagram.com/reel/DXb-CcmjcTj/' },
+  { permalink: 'https://www.instagram.com/reel/DY9DngSS6km/' },
+  { permalink: 'https://www.instagram.com/reel/DYrGMFUTzxI/' },
+  { permalink: 'https://www.instagram.com/reel/DYyk612N7UH/' },
 ];
 
 function VideoSection() {
