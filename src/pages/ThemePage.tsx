@@ -881,10 +881,10 @@ export function ThemePage() {
                 ))}
               </div>
 
-              <button onClick={scrollToForm}
+              {false && <button onClick={scrollToForm}
                 style={{ width: '100%', background: 'none', border: `1.5px solid ${C.saffron}`, borderRadius: 10, padding: '11px 16px', fontWeight: 800, fontSize: 13, color: C.saffron, cursor: 'pointer', fontFamily: "'Baloo 2', sans-serif", marginTop: 4 }}>
                 Skip order — Generate free preview →
-              </button>
+              </button>}
             </div>
           </div>
 
@@ -1190,7 +1190,7 @@ export function ThemePage() {
         </div>
 
         {/* ── Free preview (below order form) ── */}
-        {!theme.comingSoon && (
+        {false && !theme.comingSoon && (
           <>
             <div style={{ margin: '40px 16px 0', display: 'flex', alignItems: 'center', gap: 12 }}>
               <div style={{ flex: 1, height: 1, background: '#E5E7EB' }} />
