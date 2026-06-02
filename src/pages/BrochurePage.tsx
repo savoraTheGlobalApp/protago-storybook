@@ -520,7 +520,7 @@ function BrochureThemeCard({ slug, icon, name, badge, description, ageRange, com
             style={{ width: '100%', padding: '13px 0', borderRadius: 12, background: `linear-gradient(135deg, ${C.navy} 0%, #2a2a4a 100%)`, color: '#fff', border: 'none', fontWeight: 800, fontSize: 15, cursor: 'pointer', fontFamily: "'Baloo 2', sans-serif", boxShadow: '0 4px 16px rgba(26,26,46,0.3)', letterSpacing: 0.2 }}>
             Order Now →
           </button>
-          {!comingSoon && (
+          {false && !comingSoon && (
             <button
               onClick={e => { e.stopPropagation(); onPreview ? onPreview() : onClick(); }}
               style={{ width: '100%', padding: '10px 0', borderRadius: 12, background: 'transparent', color: C.saffron, border: `1.5px solid ${C.saffron}`, fontWeight: 700, fontSize: 14, cursor: 'pointer', fontFamily: "'Baloo 2', sans-serif" }}>
@@ -575,37 +575,37 @@ const CUSTOMER_VIDEOS = [
 ];
 
 function VideoSection() {
-  const scrollRef = useRef<HTMLDivElement>(null);
-  const scroll = (dir: 'left' | 'right') => {
-    const el = scrollRef.current;
-    if (!el) return;
-    el.scrollBy({ left: dir === 'right' ? 340 : -340, behavior: 'smooth' });
-  };
+  const trackRef = useRef<HTMLDivElement>(null);
+  const animRef = useRef<number | null>(null);
+  const posRef = useRef(0);
+  const CARD_W = 319; // card width + gap
+
+  useEffect(() => {
+    const track = trackRef.current;
+    if (!track) return;
+    const totalWidth = CARD_W * CUSTOMER_VIDEOS.length;
+
+    const tick = () => {
+      posRef.current += 0.5;
+      if (posRef.current >= totalWidth) posRef.current = 0;
+      track.style.transform = `translateX(-${posRef.current}px)`;
+      animRef.current = requestAnimationFrame(tick);
+    };
+    animRef.current = requestAnimationFrame(tick);
+    return () => { if (animRef.current) cancelAnimationFrame(animRef.current); };
+  }, []);
+
+  const cards = [...CUSTOMER_VIDEOS, ...CUSTOMER_VIDEOS]; // duplicate for seamless loop
+
   return (
     <section style={{ background: '#FFF8F5' }} className="py-14 sm:py-18">
-      <div className="max-w-6xl mx-auto px-5 sm:px-8">
-        <div className="flex items-center justify-between mb-6">
-          <div>
-            <p className="text-xs font-bold uppercase tracking-widest mb-1" style={{ color: C.saffron }}>Happy Families</p>
-            <h2 className="text-2xl sm:text-3xl font-extrabold" style={{ color: C.navy }}>See their reactions 🎉</h2>
-          </div>
-          <div className="flex gap-2">
-            <button onClick={() => scroll('left')}
-              className="flex items-center justify-center rounded-full transition-opacity hover:opacity-70"
-              style={{ width: 40, height: 40, background: C.white, border: `1.5px solid #E5E7EB`, cursor: 'pointer', boxShadow: '0 1px 6px rgba(0,0,0,0.08)' }}>
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke={C.navy} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
-            </button>
-            <button onClick={() => scroll('right')}
-              className="flex items-center justify-center rounded-full transition-opacity hover:opacity-70"
-              style={{ width: 40, height: 40, background: C.white, border: `1.5px solid #E5E7EB`, cursor: 'pointer', boxShadow: '0 1px 6px rgba(0,0,0,0.08)' }}>
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke={C.navy} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
-            </button>
-          </div>
-        </div>
-        <div ref={scrollRef}
-          className="flex gap-4 overflow-x-auto pb-2"
-          style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
-          {CUSTOMER_VIDEOS.map((v, i) => (
+      <div className="max-w-6xl mx-auto px-5 sm:px-8 mb-6">
+        <p className="text-xs font-bold uppercase tracking-widest mb-1" style={{ color: C.saffron }}>Happy Families</p>
+        <h2 className="text-2xl sm:text-3xl font-extrabold" style={{ color: C.navy }}>See their reactions 🎉</h2>
+      </div>
+      <div style={{ overflow: 'hidden', width: '100%' }}>
+        <div ref={trackRef} style={{ display: 'flex', gap: 4, willChange: 'transform' }}>
+          {cards.map((v, i) => (
             <a key={i} href={v.url} target="_blank" rel="noopener noreferrer"
               className="flex-none rounded-2xl overflow-hidden transition-transform hover:scale-[1.02]"
               style={{ width: 315, minWidth: 315, background: C.white, boxShadow: '0 2px 12px rgba(0,0,0,0.08)', border: '1px solid #EBEBEB', display: 'block' }}>
@@ -1959,11 +1959,8 @@ export function BrochurePage() {
               onClick={() => scrollTo('themes')}
               className="py-4 px-10 rounded-2xl font-extrabold"
               style={{ background: C.saffron, color: '#fff', border: 'none', cursor: 'pointer', fontFamily: "'Baloo 2', sans-serif", fontSize: 16, boxShadow: '0 4px 20px rgba(255,107,53,0.45)' }}>
-              ✨ Generate Free Preview
+              Order Now →
             </button>
-            <p className="text-center mt-2 text-xs font-semibold" style={{ color: 'rgba(255,255,255,0.55)' }}>
-              Free · ~2 min · No card required
-            </p>
           </motion.div>
           {/* Two-panel: animation + video — same height, aligned top-to-bottom */}
           <div className="flex flex-col-reverse sm:flex-row gap-4 sm:gap-6 items-stretch">
@@ -1973,18 +1970,14 @@ export function BrochurePage() {
               transition={{ duration: 0.5, delay: 0.1 }}
               className="w-full sm:w-1/2 min-w-0 flex flex-col">
               <HeroFaceSwapAnimation />
-              {/* Free preview CTA */}
               <motion.button
                 initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.4, delay: 0.6 }}
                 onClick={() => scrollTo('themes')}
                 className="w-full py-4 rounded-2xl font-extrabold text-base mt-3"
                 style={{ background: C.saffron, color: '#fff', border: 'none', cursor: 'pointer', fontFamily: "'Baloo 2', sans-serif", fontSize: 16, boxShadow: '0 4px 20px rgba(255,107,53,0.45)' }}>
-                ✨ Generate Free Preview
+                Order Now →
               </motion.button>
-              <p className="text-center mt-2 text-xs font-semibold" style={{ color: 'rgba(255,255,255,0.55)' }}>
-                Free · ~2 min · No card required
-              </p>
             </motion.div>
 
             {/* Right on desktop, top on mobile — real child reaction carousel */}
