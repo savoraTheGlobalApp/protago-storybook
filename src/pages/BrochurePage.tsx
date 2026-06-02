@@ -566,36 +566,44 @@ type ReviewData = {
 const API_BASE_URL = import.meta.env.VITE_API_URL || '';
 
 const CUSTOMER_VIDEOS = [
-  { name: 'Pransh',    url: 'https://www.instagram.com/p/DXwdV83zex3/' },
-  { name: 'Shreyansh', url: 'https://www.instagram.com/p/DWvGPa8j5g8/' },
-  { name: 'Adishi',    url: 'https://www.instagram.com/p/DYZhLw6TZ8E/' },
-  { name: 'Vihaan',    url: 'https://www.instagram.com/p/DXAAreLDxkZ/' },
-  { name: 'Vihaan',    url: 'https://www.instagram.com/p/DYAN2zKpGK8/' },
-  { name: 'Harsh',     url: 'https://www.instagram.com/p/DXb-CcmjcTj/' },
+  { permalink: 'https://www.instagram.com/reel/DXAAreLDxkZ/' },
+  { permalink: 'https://www.instagram.com/reel/DXwdV83zex3/' },
+  { permalink: 'https://www.instagram.com/reel/DYZhLw6TZ8E/' },
+  { permalink: 'https://www.instagram.com/reel/DWvGPa8j5g8/' },
+  { permalink: 'https://www.instagram.com/reel/DXb-CcmjcTj/' },
 ];
 
 function VideoSection() {
   const trackRef = useRef<HTMLDivElement>(null);
   const animRef = useRef<number | null>(null);
   const posRef = useRef(0);
-  const CARD_W = 319; // card width + gap
+  const CARD_W = 356; // 340px card + 16px gap
 
   useEffect(() => {
-    const track = trackRef.current;
-    if (!track) return;
-    const totalWidth = CARD_W * CUSTOMER_VIDEOS.length;
+    // Load Instagram embed.js
+    const w = window as any;
+    if (w.instgrm) { w.instgrm.Widgets.load(); }
+    else if (!document.getElementById('ig-embed-js')) {
+      const s = document.createElement('script');
+      s.id = 'ig-embed-js';
+      s.src = '//www.instagram.com/embed.js';
+      s.async = true;
+      document.body.appendChild(s);
+    }
 
+    // RAF auto-scroll
+    const total = CARD_W * CUSTOMER_VIDEOS.length;
     const tick = () => {
-      posRef.current += 0.5;
-      if (posRef.current >= totalWidth) posRef.current = 0;
-      track.style.transform = `translateX(-${posRef.current}px)`;
+      posRef.current += 0.4;
+      if (posRef.current >= total) posRef.current = 0;
+      if (trackRef.current) trackRef.current.style.transform = `translateX(-${posRef.current}px)`;
       animRef.current = requestAnimationFrame(tick);
     };
     animRef.current = requestAnimationFrame(tick);
     return () => { if (animRef.current) cancelAnimationFrame(animRef.current); };
   }, []);
 
-  const cards = [...CUSTOMER_VIDEOS, ...CUSTOMER_VIDEOS]; // duplicate for seamless loop
+  const cards = [...CUSTOMER_VIDEOS, ...CUSTOMER_VIDEOS];
 
   return (
     <section style={{ background: '#FFF8F5' }} className="py-14 sm:py-18">
@@ -604,23 +612,11 @@ function VideoSection() {
         <h2 className="text-2xl sm:text-3xl font-extrabold" style={{ color: C.navy }}>See their reactions 🎉</h2>
       </div>
       <div style={{ overflow: 'hidden', width: '100%' }}>
-        <div ref={trackRef} style={{ display: 'flex', gap: 4, willChange: 'transform' }}>
+        <div ref={trackRef} style={{ display: 'flex', gap: 16, willChange: 'transform', paddingLeft: 20 }}>
           {cards.map((v, i) => (
-            <a key={i} href={v.url} target="_blank" rel="noopener noreferrer"
-              className="flex-none rounded-2xl overflow-hidden transition-transform hover:scale-[1.02]"
-              style={{ width: 315, minWidth: 315, background: C.white, boxShadow: '0 2px 12px rgba(0,0,0,0.08)', border: '1px solid #EBEBEB', display: 'block' }}>
-              <iframe
-                src={`${v.url}embed/?autoplay=1&muted=1`}
-                width="315" height="560"
-                frameBorder="0" scrolling="no" allowTransparency
-                allow="autoplay; clipboard-write; encrypted-media; picture-in-picture; web-share"
-                style={{ display: 'block', pointerEvents: 'none' }}
-              />
-              <div style={{ padding: '10px 14px', borderTop: '1px solid #F0F0F0' }}>
-                <span style={{ fontSize: 13, fontWeight: 700, color: C.navy }}>{v.name}'s story</span>
-                <span style={{ fontSize: 12, color: '#999', marginLeft: 6 }}>via Instagram ↗</span>
-              </div>
-            </a>
+            <div key={i} style={{ flexShrink: 0, width: 340, overflow: 'hidden', borderRadius: 12 }}
+              dangerouslySetInnerHTML={{ __html: `<blockquote class="instagram-media" data-instgrm-permalink="${v.permalink}?utm_source=ig_embed&utm_campaign=loading" data-instgrm-version="14" style="background:#FFF;border:0;border-radius:12px;box-shadow:0 2px 12px rgba(0,0,0,0.08);margin:0;max-width:340px;min-width:326px;padding:0;width:340px;"></blockquote>` }}
+            />
           ))}
         </div>
       </div>
