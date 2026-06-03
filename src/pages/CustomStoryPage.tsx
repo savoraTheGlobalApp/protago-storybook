@@ -119,7 +119,7 @@ export function CustomStoryPage() {
       <link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@700;800&family=Nunito:wght@400;600;700&display=swap" rel="stylesheet" />
       <NavBar />
 
-      <div style={{ maxWidth: 720, margin: '0 auto', padding: '48px 20px 80px' }}>
+      <div style={{ maxWidth: 720, margin: '0 auto', padding: '120px 20px 80px' }}>
 
         {/* Back link */}
         <Link to="/" style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 13, fontWeight: 700, color: C.lgray, textDecoration: 'none', marginBottom: 32 }}>
