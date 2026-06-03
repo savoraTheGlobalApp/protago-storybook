@@ -134,10 +134,17 @@ export function CustomStoryPage() {
           <h1 style={{ fontFamily: "'Baloo 2', sans-serif", fontWeight: 800, fontSize: 'clamp(26px, 5vw, 40px)', color: C.navy, margin: '0 0 14px', lineHeight: 1.2 }}>
             Your story, your rules
           </h1>
-          <p style={{ fontSize: 16, color: C.gray, lineHeight: 1.65, maxWidth: 520, margin: '0 auto' }}>
+          <p style={{ fontSize: 16, color: C.gray, lineHeight: 1.65, maxWidth: 520, margin: '0 auto 20px' }}>
             Have a unique idea — a birthday adventure, a family trip, a lesson you want them to live?
             Share the brief and we'll write &amp; illustrate it completely bespoke.
           </p>
+          <div style={{ display: 'flex', justifyContent: 'center', gap: 12, flexWrap: 'wrap' as const }}>
+            {[['📚', 'Paperback print'], ['📦', 'Delivered in 5–7 days'], ['✏️', 'Custom written & illustrated']].map(([icon, text]) => (
+              <span key={text} style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 13, fontWeight: 600, color: C.navy, background: '#fff', border: '1.5px solid #E5E7EB', borderRadius: 50, padding: '5px 14px' }}>
+                {icon} {text}
+              </span>
+            ))}
+          </div>
         </div>
 
         {/* Form card */}
