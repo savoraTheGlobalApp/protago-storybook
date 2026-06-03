@@ -465,7 +465,7 @@ export function ThemePage() {
     try {
       const res = await fetch(`${API_BASE}/api/validate-coupon`, {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ code: couponInput.trim() }),
+        body: JSON.stringify({ code: couponInput.trim(), theme: theme.slug, bindingType: orderForm.bindingType === 'hardcover' ? 'hardcover' : 'paperback' }),
       });
       const data = await res.json();
       if (res.ok && data.valid) {

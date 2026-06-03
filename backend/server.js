@@ -1438,7 +1438,7 @@ function applyDiscount(basePrice, coupon) {
 // ── Validate coupon endpoint ────────────────────────────────────────────────
 app.post('/api/validate-coupon', async (req, res) => {
     try {
-        const { code } = req.body;
+        const { code, theme, bindingType } = req.body;
         if (!code) return res.status(400).json({ valid: false, error: 'No code provided' });
 
         const hasSupabase = process.env.SUPABASE_URL_STORY && !process.env.SUPABASE_URL_STORY.includes('your_');
@@ -1447,7 +1447,16 @@ app.post('/api/validate-coupon', async (req, res) => {
         const coupon = await validateCouponCode(code);
         if (!coupon) return res.status(200).json({ valid: false, error: 'Invalid or expired coupon code' });
 
-        const basePrice = parseInt(process.env.STORYBOOK_PRICE, 10) || 499;
+        const THEME_PRICE_OVERRIDES = {
+            'abc':            { paperback: 849, hardcover: 1449 },
+            'hindi-alphabet': { paperback: 849, hardcover: 1449 },
+        };
+        const themeOverride = theme ? THEME_PRICE_OVERRIDES[theme] : null;
+        const basePrice = themeOverride
+            ? (bindingType === 'hardcover' ? themeOverride.hardcover : themeOverride.paperback)
+            : bindingType === 'hardcover'
+            ? (parseInt(process.env.HARDCOVER_PRICE, 10) || 1595)
+            : (parseInt(process.env.STORYBOOK_PRICE, 10) || 974);
         const { discountAmount, finalPrice } = applyDiscount(basePrice, coupon);
 
         return res.status(200).json({
