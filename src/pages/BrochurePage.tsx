@@ -1515,10 +1515,10 @@ function HeroVideo() {
   const isFirst = active === 0;
   const showIframe = isFirst || playing;
 
-  const iframeSrc = `https://www.youtube.com/embed/${id}?autoplay=1&mute=1&playsinline=1&loop=1&playlist=${id}&controls=1&rel=0`;
+  const iframeSrc = `https://www.youtube.com/embed/${id}?autoplay=1&mute=1&playsinline=1&loop=1&playlist=${id}&controls=0&rel=0&modestbranding=1&showinfo=0`;
 
   return (
-    <div className="relative rounded-2xl overflow-hidden shadow-2xl mx-auto aspect-[9/16] max-h-[55vh] sm:aspect-auto sm:max-h-none sm:h-full">
+    <div className="relative overflow-hidden" style={{ width: '100%', height: '100%', minHeight: 420, position: 'absolute', inset: 0 }}>
       {showIframe ? (
         <>
           <iframe
@@ -1947,52 +1947,62 @@ export function BrochurePage() {
       <NavBar />
 
       {/* ══════════════════════════════════════════
-          § 0  TOP HERO — face-swap animation + video testimonial
+          § 0  TOP HERO — split: video left / copy right
       ══════════════════════════════════════════ */}
-      <section style={{ background: C.navy }} className="pt-36 pb-14 sm:pt-32 sm:pb-20">
-        <div className="max-w-6xl mx-auto px-5 sm:px-8">
-          <motion.h2 initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4 }}
-            className="text-center mb-4"
-            style={{ fontFamily: "'Baloo 2', sans-serif", fontWeight: 800, color: C.white,
-              fontSize: 'clamp(1.3rem, 3vw, 2rem)', lineHeight: 1.1 }}>
-            Give your child a storybook<br />where they are the hero
-          </motion.h2>
-          <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.4, delay: 0.3 }}
-            className="flex flex-col items-center mb-6 sm:mb-8">
-            <button
-              onClick={() => scrollTo('themes')}
-              className="py-4 px-10 rounded-2xl font-extrabold"
-              style={{ background: C.saffron, color: '#fff', border: 'none', cursor: 'pointer', fontFamily: "'Baloo 2', sans-serif", fontSize: 16, boxShadow: '0 4px 20px rgba(255,107,53,0.45)' }}>
-              Order Now →
-            </button>
-          </motion.div>
-          {/* Two-panel: animation + video — same height, aligned top-to-bottom */}
-          <div className="flex flex-col-reverse sm:flex-row gap-4 sm:gap-6 items-stretch">
+      <section style={{ background: '#0A0A0A', minHeight: '100vh', display: 'flex', flexDirection: 'column' as const }}>
+        {/* Desktop: side-by-side | Mobile: stacked */}
+        <div className="flex flex-col sm:flex-row" style={{ flex: 1, minHeight: '100vh' }}>
 
-            {/* Left on desktop, bottom on mobile — multi-theme face swap animation */}
-            <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }}
-              transition={{ duration: 0.5, delay: 0.1 }}
-              className="w-full sm:w-1/2 min-w-0 flex flex-col">
-              <HeroFaceSwapAnimation />
-              <motion.button
-                initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.4, delay: 0.6 }}
-                onClick={() => scrollTo('themes')}
-                className="w-full py-4 rounded-2xl font-extrabold text-base mt-3"
-                style={{ background: C.saffron, color: '#fff', border: 'none', cursor: 'pointer', fontFamily: "'Baloo 2', sans-serif", fontSize: 16, boxShadow: '0 4px 20px rgba(255,107,53,0.45)' }}>
-                Order Now →
-              </motion.button>
-            </motion.div>
-
-            {/* Right on desktop, top on mobile — real child reaction carousel */}
-            <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }}
-              transition={{ duration: 0.5, delay: 0.2 }}
-              className="w-full sm:w-1/2 mx-auto sm:mx-0">
-              <HeroVideo />
-            </motion.div>
-
+          {/* LEFT — full-bleed video */}
+          <div className="w-full sm:w-1/2 aspect-[9/16] sm:aspect-auto sm:h-screen" style={{ position: 'relative' as const, overflow: 'hidden', background: '#000' }}>
+            <HeroVideo />
           </div>
+
+          {/* RIGHT — dark copy panel */}
+          <div className="w-full sm:w-1/2 flex flex-col items-start justify-center px-8 sm:px-14 py-20 sm:py-0"
+            style={{ background: '#0A0A0A' }}>
+            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5 }}
+              style={{ maxWidth: 500, width: '100%' }}>
+
+              {/* Eyebrow */}
+              <p style={{ color: C.saffron, fontSize: 11, fontWeight: 700, letterSpacing: 2.5,
+                textTransform: 'uppercase', marginBottom: 18 }}>
+                Personalised Storybooks for Kids
+              </p>
+
+              <h1 style={{ fontFamily: "'Baloo 2', sans-serif", fontWeight: 800, color: '#fff',
+                fontSize: 'clamp(2rem, 3.8vw, 3.2rem)', lineHeight: 1.1, marginBottom: 20 }}>
+                Your child is<br />the hero of<br />every story
+              </h1>
+
+              <p style={{ color: 'rgba(255,255,255,0.5)', fontSize: 15, lineHeight: 1.8, marginBottom: 40, maxWidth: 380 }}>
+                AI-illustrated books with their face, name, and story — printed and delivered to your door.
+              </p>
+
+              <button
+                onClick={() => scrollTo('themes')}
+                style={{ background: C.saffron, color: '#fff', border: 'none', borderRadius: 50,
+                  padding: '16px 40px', fontWeight: 800, fontSize: 15, cursor: 'pointer',
+                  fontFamily: "'Baloo 2', sans-serif", boxShadow: '0 6px 28px rgba(249,115,22,0.45)',
+                  letterSpacing: 0.5, display: 'inline-flex', alignItems: 'center', gap: 10 }}>
+                Order Now
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+              </button>
+
+              {/* Trust row */}
+              <div style={{ display: 'flex', gap: 24, marginTop: 32, flexWrap: 'wrap' as const }}>
+                {[['⭐', '5.0 Google rating'], ['📦', '5–7 day delivery'], ['🎨', 'From ₹974']].map(([icon, label]) => (
+                  <div key={label} style={{ display: 'flex', alignItems: 'center', gap: 7 }}>
+                    <span style={{ fontSize: 13 }}>{icon}</span>
+                    <span style={{ color: 'rgba(255,255,255,0.6)', fontSize: 12, fontWeight: 600 }}>{label}</span>
+                  </div>
+                ))}
+              </div>
+
+            </motion.div>
+          </div>
+
         </div>
       </section>
 
