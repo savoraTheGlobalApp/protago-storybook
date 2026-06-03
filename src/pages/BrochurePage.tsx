@@ -1515,7 +1515,7 @@ function HeroVideo() {
   const isFirst = active === 0;
   const showIframe = isFirst || playing;
 
-  const iframeSrc = `https://www.youtube.com/embed/${id}?autoplay=1&mute=1&playsinline=1&loop=1&playlist=${id}&controls=0&rel=0&modestbranding=1&showinfo=0`;
+  const iframeSrc = `https://www.youtube.com/embed/${id}?autoplay=1&mute=1&playsinline=1&loop=1&playlist=${id}&controls=1&rel=0`;
 
   return (
     <div className="relative overflow-hidden" style={{ width: '100%', height: '100%', minHeight: 420, position: 'absolute', inset: 0 }}>
