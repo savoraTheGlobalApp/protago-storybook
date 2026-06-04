@@ -131,9 +131,11 @@ export function NavBar() {
           {[0, 1].map(copy => (
             <span key={copy} className="flex items-center gap-6 px-6" style={{ fontSize: 15, fontWeight: 700, color: '#fff' }}>
               <span>✨</span>
-              <span>Generate a <span style={{ color: '#F7B731' }}>free preview</span></span>
+              <span>Personalised storybooks for <span style={{ color: '#F7B731' }}>Indian kids</span></span>
               <span style={{ color: 'rgba(255,255,255,0.3)' }}>✦</span>
               <span><span style={{ color: '#F7B731' }}>50+ happy customers</span></span>
+              <span style={{ color: 'rgba(255,255,255,0.3)' }}>✦</span>
+              <span>Delivered in <span style={{ color: '#F7B731' }}>5–7 business days</span></span>
               <span style={{ color: 'rgba(255,255,255,0.3)' }}>✦</span>
             </span>
           ))}
