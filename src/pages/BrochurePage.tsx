@@ -1698,7 +1698,7 @@ function CustomStorySection() {
   };
 
   return (
-    <div id="custom-story" style={{ background: C.warmTint, borderRadius: 24, padding: '48px 32px', border: '1px solid #F0EEE8' }}>
+    <div id="custom-story" style={{ background: C.warmTint, borderRadius: 24, padding: '48px 32px', border: '1px solid #F0EEE8', scrollMarginTop: 80 }}>
       <div style={{ maxWidth: 680, margin: '0 auto' }}>
 
         {/* Header */}
@@ -1707,10 +1707,17 @@ function CustomStorySection() {
           <h2 style={{ fontFamily: "'Baloo 2', sans-serif", fontWeight: 800, fontSize: 'clamp(26px, 5vw, 38px)', color: C.navy, margin: '0 0 12px', lineHeight: 1.2 }}>
             Your story, your rules
           </h2>
-          <p style={{ fontSize: 16, color: C.gray, lineHeight: 1.65, maxWidth: 520, margin: '0 auto' }}>
+          <p style={{ fontSize: 16, color: C.gray, lineHeight: 1.65, maxWidth: 520, margin: '0 auto 20px' }}>
             Have a unique idea — a birthday adventure, a family trip, a lesson you want them to live?
             Share the brief and we'll write &amp; illustrate it completely bespoke.
           </p>
+          <div style={{ display: 'flex', justifyContent: 'center', gap: 20, flexWrap: 'wrap' as const }}>
+            {[['📚', 'Paperback print'], ['📦', 'Delivered in 5–7 days'], ['✏️', 'Custom written & illustrated']].map(([icon, text]) => (
+              <span key={text} style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 13, fontWeight: 600, color: C.navy, background: '#fff', border: `1.5px solid #E5E7EB`, borderRadius: 50, padding: '5px 14px' }}>
+                <span>{icon}</span>{text}
+              </span>
+            ))}
+          </div>
         </div>
 
         {/* Form */}
@@ -1925,7 +1932,11 @@ export function BrochurePage() {
   useEffect(() => {
     const anchor = searchParams.get('scroll') || (searchParams.get('theme') ? 'order' : null);
     if (anchor) {
-      setTimeout(() => document.getElementById(anchor)?.scrollIntoView({ behavior: 'smooth' }), 300);
+      setTimeout(() => {
+        const el = document.getElementById(anchor);
+        if (!el) return;
+        window.scrollTo({ top: el.getBoundingClientRect().top + window.scrollY - 90, behavior: 'smooth' });
+      }, 300);
     }
   }, [searchParams]);
 
@@ -1936,7 +1947,10 @@ export function BrochurePage() {
   }, [searchParams]);
 
   const scrollTo = (id: string) => {
-    document.getElementById(id)?.scrollIntoView({ behavior: 'smooth' });
+    const el = document.getElementById(id);
+    if (!el) return;
+    const top = el.getBoundingClientRect().top + window.scrollY - 90;
+    window.scrollTo({ top, behavior: 'smooth' });
   };
 
   return (
@@ -1992,7 +2006,7 @@ export function BrochurePage() {
 
               {/* Trust row */}
               <div style={{ display: 'flex', gap: 24, marginTop: 32, flexWrap: 'wrap' as const }}>
-                {[['⭐', '5.0 Google rating'], ['📦', '5–7 day delivery'], ['🎨', 'From ₹974']].map(([icon, label]) => (
+                {[['⭐', '5.0 Google rating'], ['📦', '7–8 day delivery'], ['🎨', 'From ₹974']].map(([icon, label]) => (
                   <div key={label} style={{ display: 'flex', alignItems: 'center', gap: 7 }}>
                     <span style={{ fontSize: 13 }}>{icon}</span>
                     <span style={{ color: 'rgba(255,255,255,0.6)', fontSize: 12, fontWeight: 600 }}>{label}</span>
