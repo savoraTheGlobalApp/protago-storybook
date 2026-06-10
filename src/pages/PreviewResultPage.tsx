@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { trackPreviewGenerated } from '../utils/analytics';
-import { useParams, useSearchParams, useNavigate } from 'react-router-dom';
+import { useParams, useSearchParams } from 'react-router-dom';
+import { OrderCompletionOverlay } from '../components/OrderCompletionOverlay';
 import { motion, AnimatePresence, useMotionValue, useTransform } from 'framer-motion';
 
 const C = {
@@ -1056,7 +1057,6 @@ function SampleVideoOverlay({ childName, onDismiss }: { childName: string; onDis
 export function PreviewResultPage() {
   const { jobId } = useParams<{ jobId: string }>();
   const [searchParams] = useSearchParams();
-  const navigate = useNavigate();
   const childName  = searchParams.get('name') || 'Your child';
   const themeSlug  = searchParams.get('theme') || '';
   const previewGender   = searchParams.get('gender') || '';
@@ -1073,112 +1073,15 @@ export function PreviewResultPage() {
   const API_BASE = import.meta.env.VITE_API_BASE_URL || '';
 
   const [orderOverlayOpen, setOrderOverlayOpen] = useState(false);
-  const [overlayForm, setOverlayForm] = useState({ addressLine1: '', addressLine2: '', city: '', state: '', pincode: '', dedicationMessage: '', couponInput: '' });
-  const [overlayCoupon, setOverlayCoupon] = useState<{ code: string; discountAmount: number; finalPrice: number; discountType: string; discountValue: number } | null>(null);
-  const [overlayCouponError, setOverlayCouponError] = useState('');
-  const [overlayCouponLoading, setOverlayCouponLoading] = useState(false);
-  const [overlayConsent, setOverlayConsent] = useState(false);
-  const [overlaySubmitting, setOverlaySubmitting] = useState(false);
-  const [overlayError, setOverlayError] = useState('');
-  const setOf = (k: string, v: string) => setOverlayForm(f => ({ ...f, [k]: v }));
 
-  // Pricing (same overrides as backend)
+  // Pricing for display (same overrides as backend)
   const THEME_PRICE_OVERRIDES: Record<string, { paperback: number; hardcover: number }> = {
     'abc':            { paperback: 849, hardcover: 1449 },
     'hindi-alphabet': { paperback: 849, hardcover: 1449 },
   };
   const themeOverride = THEME_PRICE_OVERRIDES[themeSlug] || null;
-  const basePrice = themeOverride
-    ? (orderBindingType === 'hardcover' ? themeOverride.hardcover : themeOverride.paperback)
-    : orderBindingType === 'hardcover' ? 1595 : 974;
-  const displayPrice = overlayCoupon ? overlayCoupon.finalPrice : basePrice;
-
-  const handleOverlayCoupon = async () => {
-    if (!overlayForm.couponInput.trim()) return;
-    setOverlayCouponError('');
-    setOverlayCouponLoading(true);
-    try {
-      const res = await fetch(`${API_BASE}/api/validate-coupon`, {
-        method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ code: overlayForm.couponInput.trim(), theme: themeSlug, bindingType: orderBindingType }),
-      });
-      const data = await res.json();
-      if (res.ok && data.valid) {
-        setOverlayCoupon({ code: overlayForm.couponInput.trim().toUpperCase(), discountAmount: data.discountAmount, finalPrice: data.finalPrice, discountType: data.discountType, discountValue: data.discountValue });
-        setOverlayCouponError('');
-      } else {
-        setOverlayCoupon(null);
-        setOverlayCouponError(data.error || 'Invalid coupon code');
-      }
-    } catch { setOverlayCouponError('Could not validate coupon. Try again.'); }
-    setOverlayCouponLoading(false);
-  };
-
-  const handleOverlaySubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!overlayConsent) return;
-    setOverlaySubmitting(true);
-    setOverlayError('');
-    try {
-      const res = await fetch(`${API_BASE}/api/order-inquiry`, {
-        method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          parentName: orderParentName,
-          email: previewEmail,
-          phone: orderPhone,
-          childName,
-          childAge: previewAge,
-          childGender: previewGender === 'boy' ? 'Boy' : previewGender === 'girl' ? 'Girl' : '',
-          storyTheme: themeSlug,
-          bindingType: orderBindingType,
-          addressLine1: overlayForm.addressLine1,
-          addressLine2: overlayForm.addressLine2,
-          city: overlayForm.city,
-          state: overlayForm.state,
-          pincode: overlayForm.pincode,
-          dedicationMessage: overlayForm.dedicationMessage,
-          photoPath: orderPhotoPath,
-          couponCode: overlayCoupon?.code || null,
-        }),
-      });
-      if (!res.ok) { const d = await res.json().catch(() => ({})); throw new Error(d.error || 'Failed to create order'); }
-      const { orderId, razorpayKeyId, amount, currency } = await res.json();
-      if (!razorpayKeyId || razorpayKeyId.includes('your_')) {
-        navigate('/order-confirmed', { state: { childName, email: previewEmail, amount: amount / 100 } });
-        return;
-      }
-      const options: RazorpayOptions = {
-        key: razorpayKeyId, amount, currency,
-        name: 'Protago',
-        description: `Personalised Storybook — ${themeName}`,
-        order_id: orderId,
-        handler: async (response: RazorpayResponse) => {
-          try {
-            const verifyRes = await fetch(`${API_BASE}/api/verify-payment`, {
-              method: 'POST', headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify(response),
-            });
-            if (!verifyRes.ok) throw new Error('Payment verification failed');
-            fetch(`${API_BASE}/api/order/send-confirmation-email`, {
-              method: 'POST', headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ razorpayOrderId: response.razorpay_order_id }),
-            }).catch(() => {});
-            navigate('/order-confirmed', { state: { childName, email: previewEmail, amount: amount / 100 } });
-          } catch {
-            setOverlayError('Payment verification failed. Please contact support.');
-            setOverlaySubmitting(false);
-          }
-        },
-        prefill: { name: orderParentName, email: previewEmail, contact: orderPhone },
-        theme: { color: '#FF6B35' },
-        modal: { ondismiss: () => { setOverlaySubmitting(false); setOverlayError('Payment was cancelled. Please try again.'); } },
-      };
-      new window.Razorpay(options).open();
-    } catch (err: unknown) {
-      setOverlayError(err instanceof Error ? err.message : 'Something went wrong. Please try again.');
-      setOverlaySubmitting(false);
-    }
-  };
+  const pbPrice = themeOverride ? themeOverride.paperback : 974;
+  const hcPrice = themeOverride ? themeOverride.hardcover : 1595;
 
 
   const [resultUrls, setResultUrls] = useState<(string | null)[]>([null, null, null, null, null]);
@@ -1272,94 +1175,23 @@ export function PreviewResultPage() {
     <div style={{ minHeight: '100vh', background: C.navy, fontFamily: "'Nunito', sans-serif", display: 'flex', flexDirection: 'column' }}>
       <link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@700;800&family=Nunito:wght@400;600;700&display=swap" rel="stylesheet" />
 
-      {/* Order completion overlay — shown when arriving from order form */}
-      <AnimatePresence>
-        {orderOverlayOpen && (
-          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-            style={{ position: 'fixed', inset: 0, zIndex: 200, background: 'rgba(10,8,20,0.92)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px', backdropFilter: 'blur(6px)' }}>
-            <motion.div initial={{ opacity: 0, y: 20, scale: 0.97 }} animate={{ opacity: 1, y: 0, scale: 1 }} exit={{ opacity: 0, y: 20 }}
-              style={{ background: '#fff', borderRadius: 20, width: '100%', maxWidth: 480, maxHeight: '90vh', overflowY: 'auto', padding: '28px 24px', fontFamily: "'Nunito', sans-serif", position: 'relative' }}>
-              <button onClick={() => setOrderOverlayOpen(false)}
-                style={{ position: 'absolute', top: 16, right: 16, background: 'none', border: 'none', fontSize: 20, cursor: 'pointer', color: '#9CA3AF', lineHeight: 1 }}>×</button>
-              <p style={{ fontSize: 11, fontWeight: 700, color: C.saffron, textTransform: 'uppercase', letterSpacing: '0.12em', marginBottom: 4 }}>Almost there!</p>
-              <h2 style={{ fontFamily: "'Baloo 2', sans-serif", fontWeight: 800, fontSize: 22, color: '#1A1A2E', margin: '0 0 20px', lineHeight: 1.2 }}>Where should we ship it?</h2>
-              <form onSubmit={handleOverlaySubmit} style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-                {[
-                  { key: 'addressLine1', label: 'Address line 1 *', placeholder: 'Flat / House no., Building, Street', required: true },
-                  { key: 'addressLine2', label: 'Address line 2 (optional)', placeholder: 'Area, Landmark', required: false },
-                ].map(({ key, label, placeholder, required }) => (
-                  <div key={key}>
-                    <label style={{ fontSize: 10, fontWeight: 700, color: '#9CA3AF', display: 'block', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: 3 }}>{label}</label>
-                    <input required={required} placeholder={placeholder} value={overlayForm[key as keyof typeof overlayForm]}
-                      onChange={e => setOf(key, e.target.value)}
-                      style={{ width: '100%', border: '1.5px solid #E5E7EB', borderRadius: 8, padding: '9px 11px', fontSize: 13, outline: 'none', boxSizing: 'border-box', fontFamily: 'inherit' }} />
-                  </div>
-                ))}
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
-                  {[{ key: 'city', label: 'City *', placeholder: 'e.g. Mumbai' }, { key: 'state', label: 'State *', placeholder: 'e.g. Maharashtra' }].map(({ key, label, placeholder }) => (
-                    <div key={key}>
-                      <label style={{ fontSize: 10, fontWeight: 700, color: '#9CA3AF', display: 'block', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: 3 }}>{label}</label>
-                      <input required placeholder={placeholder} value={overlayForm[key as keyof typeof overlayForm]}
-                        onChange={e => setOf(key, e.target.value)}
-                        style={{ width: '100%', border: '1.5px solid #E5E7EB', borderRadius: 8, padding: '9px 11px', fontSize: 13, outline: 'none', boxSizing: 'border-box', fontFamily: 'inherit' }} />
-                    </div>
-                  ))}
-                </div>
-                <div>
-                  <label style={{ fontSize: 10, fontWeight: 700, color: '#9CA3AF', display: 'block', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: 3 }}>Pincode *</label>
-                  <input required placeholder="e.g. 400001" inputMode="numeric" maxLength={6} pattern="[0-9]{6}"
-                    value={overlayForm.pincode} onChange={e => setOf('pincode', e.target.value.replace(/\D/g, '').slice(0, 6))}
-                    style={{ width: '100%', border: '1.5px solid #E5E7EB', borderRadius: 8, padding: '9px 11px', fontSize: 13, outline: 'none', boxSizing: 'border-box', fontFamily: 'inherit' }} />
-                </div>
-                <div>
-                  <label style={{ fontSize: 10, fontWeight: 700, color: '#9CA3AF', display: 'block', marginBottom: 4, textTransform: 'uppercase', letterSpacing: '0.07em' }}>
-                    Personal message <span style={{ color: '#C4B5A0', fontWeight: 500, textTransform: 'none', letterSpacing: 0 }}>(optional)</span>
-                  </label>
-                  <textarea placeholder={`e.g. "To my little star — with all my love"`}
-                    value={overlayForm.dedicationMessage} onChange={e => setOf('dedicationMessage', e.target.value)}
-                    rows={2} maxLength={200}
-                    style={{ width: '100%', border: '1.5px solid #E5E7EB', borderRadius: 8, padding: '9px 11px', fontSize: 13, outline: 'none', boxSizing: 'border-box', fontFamily: 'inherit', resize: 'none' }} />
-                </div>
-                <div>
-                  <label style={{ fontSize: 10, fontWeight: 700, color: '#9CA3AF', display: 'block', marginBottom: 4, textTransform: 'uppercase', letterSpacing: '0.07em' }}>Promo code (optional)</label>
-                  <div style={{ display: 'flex', gap: 8 }}>
-                    <input placeholder="e.g. WELCOME20" value={overlayForm.couponInput}
-                      onChange={e => { setOf('couponInput', e.target.value.toUpperCase()); setOverlayCoupon(null); setOverlayCouponError(''); }}
-                      onKeyDown={e => e.key === 'Enter' && (e.preventDefault(), handleOverlayCoupon())}
-                      style={{ flex: 1, border: '1.5px solid #E5E7EB', borderRadius: 8, padding: '9px 11px', fontSize: 13, outline: 'none', fontFamily: 'inherit' }} />
-                    <button type="button" onClick={handleOverlayCoupon} disabled={overlayCouponLoading || !overlayForm.couponInput.trim()}
-                      style={{ background: '#1A1A2E', color: '#fff', border: 'none', borderRadius: 8, padding: '9px 16px', fontSize: 13, fontWeight: 700, cursor: 'pointer', whiteSpace: 'nowrap', opacity: overlayCouponLoading || !overlayForm.couponInput.trim() ? 0.5 : 1 }}>
-                      {overlayCouponLoading ? '…' : 'Apply'}
-                    </button>
-                  </div>
-                  {overlayCoupon && (
-                    <p style={{ fontSize: 12, color: '#16A34A', fontWeight: 700, margin: '6px 0 0' }}>
-                      ✓ {overlayCoupon.code} applied — {overlayCoupon.discountType === 'percent' ? `${overlayCoupon.discountValue}% off` : `₹${overlayCoupon.discountAmount} off`}
-                    </p>
-                  )}
-                  {overlayCouponError && <p style={{ fontSize: 12, color: '#EF4444', margin: '6px 0 0' }}>{overlayCouponError}</p>}
-                </div>
-                <label style={{ display: 'flex', alignItems: 'flex-start', gap: 10, cursor: 'pointer' }}>
-                  <input type="checkbox" required checked={overlayConsent} onChange={e => setOverlayConsent(e.target.checked)}
-                    style={{ marginTop: 2, flexShrink: 0, accentColor: C.saffron, width: 15, height: 15, cursor: 'pointer' }} />
-                  <span style={{ fontSize: 11, lineHeight: 1.6, color: '#9CA3AF' }}>
-                    I confirm I am 18+ and have obtained parental consent to share this information per the{' '}
-                    <a href="/privacy" style={{ color: C.saffron, textDecoration: 'underline' }}>Privacy Policy</a>.
-                  </span>
-                </label>
-                {overlayError && <p style={{ fontSize: 12, color: '#EF4444', margin: '0', textAlign: 'center' }}>{overlayError}</p>}
-                <button type="submit" disabled={overlaySubmitting || !overlayConsent}
-                  style={{ background: overlayConsent ? `linear-gradient(135deg, ${C.saffron} 0%, #FF8C42 100%)` : '#E5E7EB', color: overlayConsent ? '#fff' : '#9CA3AF', border: 'none', borderRadius: 12, padding: '14px 20px', fontWeight: 800, fontSize: 16, cursor: overlayConsent ? 'pointer' : 'default', fontFamily: "'Baloo 2', sans-serif", boxShadow: overlayConsent ? '0 4px 16px rgba(255,107,53,0.4)' : 'none' }}>
-                  {overlaySubmitting ? 'Processing…' : `Pay ₹${displayPrice} & Order →`}
-                </button>
-                <p style={{ fontSize: 11, color: '#9CA3AF', textAlign: 'center', margin: '-4px 0 0' }}>
-                  {orderBindingType === 'hardcover' ? 'Hardcover' : 'Paperback'} · Delivered in 7–9 business days
-                </p>
-              </form>
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+      <OrderCompletionOverlay
+        isOpen={orderOverlayOpen}
+        onClose={() => setOrderOverlayOpen(false)}
+        parentName={orderParentName}
+        email={previewEmail}
+        phone={orderPhone}
+        childName={childName}
+        childAge={previewAge}
+        childGender={previewGender === 'boy' ? 'Boy' : previewGender === 'girl' ? 'Girl' : ''}
+        bindingType={orderBindingType}
+        themeSlug={themeSlug}
+        themeName={themeName}
+        photoPath={orderPhotoPath}
+        pbPrice={pbPrice}
+        hcPrice={hcPrice}
+        apiBase={API_BASE}
+      />
 
       {/* Sample video overlay — full screen while processing */}
       <AnimatePresence>

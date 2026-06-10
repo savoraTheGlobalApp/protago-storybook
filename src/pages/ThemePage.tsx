@@ -5,6 +5,7 @@ import { MessageCircle } from 'lucide-react';
 import { THEMES } from '../data/themes';
 import { getFaceSamples, getArrowTarget, THEME_FACE_SAMPLES } from '../data/themeMockups';
 import { NavBar } from '../components/NavBar';
+import { OrderCompletionOverlay } from '../components/OrderCompletionOverlay';
 import { trackPreviewStarted } from '../utils/analytics';
 
 const C = {
@@ -317,16 +318,11 @@ export function ThemePage() {
   const [consent, setConsent] = useState(false);
   const [jobStatus, setJobStatus] = useState('');
   const [showOrder, setShowOrder] = useState(true);
-  const [orderForm, setOrderForm] = useState({ parentName: '', email: '', phone: '', childName: '', childAge: '', childGender: '', bindingType: 'perfect', addressLine1: '', addressLine2: '', city: '', state: '', pincode: '', notes: '', dedicationMessage: '' });
+  const [orderForm, setOrderForm] = useState({ parentName: '', email: '', phone: '', childName: '', childAge: '', childGender: '', bindingType: 'perfect' });
   const [orderPhoto, setOrderPhoto] = useState<{ preview: string; uploading: boolean; uploadedPath: string | null; signedUrl: string | null; uploadFailed?: boolean } | null>(null);
   const [orderConsent, setOrderConsent] = useState(false);
-  const [orderSubmitting, setOrderSubmitting] = useState(false);
-  const [orderSubmitted, setOrderSubmitted] = useState(false);
   const [orderError, setOrderError] = useState('');
-  const [couponInput, setCouponInput] = useState('');
-  const [couponApplied, setCouponApplied] = useState<{ code: string; discountAmount: number; finalPrice: number; discountType: string; discountValue: number } | null>(null);
-  const [couponError, setCouponError] = useState('');
-  const [couponLoading, setCouponLoading] = useState(false);
+  const [orderOverlayOpen, setOrderOverlayOpen] = useState(false);
   const [orderFormPreviewLoading, setOrderFormPreviewLoading] = useState(false);
 
   const [generating, setGenerating] = useState(false);
@@ -458,100 +454,15 @@ export function ThemePage() {
     reader.readAsDataURL(file);
   };
 
-  const handleApplyCoupon = async () => {
-    if (!couponInput.trim()) return;
-    setCouponError('');
-    setCouponLoading(true);
-    try {
-      const res = await fetch(`${API_BASE}/api/validate-coupon`, {
-        method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ code: couponInput.trim(), theme: theme.slug, bindingType: orderForm.bindingType === 'hardcover' ? 'hardcover' : 'paperback' }),
-      });
-      const data = await res.json();
-      if (res.ok && data.valid) {
-        setCouponApplied({ code: couponInput.trim().toUpperCase(), discountAmount: data.discountAmount, finalPrice: data.finalPrice, discountType: data.discountType, discountValue: data.discountValue });
-        setCouponError('');
-      } else {
-        setCouponApplied(null);
-        setCouponError(data.error || 'Invalid coupon code');
-      }
-    } catch { setCouponError('Could not validate coupon. Try again.'); }
-    setCouponLoading(false);
-  };
-
-  const handleOrderSubmit = async (e: React.FormEvent) => {
+  const handleOrderOpen = (e: React.FormEvent) => {
     e.preventDefault();
     if (!orderConsent) return;
     if (!orderPhoto?.uploadedPath) {
       setOrderError("Please upload your child's photo before placing the order.");
       return;
     }
-    setOrderSubmitting(true);
     setOrderError('');
-    try {
-      const res = await fetch(`${API_BASE}/api/order-inquiry`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          ...orderForm,
-          storyTheme: theme.slug,
-          photoSignedUrl: orderPhoto?.signedUrl || null,
-          photoPath: orderPhoto?.uploadedPath || null,
-          couponCode: couponApplied?.code || null,
-          referralSource: localStorage.getItem('protago_ref') || null,
-        }),
-      });
-      if (!res.ok) { const d = await res.json().catch(() => ({})); throw new Error(d.error || 'Failed to create order'); }
-      const { orderId, razorpayKeyId, amount, currency } = await res.json();
-
-      // Dev/mock mode — no real Razorpay keys
-      if (!razorpayKeyId || razorpayKeyId.includes('your_')) {
-        setOrderSubmitted(true);
-        setOrderSubmitting(false);
-        return;
-      }
-
-      const options: RazorpayOptions = {
-        key: razorpayKeyId,
-        amount,
-        currency,
-        name: 'Protago',
-        description: `Personalised Storybook — ${theme.name}`,
-        order_id: orderId,
-        handler: async (response: RazorpayResponse) => {
-          try {
-            const verifyRes = await fetch(`${API_BASE}/api/verify-payment`, {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify(response),
-            });
-            if (!verifyRes.ok) throw new Error('Payment verification failed');
-            // Fire-and-forget confirmation email
-            fetch(`${API_BASE}/api/order/send-confirmation-email`, {
-              method: 'POST', headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ razorpayOrderId: response.razorpay_order_id }),
-            }).catch(() => {});
-            navigate('/order-confirmed', { state: { childName: orderForm.childName, email: orderForm.email, amount: amount / 100 } });
-          } catch {
-            setOrderError('Payment verification failed. Please contact support.');
-          } finally {
-            setOrderSubmitting(false);
-          }
-        },
-        prefill: { name: orderForm.parentName, email: orderForm.email, contact: orderForm.phone },
-        theme: { color: '#FF6B35' },
-        modal: {
-          ondismiss: () => {
-            setOrderSubmitting(false);
-            setOrderError('Payment was cancelled. Please try again.');
-          },
-        },
-      };
-      new window.Razorpay(options).open();
-    } catch (err: unknown) {
-      setOrderError(err instanceof Error ? err.message : 'Something went wrong. Please try again.');
-      setOrderSubmitting(false);
-    }
+    setOrderOverlayOpen(true);
   };
 
   const handleOrderFormPreview = async () => {
@@ -947,14 +858,8 @@ export function ThemePage() {
               }
             `}</style>
 
-            {orderSubmitted ? (
-              <div style={{ padding: '60px 36px', textAlign: 'center' }}>
-                <div style={{ fontSize: 56, marginBottom: 16 }}>🎉</div>
-                <h3 style={{ fontFamily: "'Baloo 2', sans-serif", fontWeight: 800, color: C.navy, fontSize: 22, margin: '0 0 8px' }}>Order received!</h3>
-                <p style={{ fontSize: 14, color: C.gray, margin: 0, lineHeight: 1.7 }}>Your order is confirmed! We'll keep you updated on <strong>{orderForm.email}</strong>.</p>
-              </div>
-            ) : (
-              <form onSubmit={handleOrderSubmit} className="of-form" style={{ padding: '24px 28px', display: 'flex', flexDirection: 'column', gap: 14 }}>
+            {(
+              <form onSubmit={handleOrderOpen} className="of-form" style={{ padding: '24px 28px', display: 'flex', flexDirection: 'column', gap: 14 }}>
 
                 {orderError && (
                   <div style={{ padding: '12px 14px', background: '#FFF0F0', borderRadius: 8, border: '1px solid #FFCDD2' }}>
@@ -1043,8 +948,8 @@ export function ThemePage() {
                   </div>
                 </div>
 
-                {/* Row 3: photo (with tips) + address */}
-                <div className="of-photo-addr" style={{ display: 'grid', gridTemplateColumns: '1fr 2fr', gap: 10 }}>
+                {/* Row 3: photo with tips */}
+                <div style={{ display: 'flex', gap: 16 }}>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                     <label style={{ fontSize: 10, fontWeight: 700, color: '#9CA3AF', display: 'block', textTransform: 'uppercase', letterSpacing: '0.07em' }}>Child's photo *</label>
                     {/* Photo tips 2×2 */}
@@ -1097,103 +1002,6 @@ export function ThemePage() {
                       </div>
                     )}
                   </div>
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-                    <label style={{ fontSize: 10, fontWeight: 700, color: '#9CA3AF', display: 'block', textTransform: 'uppercase', letterSpacing: '0.07em' }}>Delivery address</label>
-                    {[
-                      { key: 'addressLine1', label: 'Address line 1 *', placeholder: 'Flat / House no., Building, Street', required: true },
-                      { key: 'addressLine2', label: 'Address line 2 (optional)', placeholder: 'Area, Landmark', required: false },
-                    ].map(({ key, label, placeholder, required }) => (
-                      <div key={key}>
-                        <label style={{ fontSize: 9, fontWeight: 700, color: '#9CA3AF', display: 'block', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: 3 }}>{label}</label>
-                        <input required={required} placeholder={placeholder}
-                          value={orderForm[key as keyof typeof orderForm]} onChange={e => setOf(key, e.target.value)}
-                          style={{ width: '100%', border: '1.5px solid #E5E7EB', borderRadius: 8, padding: '8px 10px', fontSize: 13, outline: 'none', boxSizing: 'border-box', fontFamily: 'inherit', background: '#fff' }}
-                          onFocus={e => (e.target.style.borderColor = C.saffron)}
-                          onBlur={e => (e.target.style.borderColor = '#E5E7EB')} />
-                      </div>
-                    ))}
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 6 }}>
-                      {[
-                        { key: 'city', label: 'City *', placeholder: 'e.g. Mumbai' },
-                        { key: 'state', label: 'State *', placeholder: 'e.g. Maharashtra' },
-                      ].map(({ key, label, placeholder }) => (
-                        <div key={key}>
-                          <label style={{ fontSize: 9, fontWeight: 700, color: '#9CA3AF', display: 'block', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: 3 }}>{label}</label>
-                          <input required placeholder={placeholder}
-                            value={orderForm[key as keyof typeof orderForm]} onChange={e => setOf(key, e.target.value)}
-                            style={{ width: '100%', border: '1.5px solid #E5E7EB', borderRadius: 8, padding: '8px 10px', fontSize: 13, outline: 'none', boxSizing: 'border-box', fontFamily: 'inherit', background: '#fff' }}
-                            onFocus={e => (e.target.style.borderColor = C.saffron)}
-                            onBlur={e => (e.target.style.borderColor = '#E5E7EB')} />
-                        </div>
-                      ))}
-                    </div>
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 6 }}>
-                      <div>
-                        <label style={{ fontSize: 9, fontWeight: 700, color: '#9CA3AF', display: 'block', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: 3 }}>Pincode *</label>
-                        <input required placeholder="e.g. 400001" inputMode="numeric" maxLength={6} pattern="[0-9]{6}"
-                          value={orderForm.pincode} onChange={e => setOf('pincode', e.target.value.replace(/\D/g, '').slice(0, 6))}
-                          style={{ width: '100%', border: '1.5px solid #E5E7EB', borderRadius: 8, padding: '8px 10px', fontSize: 13, outline: 'none', boxSizing: 'border-box', fontFamily: 'inherit', background: '#fff' }}
-                          onFocus={e => (e.target.style.borderColor = C.saffron)}
-                          onBlur={e => (e.target.style.borderColor = '#E5E7EB')} />
-                      </div>
-                      <div>
-                        <label style={{ fontSize: 9, fontWeight: 700, color: '#9CA3AF', display: 'block', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: 3 }}>Country</label>
-                        <input value="India" readOnly style={{ width: '100%', border: '1.5px solid #E5E7EB', borderRadius: 8, padding: '8px 10px', fontSize: 13, outline: 'none', boxSizing: 'border-box', fontFamily: 'inherit', background: '#F9FAFB', color: '#9CA3AF' }} />
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Dedication message */}
-                <div>
-                  <label style={{ fontSize: 10, fontWeight: 700, color: '#9CA3AF', display: 'block', marginBottom: 4, textTransform: 'uppercase', letterSpacing: '0.07em' }}>
-                    Personal message for the first page <span style={{ color: '#C4B5A0', fontWeight: 500, textTransform: 'none', letterSpacing: 0 }}>(optional)</span>
-                  </label>
-                  <textarea
-                    placeholder={`e.g. "To my little star — may you always reach for the sky. With all my love, ${orderForm.parentName || 'Mama'}"`}
-                    value={orderForm.dedicationMessage}
-                    onChange={e => setOf('dedicationMessage', e.target.value)}
-                    rows={2}
-                    maxLength={200}
-                    style={{ width: '100%', border: '1.5px solid #E5E7EB', borderRadius: 9, padding: '10px 12px', fontSize: 13, outline: 'none', boxSizing: 'border-box', fontFamily: 'inherit', background: '#fff', resize: 'none' }}
-                    onFocus={e => (e.target.style.borderColor = '#FF6B35')}
-                    onBlur={e => (e.target.style.borderColor = '#E5E7EB')}
-                  />
-                  <p style={{ fontSize: 10, color: '#9CA3AF', margin: '4px 0 0' }}>
-                    🎬 Printed on the first page — Starring <strong>{orderForm.childName || 'your child'}</strong> · Produced with love by <strong>{orderForm.parentName || 'you'}</strong>
-                  </p>
-                </div>
-
-                {/* Coupon code */}
-                <div>
-                  <label style={{ fontSize: 10, fontWeight: 700, color: '#9CA3AF', display: 'block', marginBottom: 4, textTransform: 'uppercase', letterSpacing: '0.07em' }}>Promo code (optional)</label>
-                  <div style={{ display: 'flex', gap: 8 }}>
-                    <input
-                      placeholder="e.g. WELCOME20"
-                      value={couponInput}
-                      onChange={e => { setCouponInput(e.target.value.toUpperCase()); setCouponApplied(null); setCouponError(''); }}
-                      onKeyDown={e => e.key === 'Enter' && (e.preventDefault(), handleApplyCoupon())}
-                      style={{ flex: 1, border: '1.5px solid #E5E7EB', borderRadius: 9, padding: '10px 12px', fontSize: 14, outline: 'none', fontFamily: 'inherit', background: '#fff' }}
-                      onFocus={e => (e.target.style.borderColor = C.saffron)}
-                      onBlur={e => (e.target.style.borderColor = '#E5E7EB')} />
-                    <button type="button" onClick={handleApplyCoupon} disabled={couponLoading || !couponInput.trim()}
-                      style={{ background: C.navy, color: '#fff', border: 'none', borderRadius: 9, padding: '10px 18px', fontSize: 13, fontWeight: 700, cursor: couponLoading || !couponInput.trim() ? 'default' : 'pointer', opacity: couponLoading || !couponInput.trim() ? 0.5 : 1, whiteSpace: 'nowrap', fontFamily: 'inherit' }}>
-                      {couponLoading ? '…' : 'Apply'}
-                    </button>
-                  </div>
-                  {couponApplied && (
-                    <div style={{ marginTop: 8, display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: '#F0FFF4', border: '1.5px solid #22C55E', borderRadius: 9, padding: '8px 12px' }}>
-                      <div>
-                        <span style={{ fontSize: 12, fontWeight: 700, color: '#16A34A' }}>✓ {couponApplied.code} applied! </span>
-                        <span style={{ fontSize: 12, color: '#16A34A' }}>
-                          {couponApplied.discountType === 'percent' ? `${couponApplied.discountValue}% off` : `₹${couponApplied.discountAmount} off`}
-                        </span>
-                      </div>
-                      <button type="button" onClick={() => { setCouponApplied(null); setCouponInput(''); }}
-                        style={{ fontSize: 12, color: '#6B7280', background: 'none', border: 'none', cursor: 'pointer' }}>Remove</button>
-                    </div>
-                  )}
-                  {couponError && <p style={{ fontSize: 12, color: '#EF4444', margin: '6px 0 0' }}>{couponError}</p>}
                 </div>
 
                 {/* Consent + submit */}
@@ -1211,9 +1019,9 @@ export function ThemePage() {
                     Photo upload failed — please tap "Tap to retry" above before placing your order.
                   </p>
                 )}
-                <button type="submit" disabled={orderSubmitting || !orderConsent || !orderPhoto?.uploadedPath}
-                  style={{ background: (!orderConsent || orderSubmitting || !orderPhoto?.uploadedPath) ? '#E5E7EB' : `linear-gradient(135deg, ${C.saffron} 0%, #FF8C42 100%)`, color: (!orderConsent || orderSubmitting || !orderPhoto?.uploadedPath) ? '#9CA3AF' : '#fff', border: 'none', borderRadius: 12, padding: '14px 20px', fontWeight: 800, fontSize: 16, cursor: (!orderConsent || orderSubmitting || !orderPhoto?.uploadedPath) ? 'default' : 'pointer', fontFamily: "'Baloo 2', sans-serif", boxShadow: (!orderConsent || orderSubmitting || !orderPhoto?.uploadedPath) ? 'none' : '0 4px 16px rgba(255,107,53,0.4)' }}>
-                  {orderSubmitting ? 'Processing…' : `Pay ₹${couponApplied ? couponApplied.finalPrice : (orderForm.bindingType === 'hardcover' ? hcPrice : pbPrice)} & Order →`}
+                <button type="submit" disabled={!orderConsent || !orderPhoto?.uploadedPath}
+                  style={{ background: (!orderConsent || !orderPhoto?.uploadedPath) ? '#E5E7EB' : `linear-gradient(135deg, ${C.saffron} 0%, #FF8C42 100%)`, color: (!orderConsent || !orderPhoto?.uploadedPath) ? '#9CA3AF' : '#fff', border: 'none', borderRadius: 12, padding: '14px 20px', fontWeight: 800, fontSize: 16, cursor: (!orderConsent || !orderPhoto?.uploadedPath) ? 'default' : 'pointer', fontFamily: "'Baloo 2', sans-serif", boxShadow: (!orderConsent || !orderPhoto?.uploadedPath) ? 'none' : '0 4px 16px rgba(255,107,53,0.4)' }}>
+                  {`Pay ₹${orderForm.bindingType === 'hardcover' ? hcPrice : pbPrice} & Order →`}
                 </button>
                 <button type="button"
                   onClick={handleOrderFormPreview}
@@ -1227,6 +1035,25 @@ export function ThemePage() {
             )}
           </div>
         </div>
+
+        <OrderCompletionOverlay
+          isOpen={orderOverlayOpen}
+          onClose={() => setOrderOverlayOpen(false)}
+          parentName={orderForm.parentName}
+          email={orderForm.email}
+          phone={orderForm.phone}
+          childName={orderForm.childName}
+          childAge={orderForm.childAge}
+          childGender={orderForm.childGender}
+          bindingType={orderForm.bindingType === 'hardcover' ? 'hardcover' : 'paperback'}
+          themeSlug={theme.slug}
+          themeName={theme.name}
+          photoPath={orderPhoto?.uploadedPath || ''}
+          photoSignedUrl={orderPhoto?.signedUrl || undefined}
+          pbPrice={pbPrice}
+          hcPrice={hcPrice}
+          apiBase={API_BASE}
+        />
 
         {/* ── Free preview (below order form) ── */}
         {false && !theme.comingSoon && (
