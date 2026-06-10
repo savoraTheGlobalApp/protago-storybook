@@ -327,7 +327,7 @@ export function ThemePage() {
   const [couponApplied, setCouponApplied] = useState<{ code: string; discountAmount: number; finalPrice: number; discountType: string; discountValue: number } | null>(null);
   const [couponError, setCouponError] = useState('');
   const [couponLoading, setCouponLoading] = useState(false);
-
+  const [orderFormPreviewLoading, setOrderFormPreviewLoading] = useState(false);
 
   const [generating, setGenerating] = useState(false);
   const [gender, setGender] = useState<'boy' | 'girl' | null>(null);
@@ -554,9 +554,42 @@ export function ThemePage() {
     }
   };
 
+  const handleOrderFormPreview = async () => {
+    if (!orderPhoto?.signedUrl || !orderPhoto?.uploadedPath) return;
+    setOrderFormPreviewLoading(true);
+    setOrderError('');
+    try {
+      const firstName = (orderForm.childName || '').trim().split(/\s+/)[0] || orderForm.childName.trim();
+      const genderVal = orderForm.childGender.toLowerCase() === 'boy' ? 'boy' : orderForm.childGender.toLowerCase() === 'girl' ? 'girl' : undefined;
+      const ageNum = parseInt(orderForm.childAge, 10) || undefined;
+      const ageGroup = ageNum ? (ageNum <= 3 ? 'age3' : ageNum <= 5 ? 'young' : ageNum <= 8 ? 'middle' : 'older') : undefined;
+      const newTab = window.open('/preview/loading', '_blank');
+      const res = await fetch(`${API_BASE}/api/preview/trigger`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ storySlug: theme.slug, photoUrl: orderPhoto.signedUrl, childName: firstName, email: orderForm.email, phone: orderForm.phone, gender: genderVal, ageGroup, childAge: ageNum }),
+      });
+      const data = await res.json();
+      if (!res.ok) { newTab?.close(); setOrderError(`Preview failed: ${data.error}`); return; }
+      const params = new URLSearchParams({ name: firstName, theme: theme.slug, fromOrderForm: 'true' });
+      if (genderVal) params.set('gender', genderVal);
+      if (ageGroup) params.set('ageGroup', ageGroup);
+      if (ageNum) params.set('age', String(ageNum));
+      if (orderForm.email) params.set('email', orderForm.email);
+      if (orderForm.phone) params.set('phone', orderForm.phone);
+      if (orderForm.parentName) params.set('parentName', orderForm.parentName);
+      params.set('bindingType', orderForm.bindingType === 'hardcover' ? 'hardcover' : 'paperback');
+      params.set('photoPath', orderPhoto.uploadedPath);
+      if (newTab) newTab.location.href = `/preview/${data.jobId}?${params}`;
+    } catch {
+      setOrderError('Could not start preview. Please try again.');
+    } finally {
+      setOrderFormPreviewLoading(false);
+    }
+  };
+
   const handleThemeClick = (slug: string) => {
     navigate(`/theme/${slug}`);
-    // scroll handled by the slug useEffect above
   };
 
   const handlePhotoAdd = (file: File) => {
@@ -1181,6 +1214,12 @@ export function ThemePage() {
                 <button type="submit" disabled={orderSubmitting || !orderConsent || !orderPhoto?.uploadedPath}
                   style={{ background: (!orderConsent || orderSubmitting || !orderPhoto?.uploadedPath) ? '#E5E7EB' : `linear-gradient(135deg, ${C.saffron} 0%, #FF8C42 100%)`, color: (!orderConsent || orderSubmitting || !orderPhoto?.uploadedPath) ? '#9CA3AF' : '#fff', border: 'none', borderRadius: 12, padding: '14px 20px', fontWeight: 800, fontSize: 16, cursor: (!orderConsent || orderSubmitting || !orderPhoto?.uploadedPath) ? 'default' : 'pointer', fontFamily: "'Baloo 2', sans-serif", boxShadow: (!orderConsent || orderSubmitting || !orderPhoto?.uploadedPath) ? 'none' : '0 4px 16px rgba(255,107,53,0.4)' }}>
                   {orderSubmitting ? 'Processing…' : `Pay ₹${couponApplied ? couponApplied.finalPrice : (orderForm.bindingType === 'hardcover' ? hcPrice : pbPrice)} & Order →`}
+                </button>
+                <button type="button"
+                  onClick={handleOrderFormPreview}
+                  disabled={!orderConsent || !orderPhoto?.uploadedPath || orderFormPreviewLoading}
+                  style={{ background: 'none', border: `1.5px solid ${(!orderConsent || !orderPhoto?.uploadedPath) ? '#E5E7EB' : C.navy}`, borderRadius: 12, padding: '12px 20px', fontWeight: 700, fontSize: 14, cursor: (!orderConsent || !orderPhoto?.uploadedPath || orderFormPreviewLoading) ? 'default' : 'pointer', fontFamily: "'Baloo 2', sans-serif", color: (!orderConsent || !orderPhoto?.uploadedPath) ? '#9CA3AF' : C.navy }}>
+                  {orderFormPreviewLoading ? 'Opening preview…' : '👁 See preview first →'}
                 </button>
                 <p style={{ fontSize: 11, color: C.lgray, textAlign: 'center', margin: '-4px 0 0' }}>Delivered in 7–9 business days</p>
 
