@@ -1023,12 +1023,19 @@ export function ThemePage() {
                   style={{ background: (!orderConsent || !orderPhoto?.uploadedPath) ? '#E5E7EB' : `linear-gradient(135deg, ${C.saffron} 0%, #FF8C42 100%)`, color: (!orderConsent || !orderPhoto?.uploadedPath) ? '#9CA3AF' : '#fff', border: 'none', borderRadius: 12, padding: '14px 20px', fontWeight: 800, fontSize: 16, cursor: (!orderConsent || !orderPhoto?.uploadedPath) ? 'default' : 'pointer', fontFamily: "'Baloo 2', sans-serif", boxShadow: (!orderConsent || !orderPhoto?.uploadedPath) ? 'none' : '0 4px 16px rgba(255,107,53,0.4)' }}>
                   {`Pay ₹${orderForm.bindingType === 'hardcover' ? hcPrice : pbPrice} & Order →`}
                 </button>
-                <button type="button"
-                  onClick={handleOrderFormPreview}
-                  disabled={!orderConsent || !orderPhoto?.uploadedPath || orderFormPreviewLoading}
-                  style={{ background: 'none', border: `1.5px solid ${(!orderConsent || !orderPhoto?.uploadedPath) ? '#E5E7EB' : C.navy}`, borderRadius: 12, padding: '12px 20px', fontWeight: 700, fontSize: 14, cursor: (!orderConsent || !orderPhoto?.uploadedPath || orderFormPreviewLoading) ? 'default' : 'pointer', fontFamily: "'Baloo 2', sans-serif", color: (!orderConsent || !orderPhoto?.uploadedPath) ? '#9CA3AF' : C.navy }}>
-                  {orderFormPreviewLoading ? 'Opening preview…' : '👁 See preview first →'}
-                </button>
+                {theme.comingSoon ? (
+                  <div style={{ background: '#F5F3FF', border: '1.5px solid #DDD6FE', borderRadius: 12, padding: '12px 18px', textAlign: 'center' }}>
+                    <p style={{ fontWeight: 800, fontSize: 14, color: '#7C3AED', margin: '0 0 2px', fontFamily: "'Baloo 2', sans-serif" }}>🚀 Preview Coming Soon</p>
+                    <p style={{ fontSize: 11, color: '#6B7280', margin: 0 }}>We're working on AI previews for this theme</p>
+                  </div>
+                ) : (
+                  <button type="button"
+                    onClick={handleOrderFormPreview}
+                    disabled={!orderConsent || !orderPhoto?.uploadedPath || orderFormPreviewLoading}
+                    style={{ background: 'none', border: `1.5px solid ${(!orderConsent || !orderPhoto?.uploadedPath) ? '#E5E7EB' : C.navy}`, borderRadius: 12, padding: '12px 20px', fontWeight: 700, fontSize: 14, cursor: (!orderConsent || !orderPhoto?.uploadedPath || orderFormPreviewLoading) ? 'default' : 'pointer', fontFamily: "'Baloo 2', sans-serif", color: (!orderConsent || !orderPhoto?.uploadedPath) ? '#9CA3AF' : C.navy }}>
+                    {orderFormPreviewLoading ? 'Opening preview…' : '👁 See preview first →'}
+                  </button>
+                )}
                 <p style={{ fontSize: 11, color: C.lgray, textAlign: 'center', margin: '-4px 0 0' }}>Delivered in 7–9 business days</p>
 
               </form>
