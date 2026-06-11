@@ -520,7 +520,7 @@ function BrochureThemeCard({ slug, icon, name, badge, description, ageRange, com
             style={{ width: '100%', padding: '13px 0', borderRadius: 12, background: `linear-gradient(135deg, ${C.navy} 0%, #2a2a4a 100%)`, color: '#fff', border: 'none', fontWeight: 800, fontSize: 15, cursor: 'pointer', fontFamily: "'Baloo 2', sans-serif", boxShadow: '0 4px 16px rgba(26,26,46,0.3)', letterSpacing: 0.2 }}>
             Order Now →
           </button>
-          {false && !comingSoon && (
+          {!comingSoon && (
             <button
               onClick={e => { e.stopPropagation(); onPreview ? onPreview() : onClick(); }}
               style={{ width: '100%', padding: '10px 0', borderRadius: 12, background: 'transparent', color: C.saffron, border: `1.5px solid ${C.saffron}`, fontWeight: 700, fontSize: 14, cursor: 'pointer', fontFamily: "'Baloo 2', sans-serif" }}>

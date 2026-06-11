@@ -593,7 +593,7 @@ export function ThemePage() {
     })();
   };
 
-  const canGenerate = !!childName.trim() && !!photo?.signedUrl && consent && !generating && !!gender && !!selectedAgeGroup && !!previewPhone.trim();
+  const canGenerate = !!childName.trim() && !!photo?.signedUrl && consent && !generating && !!gender && !!selectedAgeGroup && !!previewPhone.trim() && !!previewEmail.trim();
 
   return (
     <div style={{ minHeight: '100vh', background: '#FAFAFA', fontFamily: "'Nunito', sans-serif" }}>
@@ -1063,7 +1063,7 @@ export function ThemePage() {
         />
 
         {/* ── Free preview (below order form) ── */}
-        {false && !theme.comingSoon && (
+        {!theme.comingSoon && (
           <>
             <div style={{ margin: '40px 16px 0', display: 'flex', alignItems: 'center', gap: 12 }}>
               <div style={{ flex: 1, height: 1, background: '#E5E7EB' }} />
