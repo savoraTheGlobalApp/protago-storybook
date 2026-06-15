@@ -576,6 +576,7 @@ export function ThemePage() {
       if (!res.ok) {
         setJobStatus(`Error: ${data.error}`);
         setGenerating(false);
+        scrollToForm();
         return;
       }
       const params = new URLSearchParams({ name: childName, theme: theme.slug });
@@ -587,6 +588,7 @@ export function ThemePage() {
     } catch {
       setJobStatus('Error: Could not start preview. Please try again.');
       setGenerating(false);
+      scrollToForm();
     }
   };
 
