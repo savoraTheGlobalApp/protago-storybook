@@ -1606,6 +1606,15 @@ app.post('/api/preview/trigger', async (req, res) => {
     if (!storySlug || !photoUrl) {
       return res.status(400).json({ error: 'storySlug and photoUrl are required' });
     }
+    if (!childName || !childName.trim()) {
+      return res.status(400).json({ error: 'childName is required' });
+    }
+    if (!email || !email.trim()) {
+      return res.status(400).json({ error: 'email is required' });
+    }
+    if (!phone || !phone.trim()) {
+      return res.status(400).json({ error: 'phone is required' });
+    }
 
     // Sanitize gender/ageGroup — allowlist only, prevents path injection
     const safeGender = VALID_GENDERS.has(gender) ? gender : undefined;

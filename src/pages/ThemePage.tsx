@@ -286,7 +286,7 @@ export function ThemePage() {
   const navigate = useNavigate();
   const location = useLocation();
   const [searchParams] = useSearchParams();
-  // Support two entry paths: navigate() with state (same tab) or window.open() with query params (new tab)
+  // Support two entry paths: navigate() with state or query params
   const locationState = (location.state as { previewUrls?: (string | null)[]; childName?: string; fromPreview?: boolean; gender?: string; ageGroup?: string; age?: string; email?: string } | null)
     ?? (searchParams.get('fromPreview') === 'true' ? {
         fromPreview: true,
@@ -474,14 +474,13 @@ export function ThemePage() {
       const genderVal = orderForm.childGender.toLowerCase() === 'boy' ? 'boy' : orderForm.childGender.toLowerCase() === 'girl' ? 'girl' : undefined;
       const ageNum = parseInt(orderForm.childAge, 10) || undefined;
       const ageGroup = ageNum ? (ageNum <= 3 ? 'age3' : ageNum <= 5 ? 'young' : ageNum <= 8 ? 'middle' : 'older') : undefined;
-      const newTab = window.open('/preview/loading', '_blank');
       const res = await fetch(`${API_BASE}/api/preview/trigger`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ storySlug: theme.slug, photoUrl: orderPhoto.signedUrl, childName: firstName, email: orderForm.email, phone: orderForm.phone, gender: genderVal, ageGroup, childAge: ageNum }),
       });
       const data = await res.json();
-      if (!res.ok) { newTab?.close(); setOrderError(`Preview failed: ${data.error}`); return; }
+      if (!res.ok) { setOrderError(`Preview failed: ${data.error}`); return; }
       const params = new URLSearchParams({ name: firstName, theme: theme.slug, fromOrderForm: 'true' });
       if (genderVal) params.set('gender', genderVal);
       if (ageGroup) params.set('ageGroup', ageGroup);
@@ -491,7 +490,7 @@ export function ThemePage() {
       if (orderForm.parentName) params.set('parentName', orderForm.parentName);
       params.set('bindingType', orderForm.bindingType === 'hardcover' ? 'hardcover' : 'paperback');
       params.set('photoPath', orderPhoto.uploadedPath);
-      if (newTab) newTab.location.href = `/preview/${data.jobId}?${params}`;
+      navigate(`/preview/${data.jobId}?${params}`);
     } catch {
       setOrderError('Could not start preview. Please try again.');
     } finally {
@@ -550,12 +549,11 @@ export function ThemePage() {
     img.src = preview;
   };
 
-  const handleGenerate = () => {
+  const handleGenerate = async () => {
     const firstName = childName.trim().split(/\s+/)[0];
     if (!firstName) { setNameError(true); return; }
     if (firstName !== childName) setChildName(firstName);
     if (!photo?.signedUrl) return;
-    // Basic email format check before hitting backend
     const emailTrimmed = previewEmail.trim();
     if (!emailTrimmed) { setEmailError('Email is required'); return; }
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(emailTrimmed)) { setEmailError('Enter a valid email address'); return; }
@@ -568,8 +566,7 @@ export function ThemePage() {
     trackPreviewStarted(theme.slug);
     setGenerating(true);
     setJobStatus('');
-    const newTab = window.open('/preview/loading', '_blank');
-    (async () => {
+    try {
       const res = await fetch(`${API_BASE}/api/preview/trigger`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -577,9 +574,9 @@ export function ThemePage() {
       });
       const data = await res.json();
       if (!res.ok) {
-        newTab?.close();
         setJobStatus(`Error: ${data.error}`);
         setGenerating(false);
+        scrollToForm();
         return;
       }
       const params = new URLSearchParams({ name: childName, theme: theme.slug });
@@ -587,10 +584,12 @@ export function ThemePage() {
       if (selectedAgeGroup) params.set('ageGroup', selectedAgeGroup);
       if (selectedAge !== null) params.set('age', String(selectedAge));
       if (emailTrimmed) params.set('email', emailTrimmed);
-      if (newTab) newTab.location.href = `/preview/${data.jobId}?${params}`;
+      navigate(`/preview/${data.jobId}?${params}`);
+    } catch {
+      setJobStatus('Error: Could not start preview. Please try again.');
       setGenerating(false);
-      setJobStatus('opened');
-    })();
+      scrollToForm();
+    }
   };
 
   const canGenerate = !!childName.trim() && !!photo?.signedUrl && consent && !generating && !!gender && !!selectedAgeGroup && !!previewPhone.trim() && !!previewEmail.trim();
@@ -1073,19 +1072,7 @@ export function ThemePage() {
             <div ref={formRef} style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'stretch', background: C.white, borderRadius: 20, overflow: 'hidden', boxShadow: '0 4px 32px rgba(0,0,0,0.07)', margin: '16px 16px 0' }}>
               <div style={{ width: '100%', padding: '32px 28px 36px', display: 'flex', flexDirection: 'column', background: C.white }}>
                 <AnimatePresence mode="wait">
-                  {jobStatus === 'opened' ? (
-                    <motion.div key="opened" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}
-                      style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 16, padding: '40px 0', textAlign: 'center', flex: 1, justifyContent: 'center' }}>
-                      <div style={{ fontSize: 56 }}>✨</div>
-                      <p style={{ fontWeight: 800, color: C.navy, fontSize: 17, margin: 0, fontFamily: "'Baloo 2', sans-serif" }}>Preview is generating!</p>
-                      <p style={{ fontSize: 13, color: C.lgray, margin: 0 }}>Check the new tab — ready in ~2 min.</p>
-                      <button onClick={() => { setJobStatus(''); setPhoto(null); setChildName(''); setGenerating(false); setConsent(false); }}
-                        style={{ marginTop: 8, background: 'none', border: '1.5px solid #E5E7EB', borderRadius: 10, padding: '10px 20px', fontSize: 13, color: C.gray, cursor: 'pointer', fontWeight: 700 }}>
-                        Generate another →
-                      </button>
-                    </motion.div>
-
-                  ) : generating ? (
+                  {generating ? (
                     <motion.div key="generating" initial={{ opacity: 0 }} animate={{ opacity: 1 }}
                       style={{ textAlign: 'center', padding: '50px 0', flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
                       <motion.div animate={{ rotate: 360 }} transition={{ repeat: Infinity, duration: 1.5, ease: 'linear' }}
