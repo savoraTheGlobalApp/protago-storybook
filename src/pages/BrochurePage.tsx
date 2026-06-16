@@ -3,7 +3,7 @@ import { useSearchParams, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence, useInView } from 'framer-motion';
 import { ArrowRight, ChevronDown, MessageCircle } from 'lucide-react';
 import { NavBar } from '../components/NavBar';
-import { THEMES, ThemeEntry, ageToRange } from '../data/themes';
+import { VISIBLE_THEMES, ThemeEntry, ageToRange } from '../data/themes';
 import { DEFAULT_FACE_SAMPLES, getFaceSamples, getArrowTarget, THEME_FACE_SAMPLES } from '../data/themeMockups';
 import { trackEvent } from '../utils/analytics';
 
@@ -389,6 +389,7 @@ function BrochureThemeCard({ slug, icon, name, badge, description, ageRange, com
   const [binding, setBinding] = useState<'paperback' | 'hardcover'>('paperback');
   const cardRef = useRef<HTMLDivElement>(null);
   const inView = useInView(cardRef, { margin: '300px 0px' });
+  const pageCount = (slug === 'abc' || slug === 'hindi-alphabet') ? 26 : 30;
 
   // Latch: once the card has been visible once, keep its full image set mounted forever.
   useEffect(() => {
@@ -498,7 +499,7 @@ function BrochureThemeCard({ slug, icon, name, badge, description, ageRange, com
         <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 8, flexWrap: 'wrap' }}>
           {badge && <span style={{ fontSize: 11, fontWeight: 700, background: 'rgba(255,107,53,0.12)', color: C.saffron, borderRadius: 20, padding: '2px 9px' }}>{badge}</span>}
           {comingSoon && <span style={{ fontSize: 11, fontWeight: 700, background: '#EDE9FE', color: '#7C3AED', borderRadius: 20, padding: '2px 9px' }}>🚀 Preview soon</span>}
-          <span style={{ fontSize: 11, fontWeight: 600, background: '#F3F4F6', color: '#555', borderRadius: 20, padding: '2px 9px' }}>32 Pages</span>
+          <span style={{ fontSize: 11, fontWeight: 600, background: '#F3F4F6', color: '#555', borderRadius: 20, padding: '2px 9px' }}>{pageCount} Pages</span>
           {ageRange && <span style={{ fontSize: 11, fontWeight: 600, color: '#9CA3AF', marginLeft: 'auto' }}>Ages {ageRange}</span>}
         </div>
         {/* Title */}
@@ -1151,7 +1152,7 @@ function OrderForm({ price }: { price: number; scrollTo: (id: string) => void })
                   <label style={labelStyle}>Theme *</label>
 
                   {(['3–5', '6–8', '9–12'] as const).map(range => {
-                    const rangeThemes = THEMES.filter(t => !t.category && (Array.isArray(t.ageRange) ? t.ageRange.includes(range) : t.ageRange === range));
+                    const rangeThemes = VISIBLE_THEMES.filter(t => !t.category && (Array.isArray(t.ageRange) ? t.ageRange.includes(range) : t.ageRange === range));
                     const isRelevant = form.childAge ? ageToRange(Number(form.childAge)) === range : true;
                     return (
                       <div key={range} className="mb-3">
@@ -1193,7 +1194,7 @@ function OrderForm({ price }: { price: number; scrollTo: (id: string) => void })
 
                   {/* Mythology themes group */}
                   {(() => {
-                    const mythThemes = THEMES.filter(t => t.category === 'mythology');
+                    const mythThemes = VISIBLE_THEMES.filter(t => t.category === 'mythology');
                     if (!mythThemes.length) return null;
                     return (
                       <div className="mb-3">
@@ -2044,11 +2045,11 @@ export function BrochurePage() {
               { range: '6–8'  as const, label: 'Early School',  color: '#F7B731' },
               { range: '9–12' as const, label: 'Upper Primary', color: '#1A1A2E' },
             ];
-            const allNonMythThemes = THEMES.filter(t => !t.category);
+            const allNonMythThemes = VISIBLE_THEMES.filter(t => !t.category);
             const tabThemes = themesTab === 'All'
               ? allNonMythThemes.filter((t, i, arr) => arr.findIndex(x => x.slug === t.slug) === i)
               : allNonMythThemes.filter(t => Array.isArray(t.ageRange) ? t.ageRange.includes(themesTab) : t.ageRange === themesTab);
-            const mythologyThemes = THEMES.filter(t => t.category === 'mythology');
+            const mythologyThemes = VISIBLE_THEMES.filter(t => t.category === 'mythology');
             return (
               <>
                 <div className="flex gap-2 mb-6">
