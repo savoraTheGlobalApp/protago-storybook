@@ -3,6 +3,7 @@ import { trackPreviewGenerated } from '../utils/analytics';
 import { useParams, useSearchParams } from 'react-router-dom';
 import { OrderCompletionOverlay } from '../components/OrderCompletionOverlay';
 import { motion, AnimatePresence, useMotionValue, useTransform } from 'framer-motion';
+import { GOOGLE_REVIEWS } from '../data/reviews';
 
 const C = {
   saffron: '#FF6B35',
@@ -30,12 +31,6 @@ const CUSTOMER_VIDEOS: { name: string; embedUrl: string }[] = [
   { name: 'Customer',  embedUrl: 'https://www.youtube.com/embed/At_FrzzTpQ0?loop=1&playlist=At_FrzzTpQ0&autoplay=1&mute=1&playsinline=1&controls=0&rel=0' },
 ];
 
-type ReviewData = {
-  rating: number;
-  userRatingCount: number;
-  reviews: { authorName: string; authorPhoto: string | null; authorUrl: string | null; rating: number; relativeTime: string; text: string }[];
-};
-
 function GoogleG() {
   return (
     <svg width="16" height="16" viewBox="0 0 18 18" fill="none">
@@ -49,12 +44,7 @@ function GoogleG() {
 
 function WhileWaitingSection() {
   const scrollRef = useRef<HTMLDivElement>(null);
-  const [reviewData, setReviewData] = useState<ReviewData | null>(null);
-  const API_BASE = import.meta.env.VITE_API_BASE_URL || '';
-
-  useEffect(() => {
-    fetch(`${API_BASE}/api/reviews`).then(r => r.json()).then(setReviewData).catch(() => {});
-  }, []);
+  const reviewData = GOOGLE_REVIEWS;
 
   const scroll = (dir: 'left' | 'right') => {
     const el = scrollRef.current;
@@ -72,38 +62,36 @@ function WhileWaitingSection() {
       <div style={{ width: '100%', height: 1, background: 'rgba(255,255,255,0.08)', marginBottom: 40 }} />
 
       {/* Google Reviews */}
-      {reviewData && (
-        <div style={{ marginBottom: 40 }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6 }}>
-            <GoogleG />
-            <span style={{ fontSize: 12, fontWeight: 700, color: 'rgba(255,255,255,0.45)', textTransform: 'uppercase', letterSpacing: 1.2 }}>Google Reviews</span>
-          </div>
-          <div style={{ display: 'flex', alignItems: 'baseline', gap: 8, marginBottom: 20 }}>
-            <span style={{ fontSize: 36, fontWeight: 800, color: '#fff', fontFamily: "'Baloo 2', sans-serif" }}>{reviewData.rating.toFixed(1)}</span>
-            <span style={{ color: '#F7B731', fontSize: 18 }}>{'★'.repeat(Math.round(reviewData.rating))}</span>
-            <span style={{ fontSize: 13, color: 'rgba(255,255,255,0.4)' }}>· {reviewData.userRatingCount} reviews</span>
-          </div>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-            {reviewData.reviews.slice(0, 4).map((r, i) => (
-              <a key={i} href={r.authorUrl || 'https://g.page/r/CfdEg8f3DVL6EAE/review'} target="_blank" rel="noopener noreferrer"
-                style={{ display: 'block', background: 'rgba(255,255,255,0.05)', borderRadius: 14, padding: '14px 18px', border: '1px solid rgba(255,255,255,0.08)', textDecoration: 'none' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 8 }}>
-                  {r.authorPhoto
-                    ? <img src={r.authorPhoto} style={{ width: 32, height: 32, borderRadius: '50%', objectFit: 'cover' }} />
-                    : <div style={{ width: 32, height: 32, borderRadius: '50%', background: avatarColor(r.authorName), display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12, fontWeight: 700, color: '#fff', flexShrink: 0 }}>{initials(r.authorName)}</div>
-                  }
-                  <div>
-                    <div style={{ fontSize: 13, fontWeight: 700, color: '#fff' }}>{r.authorName}</div>
-                    <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.35)' }}>{r.relativeTime}</div>
-                  </div>
-                  <span style={{ marginLeft: 'auto', color: '#F7B731', fontSize: 12 }}>{'★'.repeat(r.rating)}</span>
-                </div>
-                <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.7)', margin: 0, lineHeight: 1.6 }}>{r.text}</p>
-              </a>
-            ))}
-          </div>
+      <div style={{ marginBottom: 40 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6 }}>
+          <GoogleG />
+          <span style={{ fontSize: 12, fontWeight: 700, color: 'rgba(255,255,255,0.45)', textTransform: 'uppercase', letterSpacing: 1.2 }}>Google Reviews</span>
         </div>
-      )}
+        <div style={{ display: 'flex', alignItems: 'baseline', gap: 8, marginBottom: 20 }}>
+          <span style={{ fontSize: 36, fontWeight: 800, color: '#fff', fontFamily: "'Baloo 2', sans-serif" }}>{reviewData.rating.toFixed(1)}</span>
+          <span style={{ color: '#F7B731', fontSize: 18 }}>{'★'.repeat(Math.round(reviewData.rating))}</span>
+          <span style={{ fontSize: 13, color: 'rgba(255,255,255,0.4)' }}>· {reviewData.userRatingCount} reviews</span>
+        </div>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+          {reviewData.reviews.map((r, i) => (
+            <a key={i} href={r.authorUrl || 'https://g.page/r/CfdEg8f3DVL6EAE/review'} target="_blank" rel="noopener noreferrer"
+              style={{ display: 'block', background: 'rgba(255,255,255,0.05)', borderRadius: 14, padding: '14px 18px', border: '1px solid rgba(255,255,255,0.08)', textDecoration: 'none' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 8 }}>
+                {r.authorPhoto
+                  ? <img src={r.authorPhoto} style={{ width: 32, height: 32, borderRadius: '50%', objectFit: 'cover' }} />
+                  : <div style={{ width: 32, height: 32, borderRadius: '50%', background: avatarColor(r.authorName), display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12, fontWeight: 700, color: '#fff', flexShrink: 0 }}>{initials(r.authorName)}</div>
+                }
+                <div>
+                  <div style={{ fontSize: 13, fontWeight: 700, color: '#fff' }}>{r.authorName}</div>
+                  <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.35)' }}>{r.relativeTime}</div>
+                </div>
+                <span style={{ marginLeft: 'auto', color: '#F7B731', fontSize: 12 }}>{'★'.repeat(r.rating)}</span>
+              </div>
+              <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.7)', margin: 0, lineHeight: 1.6 }}>{r.text}</p>
+            </a>
+          ))}
+        </div>
+      </div>
 
       {/* Customer videos */}
       <p style={{ fontSize: 12, fontWeight: 700, color: 'rgba(255,255,255,0.45)', textTransform: 'uppercase', letterSpacing: 1.2, marginBottom: 16 }}>
