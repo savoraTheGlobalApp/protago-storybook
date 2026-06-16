@@ -1226,7 +1226,7 @@ export function PreviewResultPage() {
 
       {/* Header */}
       <div style={{ padding: '18px 24px', borderBottom: '1px solid rgba(255,255,255,0.08)', display: 'flex', alignItems: 'center', gap: 10 }}>
-        <div style={{ fontFamily: "'Baloo 2', sans-serif", fontWeight: 800, fontSize: 20, color: C.saffron }}>protago</div>
+        <a href="/" style={{ fontFamily: "'Baloo 2', sans-serif", fontWeight: 800, fontSize: 20, color: C.saffron, textDecoration: 'none' }}>protago</a>
       </div>
 
       {/* Main */}
@@ -1285,15 +1285,6 @@ export function PreviewResultPage() {
               </div>
               <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.35)', margin: '0 0 2px' }}>
                 Delivered in 5–7 business days · Premium 300GSM glossy paper
-              </p>
-              <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.45)', margin: 0, textAlign: 'center', lineHeight: 1.5 }}>
-                Tag <strong style={{ color: '#fff' }}>@protago.in</strong> in your story &amp; send us a screenshot on{' '}
-                <a
-                  href="https://wa.me/919606037934?text=Hi!%20I%20shared%20my%20Protago%20preview%20on%20Instagram.%20Here's%20my%20screenshot%20for%20the%2020%25%20discount!"
-                  target="_blank" rel="noopener noreferrer"
-                  style={{ color: C.saffron, fontWeight: 700, textDecoration: 'none' }}
-                >WhatsApp</a>
-                {' '}to claim <strong style={{ color: C.gold }}>20% off</strong> your order.
               </p>
             </motion.div>
           )}
