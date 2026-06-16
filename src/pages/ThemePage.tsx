@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate, useLocation, useSearchParams } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { MessageCircle } from 'lucide-react';
-import { THEMES } from '../data/themes';
+import { THEMES, VISIBLE_THEMES } from '../data/themes';
 import { getFaceSamples, getArrowTarget, THEME_FACE_SAMPLES } from '../data/themeMockups';
 import { NavBar } from '../components/NavBar';
 import { OrderCompletionOverlay } from '../components/OrderCompletionOverlay';
@@ -301,6 +301,8 @@ export function ThemePage() {
   const theme = THEMES.find(t => t.slug === slug);
   const NINE_PAGE_THEMES = new Set(['abc', 'colours-shapes', 'bedtime-routines', 'numbers-maths', 'sharing-sorry', 'first-day-school', 'managing-emotions', 'indian-festivals', 'history-india', 'financial-literacy', 'growth-mindset', 'professions']);
   const previewPageCount = theme && NINE_PAGE_THEMES.has(theme.slug) ? 9 : 4;
+  const ALPHABET_THEMES = new Set(['abc', 'hindi-alphabet']);
+  const totalPageCount = theme && ALPHABET_THEMES.has(theme.slug) ? 26 : 30;
   const hasFaceswapMockup = theme?.slug ? theme.slug in THEME_FACE_SAMPLES : false;
   const useScenes = !!(theme?.comingSoon && !hasFaceswapMockup);
   const sceneFiles = theme?.slug === 'abc'
@@ -406,8 +408,8 @@ export function ThemePage() {
 
   // Pick 6 other themes (same age group first, then others)
   const otherThemes = [
-    ...THEMES.filter(t => t.slug !== theme.slug && t.ageRange === theme.ageRange),
-    ...THEMES.filter(t => t.slug !== theme.slug && t.ageRange !== theme.ageRange),
+    ...VISIBLE_THEMES.filter(t => t.slug !== theme.slug && t.ageRange === theme.ageRange),
+    ...VISIBLE_THEMES.filter(t => t.slug !== theme.slug && t.ageRange !== theme.ageRange),
   ].slice(0, 6);
 
   const handleOrder = () => {
@@ -801,7 +803,7 @@ export function ThemePage() {
                   Ages {ageLabel}
                 </span>
                 <span style={{ fontSize: 11, fontWeight: 700, color: '#6B7280', background: '#F3F4F6', padding: '3px 10px', borderRadius: 20, border: '1px solid #E5E7EB' }}>
-                  32 pages
+                  {totalPageCount} pages
                 </span>
               </div>
               <p style={{ fontSize: 14, lineHeight: 1.65, color: C.gray, margin: 0 }}>{theme.description}</p>
@@ -1404,7 +1406,7 @@ export function ThemePage() {
           <div style={{ textAlign: 'center', marginTop: 24 }}>
             <button onClick={() => navigate('/?scroll=themes')}
               style={{ background: C.navy, color: '#fff', border: 'none', borderRadius: 24, padding: '12px 32px', fontSize: 14, fontWeight: 800, cursor: 'pointer', fontFamily: "'Baloo 2', sans-serif" }}>
-              Browse all {THEMES.length} themes →
+              Browse all {VISIBLE_THEMES.length} themes →
             </button>
           </div>
         </div>
