@@ -1,9 +1,10 @@
 import { useState, useEffect, useRef } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence, useInView } from 'framer-motion';
-import { ArrowRight, ChevronDown, MessageCircle } from 'lucide-react';
+import { ArrowRight, ChevronDown, ChevronLeft, ChevronRight, MessageCircle } from 'lucide-react';
 import { NavBar } from '../components/NavBar';
 import { VISIBLE_THEMES, ThemeEntry, ageToRange } from '../data/themes';
+import { GOOGLE_REVIEWS, getRelativeTime } from '../data/reviews';
 import { DEFAULT_FACE_SAMPLES, getFaceSamples, getArrowTarget, THEME_FACE_SAMPLES } from '../data/themeMockups';
 import { trackEvent } from '../utils/analytics';
 
@@ -558,14 +559,6 @@ function GoogleG() {
   );
 }
 
-type ReviewData = {
-  rating: number;
-  userRatingCount: number;
-  reviews: { authorName: string; authorPhoto: string | null; authorUrl: string | null; rating: number; relativeTime: string; text: string }[];
-};
-
-const API_BASE_URL = import.meta.env.VITE_API_URL || '';
-
 const CUSTOMER_VIDEOS = [
   { permalink: 'https://www.instagram.com/reel/DXAAreLDxkZ/' },
   { permalink: 'https://www.instagram.com/reel/DXwdV83zex3/' },
@@ -628,24 +621,25 @@ function VideoSection() {
   );
 }
 
-const HARDCODED_REVIEWS: ReviewData = {
-  rating: 5.0,
-  userRatingCount: 11,
-  reviews: [
-    { authorName: 'Hemanti Rawat',              authorPhoto: null, authorUrl: null, rating: 5, relativeTime: '3 days ago',   text: 'The book is very amazing my son is 8 months old still he was very excited to see the vibrant colors, pictures of the book..' },
-    { authorName: 'Namita Lohia',               authorPhoto: null, authorUrl: null, rating: 5, relativeTime: 'a week ago',   text: 'Loved the little details and cute animated stories. Thanku for making it special for the little ones. 😊' },
-    { authorName: 'Santanu Guha',               authorPhoto: null, authorUrl: null, rating: 5, relativeTime: '2 weeks ago',  text: 'An amazing and truly unique approach that creates personalized AI storybooks kids absolutely love. It brings so much joy and excitement to children while making reading more magical and engaging. Wishing Piyush and the entire team continued success—this is a wonderful product with huge potential!' },
-    { authorName: 'Jyothi Niveditha Karpurapu', authorPhoto: null, authorUrl: null, rating: 5, relativeTime: '2 weeks ago',  text: 'I gifted a personalised book for my nephew, and it turned out to be such a special gift! The moment he saw his name and himself as part of the story, his face lit up with excitement and happiness. He kept flipping through the pages, absolutely delighted.' },
-    { authorName: 'Suraj Shetty',               authorPhoto: null, authorUrl: null, rating: 5, relativeTime: '3 weeks ago',  text: 'Their custom kids book was loved by my 2 girls (8 years). They customized the book to include both sisters flying a plane together and visiting places. They will cherish these memories and share common experiences. Parents must have these books — an excellent gift for young ones.' },
-    { authorName: 'A Learning Theme',           authorPhoto: null, authorUrl: null, rating: 5, relativeTime: '3 weeks ago',  text: 'Such a beautiful and thoughtful gift for kids 🥹📚✨ Seeing her own name, photos & story inside the book made her genuinely so happy. Absolutely recommend!' },
-    { authorName: 'Jayam Chandra',              authorPhoto: null, authorUrl: null, rating: 5, relativeTime: '3 weeks ago',  text: 'My kid loves the book. He is so excited when he is watching his version of images on the book and is able to relate with the story better as it gives a tinge of personalization.' },
-    { authorName: 'Tanya Bhardwaj',             authorPhoto: null, authorUrl: null, rating: 5, relativeTime: '3 weeks ago',  text: 'The book and the detailing was so amazing it even captured my pimple patch and story was wonderful. Best book ever.' },
-  ],
-};
-
 function ReviewsSection() {
-  const data = HARDCODED_REVIEWS;
+  const data = GOOGLE_REVIEWS;
   const scrollRef = useRef<HTMLDivElement>(null);
+  const [canScrollLeft, setCanScrollLeft] = useState(false);
+  const [canScrollRight, setCanScrollRight] = useState(true);
+
+  const CARD_WIDTH = 316; // 300px card + 16px gap
+
+  const scroll = (dir: 'left' | 'right') => {
+    if (!scrollRef.current) return;
+    scrollRef.current.scrollBy({ left: dir === 'left' ? -CARD_WIDTH : CARD_WIDTH, behavior: 'smooth' });
+  };
+
+  const onScroll = () => {
+    const el = scrollRef.current;
+    if (!el) return;
+    setCanScrollLeft(el.scrollLeft > 0);
+    setCanScrollRight(el.scrollLeft + el.clientWidth < el.scrollWidth - 1);
+  };
 
   const stars = (n: number) => '★'.repeat(n) + '☆'.repeat(5 - n);
 
@@ -684,9 +678,23 @@ function ReviewsSection() {
           </a>
         </motion.div>
 
-        {/* Scrollable cards */}
-        <div ref={scrollRef} className="flex gap-4 overflow-x-auto pb-3"
-          style={{ scrollSnapType: 'x mandatory', WebkitOverflowScrolling: 'touch', scrollbarWidth: 'none' }}>
+        {/* Scrollable cards with nav buttons */}
+        <div style={{ position: 'relative' }}>
+          {/* Left button */}
+          <button onClick={() => scroll('left')} aria-label="Previous reviews"
+            style={{
+              position: 'absolute', left: -20, top: '50%', transform: 'translateY(-50%)', zIndex: 10,
+              width: 40, height: 40, borderRadius: '50%', border: '1.5px solid #E5E7EB',
+              background: '#FFF', boxShadow: '0 2px 8px rgba(0,0,0,0.10)',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              cursor: canScrollLeft ? 'pointer' : 'default',
+              opacity: canScrollLeft ? 1 : 0.3, transition: 'opacity 0.2s',
+            }}>
+            <ChevronLeft size={18} color="#1A1A2E" />
+          </button>
+
+          <div ref={scrollRef} onScroll={onScroll} className="flex gap-4 overflow-x-auto pb-3"
+            style={{ scrollSnapType: 'x mandatory', WebkitOverflowScrolling: 'touch', scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
           {data.reviews.map((r, i) => (
             <motion.a key={i}
               href={r.authorUrl || `https://g.page/r/CfdEg8f3DVL6EAE/review`}
@@ -709,7 +717,7 @@ function ReviewsSection() {
                   )}
                   <div>
                     <p className="text-sm font-bold leading-tight" style={{ color: '#1A1A2E' }}>{r.authorName}</p>
-                    <p className="text-xs" style={{ color: '#AAA' }}>{r.relativeTime}</p>
+                    <p className="text-xs" style={{ color: '#AAA' }}>{getRelativeTime(r.publishedAt)}</p>
                   </div>
                 </div>
                 <GoogleG />
@@ -720,6 +728,20 @@ function ReviewsSection() {
               <p className="text-sm leading-relaxed" style={{ color: '#444', margin: 0 }}>{r.text}</p>
             </motion.a>
           ))}
+          </div>
+
+          {/* Right button */}
+          <button onClick={() => scroll('right')} aria-label="Next reviews"
+            style={{
+              position: 'absolute', right: -20, top: '50%', transform: 'translateY(-50%)', zIndex: 10,
+              width: 40, height: 40, borderRadius: '50%', border: '1.5px solid #E5E7EB',
+              background: '#FFF', boxShadow: '0 2px 8px rgba(0,0,0,0.10)',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              cursor: canScrollRight ? 'pointer' : 'default',
+              opacity: canScrollRight ? 1 : 0.3, transition: 'opacity 0.2s',
+            }}>
+            <ChevronRight size={18} color="#1A1A2E" />
+          </button>
         </div>
       </div>
     </section>
