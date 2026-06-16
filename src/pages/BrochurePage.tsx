@@ -1,10 +1,10 @@
 import { useState, useEffect, useRef } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence, useInView } from 'framer-motion';
-import { ArrowRight, ChevronDown, MessageCircle } from 'lucide-react';
+import { ArrowRight, ChevronDown, ChevronLeft, ChevronRight, MessageCircle } from 'lucide-react';
 import { NavBar } from '../components/NavBar';
 import { VISIBLE_THEMES, ThemeEntry, ageToRange } from '../data/themes';
-import { GOOGLE_REVIEWS } from '../data/reviews';
+import { GOOGLE_REVIEWS, getRelativeTime } from '../data/reviews';
 import { DEFAULT_FACE_SAMPLES, getFaceSamples, getArrowTarget, THEME_FACE_SAMPLES } from '../data/themeMockups';
 import { trackEvent } from '../utils/analytics';
 
@@ -624,6 +624,22 @@ function VideoSection() {
 function ReviewsSection() {
   const data = GOOGLE_REVIEWS;
   const scrollRef = useRef<HTMLDivElement>(null);
+  const [canScrollLeft, setCanScrollLeft] = useState(false);
+  const [canScrollRight, setCanScrollRight] = useState(true);
+
+  const CARD_WIDTH = 316; // 300px card + 16px gap
+
+  const scroll = (dir: 'left' | 'right') => {
+    if (!scrollRef.current) return;
+    scrollRef.current.scrollBy({ left: dir === 'left' ? -CARD_WIDTH : CARD_WIDTH, behavior: 'smooth' });
+  };
+
+  const onScroll = () => {
+    const el = scrollRef.current;
+    if (!el) return;
+    setCanScrollLeft(el.scrollLeft > 0);
+    setCanScrollRight(el.scrollLeft + el.clientWidth < el.scrollWidth - 1);
+  };
 
   const stars = (n: number) => '★'.repeat(n) + '☆'.repeat(5 - n);
 
@@ -662,9 +678,23 @@ function ReviewsSection() {
           </a>
         </motion.div>
 
-        {/* Scrollable cards */}
-        <div ref={scrollRef} className="flex gap-4 overflow-x-auto pb-3"
-          style={{ scrollSnapType: 'x mandatory', WebkitOverflowScrolling: 'touch', scrollbarWidth: 'none' }}>
+        {/* Scrollable cards with nav buttons */}
+        <div style={{ position: 'relative' }}>
+          {/* Left button */}
+          <button onClick={() => scroll('left')} aria-label="Previous reviews"
+            style={{
+              position: 'absolute', left: -20, top: '50%', transform: 'translateY(-50%)', zIndex: 10,
+              width: 40, height: 40, borderRadius: '50%', border: '1.5px solid #E5E7EB',
+              background: '#FFF', boxShadow: '0 2px 8px rgba(0,0,0,0.10)',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              cursor: canScrollLeft ? 'pointer' : 'default',
+              opacity: canScrollLeft ? 1 : 0.3, transition: 'opacity 0.2s',
+            }}>
+            <ChevronLeft size={18} color="#1A1A2E" />
+          </button>
+
+          <div ref={scrollRef} onScroll={onScroll} className="flex gap-4 overflow-x-auto pb-3"
+            style={{ scrollSnapType: 'x mandatory', WebkitOverflowScrolling: 'touch', scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
           {data.reviews.map((r, i) => (
             <motion.a key={i}
               href={r.authorUrl || `https://g.page/r/CfdEg8f3DVL6EAE/review`}
@@ -687,7 +717,7 @@ function ReviewsSection() {
                   )}
                   <div>
                     <p className="text-sm font-bold leading-tight" style={{ color: '#1A1A2E' }}>{r.authorName}</p>
-                    <p className="text-xs" style={{ color: '#AAA' }}>{r.relativeTime}</p>
+                    <p className="text-xs" style={{ color: '#AAA' }}>{getRelativeTime(r.publishedAt)}</p>
                   </div>
                 </div>
                 <GoogleG />
@@ -698,6 +728,20 @@ function ReviewsSection() {
               <p className="text-sm leading-relaxed" style={{ color: '#444', margin: 0 }}>{r.text}</p>
             </motion.a>
           ))}
+          </div>
+
+          {/* Right button */}
+          <button onClick={() => scroll('right')} aria-label="Next reviews"
+            style={{
+              position: 'absolute', right: -20, top: '50%', transform: 'translateY(-50%)', zIndex: 10,
+              width: 40, height: 40, borderRadius: '50%', border: '1.5px solid #E5E7EB',
+              background: '#FFF', boxShadow: '0 2px 8px rgba(0,0,0,0.10)',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              cursor: canScrollRight ? 'pointer' : 'default',
+              opacity: canScrollRight ? 1 : 0.3, transition: 'opacity 0.2s',
+            }}>
+            <ChevronRight size={18} color="#1A1A2E" />
+          </button>
         </div>
       </div>
     </section>

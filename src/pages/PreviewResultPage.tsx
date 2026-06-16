@@ -3,7 +3,7 @@ import { trackPreviewGenerated } from '../utils/analytics';
 import { useParams, useSearchParams } from 'react-router-dom';
 import { OrderCompletionOverlay } from '../components/OrderCompletionOverlay';
 import { motion, AnimatePresence, useMotionValue, useTransform } from 'framer-motion';
-import { GOOGLE_REVIEWS } from '../data/reviews';
+import { GOOGLE_REVIEWS, getRelativeTime } from '../data/reviews';
 
 const C = {
   saffron: '#FF6B35',
@@ -83,7 +83,7 @@ function WhileWaitingSection() {
                 }
                 <div>
                   <div style={{ fontSize: 13, fontWeight: 700, color: '#fff' }}>{r.authorName}</div>
-                  <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.35)' }}>{r.relativeTime}</div>
+                  <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.35)' }}>{getRelativeTime(r.publishedAt)}</div>
                 </div>
                 <span style={{ marginLeft: 'auto', color: '#F7B731', fontSize: 12 }}>{'★'.repeat(r.rating)}</span>
               </div>
