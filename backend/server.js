@@ -1305,7 +1305,7 @@ app.post('/api/order-inquiry', async (req, res) => {
         const themeSlug = storyTheme || theme;
         const themeOverride = themeSlug ? THEME_PRICE_OVERRIDES[themeSlug] : null;
         const basePrice = isCustomStory
-            ? (parseInt(process.env.CUSTOM_STORY_PRICE, 10) || 1980)
+            ? (parseInt(process.env.CUSTOM_STORY_MRP, 10) || 2200)
             : themeOverride
             ? (bindingType === 'hardcover' ? themeOverride.hardcover : themeOverride.paperback)
             : bindingType === 'hardcover'
@@ -1314,7 +1314,9 @@ app.post('/api/order-inquiry', async (req, res) => {
 
         // Validate coupon server-side
         const coupon = couponCode ? await validateCouponCode(couponCode) : null;
-        const { discountAmount, finalPrice: price } = applyDiscount(basePrice, coupon);
+        const { discountAmount, finalPrice: price } = isCustomStory && !coupon
+            ? { discountAmount: 0, finalPrice: parseInt(process.env.CUSTOM_STORY_PRICE, 10) || 1980 }
+            : applyDiscount(basePrice, coupon);
 
         // Create Razorpay order
         const hasRazorpayKeys =
@@ -1438,7 +1440,7 @@ function applyDiscount(basePrice, coupon) {
 // ── Validate coupon endpoint ────────────────────────────────────────────────
 app.post('/api/validate-coupon', async (req, res) => {
     try {
-        const { code, theme, bindingType } = req.body;
+        const { code, theme, bindingType, isCustomStory } = req.body;
         if (!code) return res.status(400).json({ valid: false, error: 'No code provided' });
 
         const hasSupabase = process.env.SUPABASE_URL_STORY && !process.env.SUPABASE_URL_STORY.includes('your_');
@@ -1452,7 +1454,9 @@ app.post('/api/validate-coupon', async (req, res) => {
             'hindi-alphabet': { paperback: 849, hardcover: 1449 },
         };
         const themeOverride = theme ? THEME_PRICE_OVERRIDES[theme] : null;
-        const basePrice = themeOverride
+        const basePrice = isCustomStory
+            ? (parseInt(process.env.CUSTOM_STORY_MRP, 10) || 2200)
+            : themeOverride
             ? (bindingType === 'hardcover' ? themeOverride.hardcover : themeOverride.paperback)
             : bindingType === 'hardcover'
             ? (parseInt(process.env.HARDCOVER_PRICE, 10) || 1595)
