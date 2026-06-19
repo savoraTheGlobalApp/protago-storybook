@@ -20,7 +20,7 @@ export const THEMES: ThemeEntry[] = [
   {
     slug: 'abc', name: 'ABC Adventure', icon: '🔤', ageRange: '0–3',
     description: 'Child goes on a magical journey through the alphabet — meeting animals and objects for every letter.',
-    pricing: { paperback: { price: 849, mrp: 1499 }, hardcover: { price: 1449, mrp: 1899 } },
+    pricing: { paperback: { price: 849, mrp: 1499 }, hardcover: { price: 1399, mrp: 1899 } },
   },
   {
     slug: 'potty-training', name: 'Potty Training', icon: '🚽', ageRange: '0–3',
@@ -31,7 +31,7 @@ export const THEMES: ThemeEntry[] = [
     slug: 'hindi-alphabet', name: 'Hindi Alphabet', icon: '🔡', ageRange: '0–3',
     description: 'Child discovers the magic of Hindi letters — each Akshar comes alive with a character, a word and a world to explore.',
     comingSoon: true,
-    pricing: { paperback: { price: 849, mrp: 1499 }, hardcover: { price: 1449, mrp: 1899 } },
+    pricing: { paperback: { price: 849, mrp: 1499 }, hardcover: { price: 1399, mrp: 1899 } },
   },
   // Ages 3–5
   {

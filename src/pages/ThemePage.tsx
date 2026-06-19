@@ -393,7 +393,7 @@ export function ThemePage() {
 
   const _tp = theme.pricing;
   const pbPrice = _tp?.paperback.price ?? 974;
-  const hcPrice = _tp?.hardcover.price ?? 1595;
+  const hcPrice = _tp?.hardcover.price ?? 1449;
   const pbMrp   = _tp?.paperback.mrp   ?? 1499;
   const hcMrp   = _tp?.hardcover.mrp   ?? 1899;
   const pbPct   = Math.round((pbMrp - pbPrice) / pbMrp * 100);

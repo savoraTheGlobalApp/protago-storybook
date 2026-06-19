@@ -329,17 +329,17 @@ type BindingOption = { key: 'paperback' | 'hardcover'; label: string; price: num
 
 const BINDING_OPTIONS: BindingOption[] = [
   { key: 'paperback', label: 'Paperback', price: 974,  mrp: 1499, pct: 35 },
-  { key: 'hardcover', label: 'Hardcover', price: 1595, mrp: 1899, pct: 16 },
+  { key: 'hardcover', label: 'Hardcover', price: 1449, mrp: 1899, pct: 24 },
 ];
 
 const THEME_BINDING_OPTIONS: Record<string, BindingOption[]> = {
   'abc': [
     { key: 'paperback', label: 'Paperback', price: 849,  mrp: 1499, pct: 43 },
-    { key: 'hardcover', label: 'Hardcover', price: 1449, mrp: 1899, pct: 24 },
+    { key: 'hardcover', label: 'Hardcover', price: 1399, mrp: 1899, pct: 26 },
   ],
   'hindi-alphabet': [
     { key: 'paperback', label: 'Paperback', price: 849,  mrp: 1499, pct: 43 },
-    { key: 'hardcover', label: 'Hardcover', price: 1449, mrp: 1899, pct: 24 },
+    { key: 'hardcover', label: 'Hardcover', price: 1399, mrp: 1899, pct: 26 },
   ],
 };
 

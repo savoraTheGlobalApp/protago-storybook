@@ -5,8 +5,8 @@ import { useNavigate } from 'react-router-dom';
 const C = { saffron: '#FF6B35', navy: '#1A1A2E' };
 
 const THEME_PRICE_OVERRIDES: Record<string, { paperback: number; hardcover: number }> = {
-  'abc':            { paperback: 849, hardcover: 1449 },
-  'hindi-alphabet': { paperback: 849, hardcover: 1449 },
+  'abc':            { paperback: 849, hardcover: 1399 },
+  'hindi-alphabet': { paperback: 849, hardcover: 1399 },
 };
 
 interface Props {
