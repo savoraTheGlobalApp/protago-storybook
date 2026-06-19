@@ -23,9 +23,36 @@ export function CustomStoryPage() {
     city: '', state: '', pincode: '',
   });
   const [photo, setPhoto] = useState<{ preview: string; uploading: boolean; uploadedPath: string | null; signedUrl: string | null } | null>(null);
+  const [couponInput, setCouponInput] = useState('');
+  const [coupon, setCoupon] = useState<{ code: string; discountAmount: number; finalPrice: number; discountType: string; discountValue: number } | null>(null);
+  const [couponError, setCouponError] = useState('');
+  const [couponLoading, setCouponLoading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
   const set = (k: string, v: string) => setForm(f => ({ ...f, [k]: v }));
+
+  const displayPrice = coupon ? coupon.finalPrice : CUSTOM_PRICE;
+
+  const handleCoupon = async () => {
+    if (!couponInput.trim()) return;
+    setCouponError('');
+    setCouponLoading(true);
+    try {
+      const res = await fetch(`${API_BASE}/api/validate-coupon`, {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ code: couponInput.trim(), isCustomStory: true }),
+      });
+      const data = await res.json();
+      if (res.ok && data.valid) {
+        setCoupon({ code: couponInput.trim().toUpperCase(), discountAmount: data.discountAmount, finalPrice: data.finalPrice, discountType: data.discountType, discountValue: data.discountValue });
+        setCouponError('');
+      } else {
+        setCoupon(null);
+        setCouponError(data.error || 'Invalid coupon code');
+      }
+    } catch { setCouponError('Could not validate coupon. Try again.'); }
+    setCouponLoading(false);
+  };
 
   const inp = (style?: React.CSSProperties): React.CSSProperties => ({
     width: '100%', border: '1.5px solid #E5E7EB', borderRadius: 9, padding: '10px 12px',
@@ -70,7 +97,7 @@ export function CustomStoryPage() {
       const res = await fetch(`${API_BASE}/api/order-inquiry`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ...form, isCustomStory: true, photoPath: photo?.uploadedPath || null, photoSignedUrl: photo?.signedUrl || null }),
+        body: JSON.stringify({ ...form, isCustomStory: true, photoPath: photo?.uploadedPath || null, photoSignedUrl: photo?.signedUrl || null, couponCode: coupon?.code || null }),
       });
       if (!res.ok) { const d = await res.json().catch(() => ({})); throw new Error(d.error || 'Failed to submit'); }
       const { orderId, razorpayKeyId, amount, currency } = await res.json();
@@ -308,11 +335,51 @@ export function CustomStoryPage() {
 
             {error && <p style={{ fontSize: 13, color: '#C0392B', margin: 0 }}>{error}</p>}
 
+            {/* Promo code */}
+            <div>
+              <label style={{ ...lbl }}>Promo code (optional)</label>
+              <div style={{ display: 'flex', gap: 8 }}>
+                <input
+                  placeholder="e.g. WELCOME20"
+                  value={couponInput}
+                  onChange={e => { setCouponInput(e.target.value.toUpperCase()); setCoupon(null); setCouponError(''); }}
+                  onKeyDown={e => e.key === 'Enter' && (e.preventDefault(), handleCoupon())}
+                  style={{ ...inp(), flex: 1, width: 'auto' }}
+                />
+                <button type="button" onClick={handleCoupon} disabled={couponLoading || !couponInput.trim()}
+                  style={{ background: C.navy, color: '#fff', border: 'none', borderRadius: 9, padding: '10px 16px', fontSize: 13, fontWeight: 700, cursor: 'pointer', whiteSpace: 'nowrap', opacity: couponLoading || !couponInput.trim() ? 0.5 : 1 }}>
+                  {couponLoading ? '…' : 'Apply'}
+                </button>
+              </div>
+              {coupon && (
+                <div style={{ marginTop: 6, display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: '#F0FFF4', border: '1.5px solid #22C55E', borderRadius: 8, padding: '7px 11px' }}>
+                  <span style={{ fontSize: 12, fontWeight: 700, color: '#16A34A' }}>
+                    ✓ {coupon.code} — {coupon.discountType === 'percent' ? `${coupon.discountValue}% off` : `₹${coupon.discountAmount} off`}
+                  </span>
+                  <button type="button" onClick={() => { setCoupon(null); setCouponInput(''); }}
+                    style={{ fontSize: 12, color: '#6B7280', background: 'none', border: 'none', cursor: 'pointer' }}>Remove</button>
+                </div>
+              )}
+              {couponError && <p style={{ fontSize: 12, color: '#EF4444', margin: '5px 0 0' }}>{couponError}</p>}
+            </div>
+
             {/* Pricing */}
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10, padding: '12px 16px', background: '#FFF7ED', borderRadius: 12, border: '1px solid #FFE4CC' }}>
-              <span style={{ fontSize: 11, fontWeight: 800, color: '#fff', background: '#22C55E', borderRadius: 50, padding: '2px 10px' }}>10% OFF</span>
-              <span style={{ fontSize: 18, color: '#9CA3AF', textDecoration: 'line-through', fontWeight: 600 }}>₹2,200</span>
-              <span style={{ fontSize: 18, fontWeight: 800, color: C.navy, fontFamily: "'Baloo 2', sans-serif" }}>Starting ₹1,980</span>
+              {coupon ? (
+                <>
+                  <span style={{ fontSize: 11, fontWeight: 800, color: '#fff', background: '#22C55E', borderRadius: 50, padding: '2px 10px' }}>
+                    {coupon.discountType === 'percent' ? `${coupon.discountValue}% OFF` : `₹${coupon.discountAmount} OFF`}
+                  </span>
+                  <span style={{ fontSize: 18, color: '#9CA3AF', textDecoration: 'line-through', fontWeight: 600 }}>₹2,200</span>
+                  <span style={{ fontSize: 18, fontWeight: 800, color: C.navy, fontFamily: "'Baloo 2', sans-serif" }}>₹{coupon.finalPrice.toLocaleString('en-IN')}</span>
+                </>
+              ) : (
+                <>
+                  <span style={{ fontSize: 11, fontWeight: 800, color: '#fff', background: '#22C55E', borderRadius: 50, padding: '2px 10px' }}>10% OFF</span>
+                  <span style={{ fontSize: 18, color: '#9CA3AF', textDecoration: 'line-through', fontWeight: 600 }}>₹2,200</span>
+                  <span style={{ fontSize: 18, fontWeight: 800, color: C.navy, fontFamily: "'Baloo 2', sans-serif" }}>Starting ₹1,980</span>
+                </>
+              )}
             </div>
 
             <button type="submit" disabled={submitting || !!photo?.uploading || !photo?.uploadedPath}
@@ -324,7 +391,7 @@ export function CustomStoryPage() {
                 fontFamily: "'Baloo 2', sans-serif",
                 boxShadow: (submitting || photo?.uploading || !photo?.uploadedPath) ? 'none' : '0 4px 16px rgba(255,107,53,0.4)',
               }}>
-              {photo?.uploading ? 'Uploading photo…' : submitting ? 'Processing…' : 'Pay ₹1,980 & Order →'}
+              {photo?.uploading ? 'Uploading photo…' : submitting ? 'Processing…' : `Pay ₹${displayPrice.toLocaleString('en-IN')} & Order →`}
             </button>
             <p style={{ fontSize: 11, color: C.lgray, textAlign: 'center', margin: '-8px 0 0' }}>
               Secure payment · We'll contact you within 24 hours to finalise the story
