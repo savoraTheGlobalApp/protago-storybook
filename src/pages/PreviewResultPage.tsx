@@ -1064,12 +1064,12 @@ export function PreviewResultPage() {
 
   // Pricing for display (same overrides as backend)
   const THEME_PRICE_OVERRIDES: Record<string, { paperback: number; hardcover: number }> = {
-    'abc':            { paperback: 849, hardcover: 1449 },
-    'hindi-alphabet': { paperback: 849, hardcover: 1449 },
+    'abc':            { paperback: 849, hardcover: 1399 },
+    'hindi-alphabet': { paperback: 849, hardcover: 1399 },
   };
   const themeOverride = THEME_PRICE_OVERRIDES[themeSlug] || null;
   const pbPrice = themeOverride ? themeOverride.paperback : 974;
-  const hcPrice = themeOverride ? themeOverride.hardcover : 1595;
+  const hcPrice = themeOverride ? themeOverride.hardcover : 1449;
 
 
   const [resultUrls, setResultUrls] = useState<(string | null)[]>([null, null, null, null, null]);
