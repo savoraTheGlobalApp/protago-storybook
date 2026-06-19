@@ -1304,8 +1304,14 @@ app.post('/api/order-inquiry', async (req, res) => {
         };
         const themeSlug = storyTheme || theme;
         const themeOverride = themeSlug ? THEME_PRICE_OVERRIDES[themeSlug] : null;
+        const customMrp = bindingType === 'hardcover'
+            ? (parseInt(process.env.CUSTOM_STORY_HARDCOVER_MRP, 10) || 2500)
+            : (parseInt(process.env.CUSTOM_STORY_MRP, 10) || 2200);
+        const customSellingPrice = bindingType === 'hardcover'
+            ? (parseInt(process.env.CUSTOM_STORY_HARDCOVER_PRICE, 10) || 2180)
+            : (parseInt(process.env.CUSTOM_STORY_PRICE, 10) || 1980);
         const basePrice = isCustomStory
-            ? (parseInt(process.env.CUSTOM_STORY_MRP, 10) || 2200)
+            ? customMrp
             : themeOverride
             ? (bindingType === 'hardcover' ? themeOverride.hardcover : themeOverride.paperback)
             : bindingType === 'hardcover'
@@ -1315,7 +1321,7 @@ app.post('/api/order-inquiry', async (req, res) => {
         // Validate coupon server-side
         const coupon = couponCode ? await validateCouponCode(couponCode) : null;
         const { discountAmount, finalPrice: price } = isCustomStory && !coupon
-            ? { discountAmount: 0, finalPrice: parseInt(process.env.CUSTOM_STORY_PRICE, 10) || 1980 }
+            ? { discountAmount: 0, finalPrice: customSellingPrice }
             : applyDiscount(basePrice, coupon);
 
         // Create Razorpay order
@@ -1455,7 +1461,9 @@ app.post('/api/validate-coupon', async (req, res) => {
         };
         const themeOverride = theme ? THEME_PRICE_OVERRIDES[theme] : null;
         const basePrice = isCustomStory
-            ? (parseInt(process.env.CUSTOM_STORY_MRP, 10) || 2200)
+            ? (bindingType === 'hardcover'
+                ? (parseInt(process.env.CUSTOM_STORY_HARDCOVER_MRP, 10) || 2500)
+                : (parseInt(process.env.CUSTOM_STORY_MRP, 10) || 2200))
             : themeOverride
             ? (bindingType === 'hardcover' ? themeOverride.hardcover : themeOverride.paperback)
             : bindingType === 'hardcover'

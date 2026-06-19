@@ -15,7 +15,11 @@ const C = {
 export function CustomStoryPage() {
   const API_BASE = import.meta.env.VITE_API_BASE_URL || '';
   const navigate = useNavigate();
-  const CUSTOM_PRICE = 1980;
+
+  const PRICES = {
+    paperback: { mrp: 2200, price: 1980, offPct: 10 },
+    hardcover: { mrp: 2500, price: 2180, offPct: 13 },
+  } as const;
 
   const [form, setForm] = useState({
     parentName: '', email: '', phone: '', childName: '', childAge: '',
@@ -23,6 +27,7 @@ export function CustomStoryPage() {
     city: '', state: '', pincode: '',
   });
   const [photo, setPhoto] = useState<{ preview: string; uploading: boolean; uploadedPath: string | null; signedUrl: string | null } | null>(null);
+  const [bindingType, setBindingType] = useState<'paperback' | 'hardcover'>('paperback');
   const [couponInput, setCouponInput] = useState('');
   const [coupon, setCoupon] = useState<{ code: string; discountAmount: number; finalPrice: number; discountType: string; discountValue: number } | null>(null);
   const [couponError, setCouponError] = useState('');
@@ -31,7 +36,15 @@ export function CustomStoryPage() {
   const [error, setError] = useState('');
   const set = (k: string, v: string) => setForm(f => ({ ...f, [k]: v }));
 
-  const displayPrice = coupon ? coupon.finalPrice : CUSTOM_PRICE;
+  const activePrice = PRICES[bindingType];
+  const displayPrice = coupon ? coupon.finalPrice : activePrice.price;
+
+  const handleBindingType = (type: 'paperback' | 'hardcover') => {
+    setBindingType(type);
+    setCoupon(null);
+    setCouponInput('');
+    setCouponError('');
+  };
 
   const handleCoupon = async () => {
     if (!couponInput.trim()) return;
@@ -40,7 +53,7 @@ export function CustomStoryPage() {
     try {
       const res = await fetch(`${API_BASE}/api/validate-coupon`, {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ code: couponInput.trim(), isCustomStory: true }),
+        body: JSON.stringify({ code: couponInput.trim(), isCustomStory: true, bindingType }),
       });
       const data = await res.json();
       if (res.ok && data.valid) {
@@ -97,13 +110,13 @@ export function CustomStoryPage() {
       const res = await fetch(`${API_BASE}/api/order-inquiry`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ...form, isCustomStory: true, photoPath: photo?.uploadedPath || null, photoSignedUrl: photo?.signedUrl || null, couponCode: coupon?.code || null }),
+        body: JSON.stringify({ ...form, isCustomStory: true, bindingType, photoPath: photo?.uploadedPath || null, photoSignedUrl: photo?.signedUrl || null, couponCode: coupon?.code || null }),
       });
       if (!res.ok) { const d = await res.json().catch(() => ({})); throw new Error(d.error || 'Failed to submit'); }
       const { orderId, razorpayKeyId, amount, currency } = await res.json();
 
       if (!razorpayKeyId || razorpayKeyId.includes('your_')) {
-        navigate('/order-confirmed', { state: { childName: form.childName, email: form.email, amount: CUSTOM_PRICE } });
+        navigate('/order-confirmed', { state: { childName: form.childName, email: form.email, amount: displayPrice } });
         return;
       }
 
@@ -166,7 +179,7 @@ export function CustomStoryPage() {
             Share the brief and we'll write &amp; illustrate it completely bespoke.
           </p>
           <div style={{ display: 'flex', justifyContent: 'center', gap: 12, flexWrap: 'wrap' as const }}>
-            {[['📚', 'Paperback print'], ['📦', 'Delivered in 5–7 days'], ['✏️', 'Custom written & illustrated']].map(([icon, text]) => (
+            {[['📦', 'Delivered in 5–7 days'], ['✏️', 'Custom written & illustrated']].map(([icon, text]) => (
               <span key={text} style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 13, fontWeight: 600, color: C.navy, background: '#fff', border: '1.5px solid #E5E7EB', borderRadius: 50, padding: '5px 14px' }}>
                 {icon} {text}
               </span>
@@ -333,6 +346,30 @@ export function CustomStoryPage() {
               </div>
             </div>
 
+            {/* Binding type */}
+            <div>
+              <p style={{ fontSize: 12, fontWeight: 800, color: C.navy, textTransform: 'uppercase', letterSpacing: '0.08em', margin: '0 0 12px' }}>Book type</p>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+                {(['paperback', 'hardcover'] as const).map(type => {
+                  const p = PRICES[type];
+                  const active = bindingType === type;
+                  return (
+                    <button key={type} type="button" onClick={() => handleBindingType(type)}
+                      style={{ padding: '12px 14px', borderRadius: 12, cursor: 'pointer', textAlign: 'left', border: `2px solid ${active ? C.saffron : '#E5E7EB'}`, background: active ? '#FFF3EE' : '#fff', transition: 'border-color 0.15s, background 0.15s' }}>
+                      <div style={{ fontSize: 13, fontWeight: 800, color: active ? C.saffron : C.navy, marginBottom: 4, textTransform: 'capitalize' }}>
+                        {type === 'paperback' ? '📚' : '📖'} {type}
+                      </div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                        <span style={{ fontSize: 11, color: '#9CA3AF', textDecoration: 'line-through' }}>₹{p.mrp.toLocaleString('en-IN')}</span>
+                        <span style={{ fontSize: 14, fontWeight: 800, color: C.navy }}>₹{p.price.toLocaleString('en-IN')}</span>
+                        <span style={{ fontSize: 10, fontWeight: 800, color: '#fff', background: '#22C55E', borderRadius: 50, padding: '1px 7px' }}>{p.offPct}% OFF</span>
+                      </div>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
             {error && <p style={{ fontSize: 13, color: '#C0392B', margin: 0 }}>{error}</p>}
 
             {/* Promo code */}
@@ -370,14 +407,14 @@ export function CustomStoryPage() {
                   <span style={{ fontSize: 11, fontWeight: 800, color: '#fff', background: '#22C55E', borderRadius: 50, padding: '2px 10px' }}>
                     {coupon.discountType === 'percent' ? `${coupon.discountValue}% OFF` : `₹${coupon.discountAmount} OFF`}
                   </span>
-                  <span style={{ fontSize: 18, color: '#9CA3AF', textDecoration: 'line-through', fontWeight: 600 }}>₹2,200</span>
+                  <span style={{ fontSize: 18, color: '#9CA3AF', textDecoration: 'line-through', fontWeight: 600 }}>₹{activePrice.mrp.toLocaleString('en-IN')}</span>
                   <span style={{ fontSize: 18, fontWeight: 800, color: C.navy, fontFamily: "'Baloo 2', sans-serif" }}>₹{coupon.finalPrice.toLocaleString('en-IN')}</span>
                 </>
               ) : (
                 <>
-                  <span style={{ fontSize: 11, fontWeight: 800, color: '#fff', background: '#22C55E', borderRadius: 50, padding: '2px 10px' }}>10% OFF</span>
-                  <span style={{ fontSize: 18, color: '#9CA3AF', textDecoration: 'line-through', fontWeight: 600 }}>₹2,200</span>
-                  <span style={{ fontSize: 18, fontWeight: 800, color: C.navy, fontFamily: "'Baloo 2', sans-serif" }}>Starting ₹1,980</span>
+                  <span style={{ fontSize: 11, fontWeight: 800, color: '#fff', background: '#22C55E', borderRadius: 50, padding: '2px 10px' }}>{activePrice.offPct}% OFF</span>
+                  <span style={{ fontSize: 18, color: '#9CA3AF', textDecoration: 'line-through', fontWeight: 600 }}>₹{activePrice.mrp.toLocaleString('en-IN')}</span>
+                  <span style={{ fontSize: 18, fontWeight: 800, color: C.navy, fontFamily: "'Baloo 2', sans-serif" }}>₹{activePrice.price.toLocaleString('en-IN')}</span>
                 </>
               )}
             </div>
