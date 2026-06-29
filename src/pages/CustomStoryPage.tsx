@@ -33,6 +33,7 @@ export function CustomStoryPage() {
   const [couponError, setCouponError] = useState('');
   const [couponLoading, setCouponLoading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const [showPaused, setShowPaused] = useState(false);
   const [error, setError] = useState('');
   const set = (k: string, v: string) => setForm(f => ({ ...f, [k]: v }));
 
@@ -99,7 +100,9 @@ export function CustomStoryPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!form.email || !form.phone || !form.childName || !form.customStoryBrief) return;
+    setShowPaused(true);
+    return;
+    if (!form.email || !form.phone || !form.childName || !form.customStoryBrief) return; // eslint-disable-line no-unreachable
     if (!photo?.uploadedPath) { setError("Please upload your child's photo"); return; }
     if (!form.addressLine1 || !form.city || !form.state || !form.pincode) {
       setError('Please fill in the full delivery address'); return;
@@ -148,7 +151,7 @@ export function CustomStoryPage() {
         modal: { ondismiss: () => { setSubmitting(false); setError('Payment was cancelled. Please try again.'); } },
       };
       new window.Razorpay(options).open();
-    } catch (err: unknown) {
+    } catch (err) {
       setError(err instanceof Error ? err.message : 'Something went wrong. Please try again.');
       setSubmitting(false);
     }
@@ -436,6 +439,28 @@ export function CustomStoryPage() {
           </form>
         </div>
       </div>
+
+      {/* Temporarily paused modal */}
+      {showPaused && (
+        <div style={{ position: 'fixed', inset: 0, zIndex: 999, background: 'rgba(10,8,20,0.75)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20, backdropFilter: 'blur(4px)' }}
+          onClick={() => setShowPaused(false)}>
+          <div style={{ background: '#fff', borderRadius: 20, padding: '36px 32px', maxWidth: 420, width: '100%', textAlign: 'center', boxShadow: '0 20px 60px rgba(0,0,0,0.2)' }}
+            onClick={e => e.stopPropagation()}>
+            <div style={{ fontSize: 44, marginBottom: 16 }}>🛑</div>
+            <h2 style={{ fontFamily: "'Baloo 2', sans-serif", fontWeight: 800, fontSize: 22, color: C.navy, margin: '0 0 12px' }}>
+              Orders temporarily paused
+            </h2>
+            <p style={{ fontSize: 15, color: C.gray, lineHeight: 1.65, margin: '0 0 24px' }}>
+              We've paused new orders for now and will be back soon. For any questions about existing orders, reach us at{' '}
+              <a href="mailto:hello@protago.in" style={{ color: C.saffron, fontWeight: 700 }}>hello@protago.in</a>.
+            </p>
+            <button onClick={() => setShowPaused(false)}
+              style={{ background: `linear-gradient(135deg, ${C.saffron} 0%, #FF8C42 100%)`, color: '#fff', border: 'none', borderRadius: 12, padding: '12px 32px', fontWeight: 800, fontSize: 15, cursor: 'pointer', fontFamily: "'Baloo 2', sans-serif" }}>
+              Got it
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
