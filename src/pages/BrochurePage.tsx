@@ -1931,6 +1931,7 @@ export function BrochurePage() {
   const [openFaq, setOpenFaq]         = useState<number | null>(null);
   const [themesTab, setThemesTab]     = useState<'All' | '0–3' | '3–5' | '6–8' | '9–12'>('All');
   const [heroSlide, setHeroSlide]     = useState(0);
+  const [showPaused, setShowPaused]   = useState(false);
   const price = Number(import.meta.env.VITE_STORYBOOK_PRICE) || 974;
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
@@ -2108,12 +2109,12 @@ export function BrochurePage() {
                     exit={{ opacity: 0, y: -10 }} transition={{ duration: 0.2 }}
                     style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: 20 }}>
                     {tabThemes.map(t => (
-                      <BrochureThemeCard key={t.slug} slug={t.slug} icon={t.icon} name={t.name} description={t.description} ageRange={Array.isArray(t.ageRange) ? t.ageRange.join(', ') : t.ageRange} badge={['abc', 'colours-shapes', 'bedtime-routines', 'numbers-maths', 'sharing-sorry', 'first-day-school', 'managing-emotions', 'indian-festivals', 'history-india', 'financial-literacy', 'growth-mindset', 'professions', 'internet-safety', 'body-safety'].includes(t.slug) ? '✨ 9-Page Preview' : undefined} comingSoon={t.comingSoon} onClick={() => navigate(`/theme/${t.slug}`)} onOrder={(b) => navigate(`/theme/${t.slug}?order=1&binding=${b}`)} onPreview={() => navigate(`/theme/${t.slug}?preview=1`)} />
+                      <BrochureThemeCard key={t.slug} slug={t.slug} icon={t.icon} name={t.name} description={t.description} ageRange={Array.isArray(t.ageRange) ? t.ageRange.join(', ') : t.ageRange} badge={['abc', 'colours-shapes', 'bedtime-routines', 'numbers-maths', 'sharing-sorry', 'first-day-school', 'managing-emotions', 'indian-festivals', 'history-india', 'financial-literacy', 'growth-mindset', 'professions', 'internet-safety', 'body-safety'].includes(t.slug) ? '✨ 9-Page Preview' : undefined} comingSoon={t.comingSoon} onClick={() => navigate(`/theme/${t.slug}`)} onOrder={() => setShowPaused(true)} onPreview={() => navigate(`/theme/${t.slug}?preview=1`)} />
                     ))}
 
                     {/* ── Custom story card — last slot ── */}
                     <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.15 }}
-                      onClick={() => navigate('/custom-story')}
+                      onClick={() => setShowPaused(true)}
                       style={{ borderRadius: 20, border: `2px dashed ${C.saffron}`, background: 'linear-gradient(135deg, #FFF3EE 0%, #FFF8F0 100%)', cursor: 'pointer', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 12, padding: '32px 24px', textAlign: 'center', minHeight: 200 }}
                       whileHover={{ scale: 1.02, boxShadow: '0 8px 32px rgba(255,107,53,0.18)' }}>
                       <span style={{ fontSize: 48 }}>✨</span>
@@ -2147,7 +2148,7 @@ export function BrochurePage() {
                     </div>
                     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: 20 }}>
                       {mythologyThemes.map(t => (
-                        <BrochureThemeCard key={t.slug} slug={t.slug} icon={t.icon} name={t.name} description={t.description} ageRange={Array.isArray(t.ageRange) ? t.ageRange.join(', ') : t.ageRange} badge={['abc', 'colours-shapes', 'bedtime-routines', 'numbers-maths', 'sharing-sorry', 'first-day-school', 'managing-emotions', 'indian-festivals', 'history-india', 'financial-literacy', 'growth-mindset', 'professions', 'internet-safety', 'body-safety'].includes(t.slug) ? '✨ 9-Page Preview' : undefined} onClick={() => navigate(`/theme/${t.slug}`)} onOrder={(b) => navigate(`/theme/${t.slug}?order=1&binding=${b}`)} onPreview={() => navigate(`/theme/${t.slug}?preview=1`)} />
+                        <BrochureThemeCard key={t.slug} slug={t.slug} icon={t.icon} name={t.name} description={t.description} ageRange={Array.isArray(t.ageRange) ? t.ageRange.join(', ') : t.ageRange} badge={['abc', 'colours-shapes', 'bedtime-routines', 'numbers-maths', 'sharing-sorry', 'first-day-school', 'managing-emotions', 'indian-festivals', 'history-india', 'financial-literacy', 'growth-mindset', 'professions', 'internet-safety', 'body-safety'].includes(t.slug) ? '✨ 9-Page Preview' : undefined} onClick={() => navigate(`/theme/${t.slug}`)} onOrder={() => setShowPaused(true)} onPreview={() => navigate(`/theme/${t.slug}?preview=1`)} />
                       ))}
                     </div>
                   </motion.div>
@@ -2597,6 +2598,27 @@ export function BrochurePage() {
         </div>
       </footer>
 
+      {/* Temporarily paused modal */}
+      {showPaused && (
+        <div style={{ position: 'fixed', inset: 0, zIndex: 999, background: 'rgba(10,8,20,0.75)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20, backdropFilter: 'blur(4px)' }}
+          onClick={() => setShowPaused(false)}>
+          <div style={{ background: '#fff', borderRadius: 20, padding: '36px 32px', maxWidth: 420, width: '100%', textAlign: 'center', boxShadow: '0 20px 60px rgba(0,0,0,0.2)', fontFamily: "'Nunito', sans-serif" }}
+            onClick={e => e.stopPropagation()}>
+            <div style={{ fontSize: 44, marginBottom: 16 }}>🛑</div>
+            <h2 style={{ fontFamily: "'Baloo 2', sans-serif", fontWeight: 800, fontSize: 22, color: C.navy, margin: '0 0 12px' }}>
+              Orders temporarily paused
+            </h2>
+            <p style={{ fontSize: 15, color: C.gray, lineHeight: 1.65, margin: '0 0 24px' }}>
+              We've paused new orders for now and will be back soon. For any questions about existing orders, reach us at{' '}
+              <a href="mailto:hello@protago.in" style={{ color: C.saffron, fontWeight: 700 }}>hello@protago.in</a>.
+            </p>
+            <button onClick={() => setShowPaused(false)}
+              style={{ background: `linear-gradient(135deg, ${C.saffron} 0%, #FF8C42 100%)`, color: '#fff', border: 'none', borderRadius: 12, padding: '12px 32px', fontWeight: 800, fontSize: 15, cursor: 'pointer', fontFamily: "'Baloo 2', sans-serif" }}>
+              Got it
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
