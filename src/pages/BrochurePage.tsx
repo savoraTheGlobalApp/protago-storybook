@@ -2109,7 +2109,7 @@ export function BrochurePage() {
                     exit={{ opacity: 0, y: -10 }} transition={{ duration: 0.2 }}
                     style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: 20 }}>
                     {tabThemes.map(t => (
-                      <BrochureThemeCard key={t.slug} slug={t.slug} icon={t.icon} name={t.name} description={t.description} ageRange={Array.isArray(t.ageRange) ? t.ageRange.join(', ') : t.ageRange} badge={['abc', 'colours-shapes', 'bedtime-routines', 'numbers-maths', 'sharing-sorry', 'first-day-school', 'managing-emotions', 'indian-festivals', 'history-india', 'financial-literacy', 'growth-mindset', 'professions', 'internet-safety', 'body-safety'].includes(t.slug) ? '✨ 9-Page Preview' : undefined} comingSoon={t.comingSoon} onClick={() => navigate(`/theme/${t.slug}`)} onOrder={() => setShowPaused(true)} onPreview={() => navigate(`/theme/${t.slug}?preview=1`)} />
+                      <BrochureThemeCard key={t.slug} slug={t.slug} icon={t.icon} name={t.name} description={t.description} ageRange={Array.isArray(t.ageRange) ? t.ageRange.join(', ') : t.ageRange} badge={['abc', 'colours-shapes', 'bedtime-routines', 'numbers-maths', 'sharing-sorry', 'first-day-school', 'managing-emotions', 'indian-festivals', 'history-india', 'financial-literacy', 'growth-mindset', 'professions', 'internet-safety', 'body-safety'].includes(t.slug) ? '✨ 9-Page Preview' : undefined} comingSoon={t.comingSoon} onClick={() => setShowPaused(true)} onOrder={() => setShowPaused(true)} onPreview={() => navigate(`/theme/${t.slug}?preview=1`)} />
                     ))}
 
                     {/* ── Custom story card — last slot ── */}
@@ -2148,7 +2148,7 @@ export function BrochurePage() {
                     </div>
                     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: 20 }}>
                       {mythologyThemes.map(t => (
-                        <BrochureThemeCard key={t.slug} slug={t.slug} icon={t.icon} name={t.name} description={t.description} ageRange={Array.isArray(t.ageRange) ? t.ageRange.join(', ') : t.ageRange} badge={['abc', 'colours-shapes', 'bedtime-routines', 'numbers-maths', 'sharing-sorry', 'first-day-school', 'managing-emotions', 'indian-festivals', 'history-india', 'financial-literacy', 'growth-mindset', 'professions', 'internet-safety', 'body-safety'].includes(t.slug) ? '✨ 9-Page Preview' : undefined} onClick={() => navigate(`/theme/${t.slug}`)} onOrder={() => setShowPaused(true)} onPreview={() => navigate(`/theme/${t.slug}?preview=1`)} />
+                        <BrochureThemeCard key={t.slug} slug={t.slug} icon={t.icon} name={t.name} description={t.description} ageRange={Array.isArray(t.ageRange) ? t.ageRange.join(', ') : t.ageRange} badge={['abc', 'colours-shapes', 'bedtime-routines', 'numbers-maths', 'sharing-sorry', 'first-day-school', 'managing-emotions', 'indian-festivals', 'history-india', 'financial-literacy', 'growth-mindset', 'professions', 'internet-safety', 'body-safety'].includes(t.slug) ? '✨ 9-Page Preview' : undefined} onClick={() => setShowPaused(true)} onOrder={() => setShowPaused(true)} onPreview={() => navigate(`/theme/${t.slug}?preview=1`)} />
                       ))}
                     </div>
                   </motion.div>
