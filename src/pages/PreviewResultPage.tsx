@@ -1061,6 +1061,7 @@ export function PreviewResultPage() {
   const API_BASE = import.meta.env.VITE_API_BASE_URL || '';
 
   const [orderOverlayOpen, setOrderOverlayOpen] = useState(false);
+  const [showPaused, setShowPaused] = useState(false);
 
   // Pricing for display (same overrides as backend)
   const THEME_PRICE_OVERRIDES: Record<string, { paperback: number; hardcover: number }> = {
@@ -1142,6 +1143,9 @@ export function PreviewResultPage() {
   };
 
   const handleOrder = () => {
+    // Orders are temporarily paused — remove this early return to re-enable
+    setShowPaused(true);
+    return;
     if (fromOrderForm) {
       setOrderOverlayOpen(true);
       return;
@@ -1180,6 +1184,28 @@ export function PreviewResultPage() {
         hcPrice={hcPrice}
         apiBase={API_BASE}
       />
+
+      {/* Temporarily paused modal */}
+      {showPaused && (
+        <div style={{ position: 'fixed', inset: 0, zIndex: 999, background: 'rgba(10,8,20,0.75)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20, backdropFilter: 'blur(4px)' }}
+          onClick={() => setShowPaused(false)}>
+          <div style={{ background: '#fff', borderRadius: 20, padding: '36px 32px', maxWidth: 420, width: '100%', textAlign: 'center', boxShadow: '0 20px 60px rgba(0,0,0,0.2)', fontFamily: "'Nunito', sans-serif" }}
+            onClick={e => e.stopPropagation()}>
+            <div style={{ fontSize: 44, marginBottom: 16 }}>🛑</div>
+            <h2 style={{ fontFamily: "'Baloo 2', sans-serif", fontWeight: 800, fontSize: 22, color: C.navy, margin: '0 0 12px' }}>
+              Orders temporarily paused
+            </h2>
+            <p style={{ fontSize: 15, color: C.gray, lineHeight: 1.65, margin: '0 0 24px' }}>
+              We've paused new orders for now and will be back soon. For any questions about existing orders, reach us at{' '}
+              <a href="mailto:hello@protago.in" style={{ color: C.saffron, fontWeight: 700 }}>hello@protago.in</a>.
+            </p>
+            <button onClick={() => setShowPaused(false)}
+              style={{ background: `linear-gradient(135deg, ${C.saffron} 0%, #FF8C42 100%)`, color: '#fff', border: 'none', borderRadius: 12, padding: '12px 32px', fontWeight: 800, fontSize: 15, cursor: 'pointer', fontFamily: "'Baloo 2', sans-serif" }}>
+              Got it
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Sample video overlay — full screen while processing */}
       <AnimatePresence>
