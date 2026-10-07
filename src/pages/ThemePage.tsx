@@ -618,7 +618,7 @@ export function ThemePage() {
           <div style={{ display: 'flex', gap: 0, margin: '0 16px 20px', borderRadius: 20, overflow: 'hidden', boxShadow: '0 4px 32px rgba(0,0,0,0.08)', background: C.white }}>
             {/* 3/4: Book viewer */}
             <div style={{ flex: 3, borderRight: '1px solid #F0EEE8', background: '#FAFAFA' }}>
-              <SampleBookViewer slug={theme.slug} />
+              <SampleBookViewer slug={theme.slug} onGetPreview={scrollToForm} />
             </div>
             {/* 1/4: Face animation + CTA (hidden on mobile) */}
             <div className="book-hook-face-col" style={{ flex: 1, flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '24px 16px', gap: 16, minWidth: 160 }}>
@@ -673,7 +673,6 @@ export function ThemePage() {
                   </>
                 )}
               </div>
-              {false && <>
               <p style={{ fontFamily: "'Baloo 2', sans-serif", fontWeight: 800, fontSize: 13, color: C.navy, textAlign: 'center', margin: 0, lineHeight: 1.4 }}>
                 See your child<br />in this story
               </p>
@@ -682,13 +681,12 @@ export function ThemePage() {
                 ✨ Get Preview →
               </button>
               <p style={{ fontSize: 10, color: C.lgray, textAlign: 'center', margin: 0 }}>Free · ~2 min · No card required</p>
-              </>}
             </div>
           </div>
         )}
 
         {/* ── Sticky mobile CTA (only for themes with sample pages, hidden once form is visible) ── */}
-        {false && hasSamplePages && !formVisible && (
+        {hasSamplePages && !formVisible && (
           <div className="book-preview-sticky-cta">
             <button onClick={scrollToForm}
               style={{ background: `linear-gradient(135deg, ${C.saffron} 0%, #FF8C42 100%)`, color: '#fff', border: 'none', borderRadius: 14, padding: '14px 0', fontSize: 15, fontWeight: 800, cursor: 'pointer', fontFamily: "'Baloo 2', sans-serif", boxShadow: '0 4px 20px rgba(255,107,53,0.45)', width: '100%', textAlign: 'center' }}>
@@ -1021,7 +1019,7 @@ export function ThemePage() {
                   style={{ background: (!orderConsent || !orderPhoto?.uploadedPath) ? '#E5E7EB' : `linear-gradient(135deg, ${C.saffron} 0%, #FF8C42 100%)`, color: (!orderConsent || !orderPhoto?.uploadedPath) ? '#9CA3AF' : '#fff', border: 'none', borderRadius: 12, padding: '14px 20px', fontWeight: 800, fontSize: 16, cursor: (!orderConsent || !orderPhoto?.uploadedPath) ? 'default' : 'pointer', fontFamily: "'Baloo 2', sans-serif", boxShadow: (!orderConsent || !orderPhoto?.uploadedPath) ? 'none' : '0 4px 16px rgba(255,107,53,0.4)' }}>
                   {`Pay ₹${orderForm.bindingType === 'hardcover' ? hcPrice : pbPrice} & Order →`}
                 </button>
-                {false && (theme.comingSoon ? (
+                {theme.comingSoon ? (
                   <div style={{ background: '#F5F3FF', border: '1.5px solid #DDD6FE', borderRadius: 12, padding: '12px 18px', textAlign: 'center' }}>
                     <p style={{ fontWeight: 800, fontSize: 14, color: '#7C3AED', margin: '0 0 2px', fontFamily: "'Baloo 2', sans-serif" }}>🚀 Preview Coming Soon</p>
                     <p style={{ fontSize: 11, color: '#6B7280', margin: 0 }}>We're working on AI previews for this theme</p>
@@ -1033,7 +1031,7 @@ export function ThemePage() {
                     style={{ background: 'none', border: `1.5px solid ${(!orderConsent || !orderPhoto?.uploadedPath) ? '#E5E7EB' : C.navy}`, borderRadius: 12, padding: '12px 20px', fontWeight: 700, fontSize: 14, cursor: (!orderConsent || !orderPhoto?.uploadedPath || orderFormPreviewLoading) ? 'default' : 'pointer', fontFamily: "'Baloo 2', sans-serif", color: (!orderConsent || !orderPhoto?.uploadedPath) ? '#9CA3AF' : C.navy }}>
                     {orderFormPreviewLoading ? 'Opening preview…' : '👁 See preview first →'}
                   </button>
-                ))}
+                )}
                 <p style={{ fontSize: 11, color: C.lgray, textAlign: 'center', margin: '-4px 0 0' }}>Delivered in 7–9 business days</p>
 
               </form>
@@ -1061,7 +1059,7 @@ export function ThemePage() {
         />
 
         {/* ── Free preview (below order form) ── */}
-        {false && !theme.comingSoon && (
+        {!theme.comingSoon && (
           <>
             <div style={{ margin: '40px 16px 0', display: 'flex', alignItems: 'center', gap: 12 }}>
               <div style={{ flex: 1, height: 1, background: '#E5E7EB' }} />
